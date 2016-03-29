@@ -1,0 +1,27 @@
+{
+	"name" : "codisto/codisto-connect",
+	"description" : "Codisto Connect Magento 2 Extension",
+	"type" : "magento2-module",
+	"version" : "0.1.0",
+	"license" : [
+		"OSL-3.0"
+	],
+	"require" : {
+		"magento/framework" : "*"
+	},
+	"extra" : {
+		"map" : [
+				[
+					"*",
+					"Codisto/Connect"
+				]
+			]
+	},
+	"authors" : [
+		{
+			"name" : "Codisto",
+			"homepage" : "https://codisto.com/",
+			"role" : "developer"
+		}
+	]
+}
