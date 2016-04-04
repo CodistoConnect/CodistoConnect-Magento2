@@ -21,7 +21,7 @@
 
 namespace Codisto\Connect\Controller\Index;
 
-class Index extends \Magento\Framework\App\Action\Action
+class Calc extends \Magento\Framework\App\Action\Action
 {
 	private $context;
 
