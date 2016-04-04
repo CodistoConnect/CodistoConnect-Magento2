@@ -110,7 +110,6 @@ class Sync
 		\Magento\Framework\Model\ResourceModel\IteratorFactory $iteratorFactory,
 		\Magento\Catalog\Model\Indexer\Product\Flat\StateFactory $productFlatState,
 		\Magento\Catalog\Model\Indexer\Category\Flat\StateFactory $categoryFlatState,
-		\Magento\Framework\UrlInterface $urlBuilder,
         \Codisto\Connect\Helper\Data $codistoHelper
 	) {
 
@@ -142,7 +141,7 @@ class Sync
 		$this->iteratorFactory = $iteratorFactory;
 		$this->productFlatState = $productFlatState;
 		$this->categoryFlatState = $categoryFlatState;
-		$this->urlBuilder = $urlBuilder;
+		$this->urlBuilder = $context->getUrl();
         $this->codistoHelper = $codistoHelper;
 
 		$this->groupCache = array();

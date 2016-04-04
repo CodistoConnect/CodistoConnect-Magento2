@@ -18,7 +18,7 @@
  * @copyright   Copyright (c) 2016 On Technology Pty. Ltd. (http://codisto.com/)
  * @license	 http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
- 
+
 namespace Codisto\Connect\Controller\Adminhtml;
 
 use \Magento\Framework\Controller\ResultFactory;
@@ -47,7 +47,6 @@ class CodistoController extends \Magento\Backend\App\Action
 		\Magento\Framework\View\Asset\Repository $assetRepository,
 		\Magento\Framework\View\Asset\GroupedCollection $assetCollection,
 		\Magento\Framework\Data\Form\FormKey $formKey,
-		\Magento\Backend\Model\UrlInterface $urlInterface,
 		\Magento\Store\Model\StoreManager $storeManager,
 		\Magento\Framework\Json\Helper\Data $json,
 		\Magento\Config\Model\ResourceModel\ConfigFactory $configFactory,
@@ -62,7 +61,7 @@ class CodistoController extends \Magento\Backend\App\Action
 		$this->assetRepository = $assetRepository;
 		$this->assetCollection = $assetCollection;
 		$this->formKey = $formKey;
-		$this->urlInterface = $urlInterface;
+		$this->urlInterface = $context->getUrl();
 		$this->storeManager = $storeManager;
 		$this->json = $json;
 		$this->configFactory = $configFactory;

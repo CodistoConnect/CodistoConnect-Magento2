@@ -18,31 +18,77 @@
  * @copyright   Copyright (c) 2016 On Technology Pty. Ltd. (http://codisto.com/)
  * @license	 http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
- 
+
 namespace Codisto\Connect\Controller\Sync;
 
 class TestHash extends \Magento\Framework\App\Action\Action
 {
-	private $context;
+    private $context;
+    private $moduleList;
+    private $storeManager;
+    private $codistoHelper;
 
 	public function __construct(
-		\Magento\Framework\App\Action\Context $context
+		\Magento\Framework\App\Action\Context $context,
+        \Magento\Framework\Module\ModuleListInterface $moduleList,
+        \Magento\Store\Model\StoreManager $storeManager,
+        \Codisto\Connect\Helper\Data $codistoHelper
 	) {
 		parent::__construct($context);
 
-		$this->context = $context;
+        $this->context = $context;
+		$this->moduleList = $moduleList;
+        $this->storeManager = $storeManager;
+        $this->codistoHelper = $codistoHelper;
 	}
 
 	public function execute()
 	{
-		$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
-		$rawResult->setHttpResponseCode(200);
-		$rawResult->setHeader('Cache-Control', 'no-cache', true);
-		$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-		$rawResult->setHeader('Pragma', 'no-cache', true);
-		$rawResult->setHeader('X-Codisto-Version', '1.1.93', true);
-		$rawResult->setContents('OK');
+        $request = $this->getRequest();
+		$request->setDispatched(true);
+		$server = $request->getServer();
 
-		return $rawResult;
+        $storeId = $request->getQuery('storeid') == null ? 0 : (int)$request->getQuery('storeid');
+
+        $codistoModule = $this->moduleList->getOne('Codisto_Connect');
+		$codistoVersion = $codistoModule['setup_version'];
+
+        if(!$this->codistoHelper->getConfig($storeId))
+        {
+            $rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
+			$rawResult->setHttpResponseCode(400);
+			$rawResult->setHeader('Cache-Control', 'no-cache', true);
+			$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
+			$rawResult->setHeader('Pragma', 'no-cache', true);
+			$rawResult->setHeader('Content-Type', 'text/plain');
+			$rawResult->setContents('Config Error');
+			return $rawResult;
+        }
+
+        $store = $this->storeManager->getStore($storeId);
+
+        if (isset($server['HTTP_X_NONCE'], $server['HTTP_X_HASH']) &&
+            $this->codistoHelper->checkHash($store->getConfig('codisto/hostkey'), $server['HTTP_X_NONCE'], $server['HTTP_X_HASH']))
+        {
+    		$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
+    		$rawResult->setHttpResponseCode(200);
+    		$rawResult->setHeader('Cache-Control', 'no-cache', true);
+    		$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
+    		$rawResult->setHeader('Pragma', 'no-cache', true);
+    		$rawResult->setHeader('X-Codisto-Version', $codistoVersion, true);
+    		$rawResult->setContents('OK');
+            return $rawResult;
+        }
+        else
+        {
+            $rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
+            $rawResult->setHttpResponseCode(400);
+            $rawResult->setHeader('Cache-Control', 'no-cache', true);
+            $rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
+            $rawResult->setHeader('Pragma', 'no-cache', true);
+            $rawResult->setHeader('Content-Type', 'text/plain');
+            $rawResult->setContents('Security Error');
+            return $rawResult;    
+        }
 	}
 }
