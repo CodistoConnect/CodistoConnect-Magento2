@@ -2,25 +2,24 @@
 	"name" : "codisto/codisto-connect",
 	"description" : "Codisto Connect Magento 2 Extension",
 	"type" : "magento2-module",
-	"version" : "0.1.0",
+	"version" : "1.1.93",
 	"license" : [
 		"OSL-3.0"
 	],
 	"require" : {
-		"magento/framework" : "*"
+		"magento/framework" : "*",
+		"ext-pdo_sqlite": "*"
 	},
-	"extra" : {
-		"map" : [
-				[
-					"*",
-					"Codisto/Connect"
-				]
-			]
+	"autoload" : {
+		"files" : [ "registration.php" ],
+		"psr-4" : {
+			"Codisto\\Connect\\" : ""
+		}
 	},
 	"authors" : [
 		{
 			"name" : "Codisto",
-			"homepage" : "https://codisto.com/",
+			"homepage" : "https://codisto.com/connect/",
 			"role" : "developer"
 		}
 	]

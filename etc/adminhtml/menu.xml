@@ -1,12 +1,34 @@
-<?xml version="1.0"?>
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+/**
+ * Codisto eBay Sync Extension
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to license@magentocommerce.com so we can send you a copy immediately.
+ *
+ * @category    Codisto
+ * @package     codisto/codisto-connect
+ * @copyright   Copyright (c) 2016 On Technology Pty. Ltd. (http://codisto.com/)
+ * @license     http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
+
+-->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
-    <menu>
-        <add id="Codisto_Connect::ebay" title="eBay | Codisto" module="Codisto_Connect" sortOrder="100" parent="Magento_Backend::marketing" resource="Codisto_Connect::ebay" />
-        <add id="Codisto_Connect::listings" title="Listings" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::ebay" action="codisto/listings" resource="Codisto_Connect::listings"/>
-        <add id="Codisto_Connect::orders" title="Orders" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::ebay" action="codisto/orders" resource="Codisto_Connect::orders"/>
-        <add id="Codisto_Connect::categories" title="Categories" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::ebay" action="codisto/categories" resource="Codisto_Connect::categories"/>
-        <add id="Codisto_Connect::attributes" title="Attributes" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::ebay" action="codisto/attributes" resource="Codisto_Connect::attributes"/>
-        <add id="Codisto_Connect::import" title="Import Listings" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::ebay" action="codisto/import" resource="Codisto_Connect::import"/>
-        <add id="Codisto_Connect::settings" title="Settings" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::ebay" action="codisto/settings" resource="Codisto_Connect::settings"/>
-    </menu>
+	<menu>
+		<add id="Codisto_Connect::ebay" title="eBay | Codisto" module="Codisto_Connect" sortOrder="100" parent="Magento_Backend::marketing" resource="Codisto_Connect::ebay" />
+		<add id="Codisto_Connect::listings" title="Listings" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::ebay" action="codisto/listings" resource="Codisto_Connect::listings"/>
+		<add id="Codisto_Connect::orders" title="Orders" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::ebay" action="codisto/orders" resource="Codisto_Connect::orders"/>
+		<add id="Codisto_Connect::categories" title="Categories" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::ebay" action="codisto/categories" resource="Codisto_Connect::categories"/>
+		<add id="Codisto_Connect::attributes" title="Attributes" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::ebay" action="codisto/attributes" resource="Codisto_Connect::attributes"/>
+		<add id="Codisto_Connect::import" title="Import Listings" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::ebay" action="codisto/import" resource="Codisto_Connect::import"/>
+		<add id="Codisto_Connect::settings" title="Settings" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::ebay" action="codisto/settings" resource="Codisto_Connect::settings"/>
+	</menu>
 </config>

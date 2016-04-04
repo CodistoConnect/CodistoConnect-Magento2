@@ -19,9 +19,9 @@
  * @license	 http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
  
-namespace Codisto\Connect\Controller\Index;
+namespace Codisto\Connect\Controller\Sync;
 
-class Index extends \Magento\Framework\App\Action\Action
+class TestHash extends \Magento\Framework\App\Action\Action
 {
 	private $context;
 
@@ -40,7 +40,9 @@ class Index extends \Magento\Framework\App\Action\Action
 		$rawResult->setHeader('Cache-Control', 'no-cache', true);
 		$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
 		$rawResult->setHeader('Pragma', 'no-cache', true);
-		$rawResult->setContents('hi89');
+		$rawResult->setHeader('X-Codisto-Version', '1.1.93', true);
+		$rawResult->setContents('OK');
+
 		return $rawResult;
 	}
 }

@@ -1,50 +1,29 @@
 <?php
+
+/**
+ * Codisto eBay Sync Extension
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to license@magentocommerce.com so we can send you a copy immediately.
+ *
+ * @category    Codisto
+ * @package     codisto/codisto-connect
+ * @copyright   Copyright (c) 2016 On Technology Pty. Ltd. (http://codisto.com/)
+ * @license     http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ */
+
 namespace Codisto\Connect\Controller\Adminhtml\Listings;
 
-use Psr\Log\LoggerInterface as Logger;
-use Magento\Backend\App\Action\Context;
-
-class Index extends \Magento\Backend\App\Action
+class Index extends \Codisto\Connect\Controller\Adminhtml\CodistoController
 {
-	protected $resultPageFactory;
-
-	protected $logger;
-
-	public function __construct(
-		Context $context,
-		Logger $logger
-	) {
-		parent::__construct($context);
-
-		$this->logger = $logger;
-	}
-
-	public function execute()
-	{
-		$page = $this->_view->getPage();
-
-		$page->initLayout();
-
-        $page->setActiveMenu('Codisto_Connect::listings')
-            ->addBreadcrumb('Listings', 'Listings');
-
-		$page->getConfig()->getTitle()->prepend('Listings');
-
-		$page->setHttpResponseCode(200);
-		$page->setHeader('Cache-Control', 'no-cache', true);
-		$page->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-		$page->setHeader('Pragma', 'no-cache', true);
-		
-
-		$page->addContent(
-			$page->getLayout()->createBlock('Codisto\Connect\Block\Adminhtml\Listings\Index', 'codisto.listings.index')
-		);
-
-		return $page;
-	}
-
-	protected function _isAllowed()
-	{
-		return $this->_authorization->isAllowed('Codisto_Connect::listings');
-	}
+	protected $view = 'listings';
+	protected $breadCrumb = 'Listings';
+	protected $frameUrl = 'codisto/ebaytab/';
 }

@@ -1,6 +1,5 @@
-<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!--
-
 /**
  * Codisto eBay Sync Extension
  *
@@ -14,14 +13,15 @@
  * obtain it through the world-wide-web, please send an email
  * to license@magentocommerce.com so we can send you a copy immediately.
  *
- * @category    Codisto
- * @package     codisto/codisto-connect
+ * @category	Codisto
+ * @package	 codisto/codisto-connect
  * @copyright   Copyright (c) 2016 On Technology Pty. Ltd. (http://codisto.com/)
- * @license     http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ * @license	 http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
-
 -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../lib/internal/Magento/Framework/Module/etc/module.xsd">
-	<module name="Codisto_Connect" schema_version="0" active="true" setup_version="1.1.93">
-	</module>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Indexer/etc/indexer.xsd">
+	<indexer id="codistoebayindex" view_id="codistoebayindex" class="Codisto\Connect\Model\Indexer\Ebay">
+		<title translate="true">eBay Index</title>
+		<description translate="true">Index Catalog data for synchronisation with eBay</description>
+	</indexer>
 </config>

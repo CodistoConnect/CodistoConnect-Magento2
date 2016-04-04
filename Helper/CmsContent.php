@@ -18,29 +18,28 @@
  * @copyright   Copyright (c) 2016 On Technology Pty. Ltd. (http://codisto.com/)
  * @license	 http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
- 
-namespace Codisto\Connect\Controller\Index;
 
-class Index extends \Magento\Framework\App\Action\Action
+require 'app/bootstrap.php';
+
+$params = $_SERVER;
+$params[\Magento\Framework\App\Bootstrap::PARAM_REQUIRE_MAINTENANCE] = false;
+$params[\Magento\Framework\App\Bootstrap::PARAM_REQUIRE_IS_INSTALLED] = false;
+
+$bootstrap = \Magento\Framework\App\Bootstrap::create(BP, $params);
+$om = $bootstrap->getObjectManager();
+
+$om->get('Magento\Framework\App\State')->setAreaCode('backend');
+
+try
 {
-	private $context;
+	$contents = file_get_contents('php://stdin');
 
-	public function __construct(
-		\Magento\Framework\App\Action\Context $context
-	) {
-		parent::__construct($context);
+	$filterProvider = $om->create('Magento\Cms\Model\Template\FilterProvider');
+	$blockFilter = $filterProvider->getBlockFilter();
 
-		$this->context = $context;
-	}
-
-	public function execute()
-	{
-		$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
-		$rawResult->setHttpResponseCode(200);
-		$rawResult->setHeader('Cache-Control', 'no-cache', true);
-		$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-		$rawResult->setHeader('Pragma', 'no-cache', true);
-		$rawResult->setContents('hi89');
-		return $rawResult;
-	}
+	echo $blockFilter->filter($contents);
+}
+catch(Exception $e)
+{
+	echo $e->getMessage();
 }
