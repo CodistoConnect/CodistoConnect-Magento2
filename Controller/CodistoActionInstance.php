@@ -32,6 +32,8 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
 	private $backendHelper;
 	private $moduleList;
 	private $storeManager;
+	private $redirectResponseFactory;
+	private $rawResponseFactory;
 
 	public function __construct(
 		\Magento\Framework\App\Action\Context $context,
@@ -41,7 +43,8 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
 		\Magento\Framework\Json\Helper\Data $json,
 		\Magento\Backend\Helper\Data $backendHelper,
 		\Magento\Framework\Module\ModuleListInterface $moduleList,
-		\Magento\Store\Model\StoreManager $storeManager
+		\Magento\Store\Model\StoreManager $storeManager,
+		\Magento\Framework\Controller\Result\RawFactory $rawResponseFactory
 	) {
 		parent::__construct($context);
 
@@ -53,6 +56,7 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
 		$this->backendHelper = $backendHelper;
 		$this->moduleList = $moduleList;
 		$this->storeManager = $storeManager;
+		$this->rawResponseFactory = $rawResponseFactory;
 	}
 
 	public function execute()
@@ -68,6 +72,17 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
 		$path = $request->getPathInfo();
 
 		$adminPath = $this->backendHelper->getAreaFrontName();
+
+		// redirect to product page
+		if(preg_match('/^\/'.preg_quote($adminPath, '/').'\/codisto\/ebaytab(?:\/|$)/', $path) && $request->getQuery('productid'))
+		{
+			$productUrl = '/' . $adminPath . '/catalog/product/edit/id/'.$request->getQuery('productid');
+
+			$response = $this->context->getResultRedirectFactory()->create();
+			$response->setUrl( $productUrl );
+
+			return $response;
+		}
 
 		$storematch = array();
 		if(preg_match('/^\/'.preg_quote($adminPath, '/').'\/codisto\/ebaytab\/(\d+)\/\d+/', $path, $storematch))
@@ -152,7 +167,7 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
 		$remoteResponse = $client->request($request->getMethod());
 
 
-		$response = new \Magento\Framework\Controller\Result\Raw();
+		$response = $this->rawResponseFactory->create();
 
 
 		// set proxied status and headers

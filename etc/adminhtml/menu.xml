@@ -24,11 +24,13 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
 	<menu>
 		<add id="Codisto_Connect::ebay" title="eBay | Codisto" module="Codisto_Connect" sortOrder="100" parent="Magento_Backend::marketing" resource="Codisto_Connect::ebay" />
-		<add id="Codisto_Connect::listings" title="Listings" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::ebay" action="codisto/listings" resource="Codisto_Connect::listings"/>
-		<add id="Codisto_Connect::orders" title="Orders" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::ebay" action="codisto/orders" resource="Codisto_Connect::orders"/>
-		<add id="Codisto_Connect::categories" title="Categories" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::ebay" action="codisto/categories" resource="Codisto_Connect::categories"/>
-		<add id="Codisto_Connect::attributes" title="Attributes" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::ebay" action="codisto/attributes" resource="Codisto_Connect::attributes"/>
-		<add id="Codisto_Connect::import" title="Import Listings" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::ebay" action="codisto/import" resource="Codisto_Connect::import"/>
+		<add id="Codisto_Connect::listings" title="Manage Listings" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::ebay" action="codisto/listings" resource="Codisto_Connect::listings"/>
+		<add id="Codisto_Connect::orders" title="eBay Orders View" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::ebay" action="codisto/orders" resource="Codisto_Connect::orders"/>
+		<add id="Codisto_Connect::categories" title="Manage eBay Store Categories" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::ebay" action="codisto/categories" resource="Codisto_Connect::categories"/>
+		<add id="Codisto_Connect::attributes" title="Manage Custom Attributes" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::ebay" action="codisto/attributes" resource="Codisto_Connect::attributes"/>
+		<!-- add id="Codisto_Connect::profiles" title="Profiles" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::ebay" action="codisto/profiles" resource="Codisto_Connect::profiles"/ -->
+		<add id="Codisto_Connect::import" title="Link eBay Listings" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::ebay" action="codisto/import" resource="Codisto_Connect::import"/>
 		<add id="Codisto_Connect::settings" title="Settings" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::ebay" action="codisto/settings" resource="Codisto_Connect::settings"/>
+		<add id="Codisto_Connect::account" title="Account" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::ebay" action="codisto/account" resource="Codisto_Connect::account"/>
 	</menu>
 </config>

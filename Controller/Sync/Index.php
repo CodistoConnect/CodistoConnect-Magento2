@@ -23,7 +23,6 @@ namespace Codisto\Connect\Controller\Sync;
 
 class Index extends \Magento\Framework\App\Action\Action
 {
-	private $defaultSyncTimeout = 15;
 	private $defaultConfigurableCount = 6;
 	private $defaultSimpleCount = 250;
 
@@ -73,21 +72,15 @@ class Index extends \Magento\Framework\App\Action\Action
 			$stores = $this->storeManager->getStores();
 			foreach($stores as $store)
 			{
-				$storeId = $stores[1]->getId();
-				break;
+				$storeId = $store->getId();
+				if($storeId != 0)
+					break;
 			}
 		}
 
 		if(!$this->codistoHelper->getConfig($storeId))
 		{
-			$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
-			$rawResult->setHttpResponseCode(400);
-			$rawResult->setHeader('Cache-Control', 'no-cache', true);
-			$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-			$rawResult->setHeader('Pragma', 'no-cache', true);
-			$rawResult->setHeader('Content-Type', 'text/plain');
-			$rawResult->setContents('Config Error');
-			return $rawResult;
+			return $this->sendConfigError();
 		}
 
 		$this->storeManager->setCurrentStore($storeId);
@@ -105,13 +98,12 @@ class Index extends \Magento\Framework\App\Action\Action
 
 			case 'GET':
 
-				if (isset($server['HTTP_X_NONCE'], $server['HTTP_X_HASH']) &&
-					$this->codistoHelper->checkHash($store->getConfig('codisto/hostkey'), $server['HTTP_X_NONCE'], $server['HTTP_X_HASH']))
+				if($this->checkHash($store, $server))
 				{
 					if($request->getQuery('first'))
-						$syncDb = $this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::VAR_DIR) . '/codisto-ebay-sync-first-'.$storeId.'.db';
+						$syncDb = $this->codistoHelper->getSyncPath('sync-first-'.$storeId.'.db');
 					else
-						$syncDb = $this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::VAR_DIR) . '/codisto-ebay-sync-'.$storeId.'.db';
+						$syncDb = $this->codistoHelper->getSyncPath('sync-'.$storeId.'.db');
 
 					if($request->getQuery('productid') || $request->getQuery('categoryid') || $request->getQuery('orderid'))
 					{
@@ -126,7 +118,7 @@ class Index extends \Magento\Framework\App\Action\Action
 							$this->sync->SyncOrders($syncDb, $orderIds, $storeId);
 						}
 
-						$tmpDb = tempnam($this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::VAR_DIR), 'codisto-ebay-sync-');
+						$tmpDb = $this->codistoHelper->getSyncPathTemp('sync');
 
 						$db = new \PDO('sqlite:' . $tmpDb);
 						$db->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
@@ -191,128 +183,110 @@ class Index extends \Magento\Framework\App\Action\Action
 						$db->exec('DETACH DATABASE SyncDB');
 						$db->exec('VACUUM');
 
-						$this->Send($tmpDb);
+						$this->sendFile($tmpDb);
 
 						unlink($tmpDb);
 					}
 					else
 					{
-						$this->Send($syncDb);
+						$this->sendFile($syncDb);
 					}
 
 					exit(0);
 				}
 				else
 				{
-					$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
-					$rawResult->setHttpResponseCode(400);
-					$rawResult->setHeader('Cache-Control', 'no-cache', true);
-					$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-					$rawResult->setHeader('Pragma', 'no-cache', true);
-					$rawResult->setHeader('Content-Type', 'text/plain');
-					$rawResult->setContents('Security Error');
-					return $rawResult;
+					return $this->sendSecurityError();
 				}
 
 			case 'PRODUCTCOUNT':
 
-				if (isset($server['HTTP_X_NONCE'], $server['HTTP_X_HASH']) &&
-					$this->codistoHelper->checkHash($store->getConfig('codisto/hostkey'), $server['HTTP_X_NONCE'], $server['HTTP_X_HASH']))
+				if($this->checkHash($store, $server))
 				{
-					$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_JSON);
-					$rawResult->setHttpResponseCode(200);
-					$rawResult->setHeader('Cache-Control', 'no-cache', true);
-					$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-					$rawResult->setHeader('Pragma', 'no-cache', true);
-					$rawResult->setHeader('Content-Type', 'application/json');
-					$rawResult->setData($this->sync->ProductTotals($storeId));
-					return $rawResult;
+					return $this->sendJsonResponse(200, 'OK', $this->sync->ProductTotals($storeId));
 				}
 				else
 				{
-					$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
-					$rawResult->setHttpResponseCode(400);
-					$rawResult->setHeader('Cache-Control', 'no-cache', true);
-					$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-					$rawResult->setHeader('Pragma', 'no-cache', true);
-					$rawResult->setHeader('Content-Type', 'text/plain');
-					$rawResult->setContents('Security Error');
-					return $rawResult;
+					return $this->sendSecurityError();
 				}
 
 			case 'EXECUTEFIRST':
 
-				if (isset($server['HTTP_X_NONCE'], $server['HTTP_X_HASH']) &&
-					$this->codistoHelper->checkHash($store->getConfig('codisto/hostkey'), $server['HTTP_X_NONCE'], $server['HTTP_X_HASH']))
+				if($this->checkHash($store, $server))
 				{
-					$result = 'error';
-
-					$syncDb = $this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::VAR_DIR)
-								. '/codisto-ebay-sync-'.$storeId.'.db';
-
-					if(file_exists($syncDb))
-						unlink($syncDb);
-
-					$configurableCount = (int)$request->getQuery('configurablecount');
-					if(!$configurableCount || !is_numeric($configurableCount))
-						$configurableCount = $this->defaultConfigurableCount;
-
-					$simpleCount = (int)$request->getQuery('simplecount');
-					if(!$simpleCount || !is_numeric($simpleCount))
-						$simpleCount = $this->defaultSimpleCount;
-
-					$timeout = (int)$request->getQuery('timeout');
-					if(!$timeout || !is_numeric($timeout))
-						$timeout = $this->defaultSyncTimeout;
-
-					if($timeout < 5)
-						$timeout = 5;
-
-					$startTime = microtime(true);
-
-					$result = $this->sync->SyncChunk($syncDb, 0, $configurableCount, $storeId, true);
-					$result = $this->sync->SyncChunk($syncDb, $simpleCount, 0, $storeId, true);
-
-					if($result == 'complete')
+					try
 					{
-						$this->sync->SyncTax($syncDb, $storeId);
-						$this->sync->SyncStores($syncDb, $storeId);
-					}
-					else
-					{
-						throw new Exception('First page execution failed');
-					}
+						$result = 'error';
 
-					$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
-					$rawResult->setHttpResponseCode(200);
-					$rawResult->setHeader('Cache-Control', 'no-cache', true);
-					$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-					$rawResult->setHeader('Pragma', 'no-cache', true);
-					$rawResult->setHeader('Content-Type', 'text/plain');
-					$rawResult->setContents($result);
-					return $rawResult;
+						$syncDb = $this->codistoHelper->getSyncPath('sync-first-'.$storeId.'.db');
+
+						if(file_exists($syncDb))
+							unlink($syncDb);
+
+						$configurableCount = (int)$request->getQuery('configurablecount');
+						if(!$configurableCount || !is_numeric($configurableCount))
+							$configurableCount = $this->defaultConfigurableCount;
+
+						$simpleCount = (int)$request->getQuery('simplecount');
+						if(!$simpleCount || !is_numeric($simpleCount))
+							$simpleCount = $this->defaultSimpleCount;
+
+
+						if($configurableCount > 0)
+						{
+							$result = $this->sync->SyncChunk($syncDb, 0, $configurableCount, $storeId, true);
+						}
+
+						if($simpleCount > 0)
+						{
+							$result = $this->sync->SyncChunk($syncDb, $simpleCount, 0, $storeId, true);
+						}
+
+						if($result == 'complete')
+						{
+							$this->sync->SyncTax($syncDb, $storeId);
+							$this->sync->SyncStores($syncDb, $storeId);
+						}
+						else
+						{
+							throw new Exception('First page execution failed');
+						}
+
+						return $this->sendPlainResponse(200, 'OK', $result);
+					}
+					catch(Exception $e)
+					{
+						if(property_exists($e, 'errorInfo') &&
+							$e->errorInfo[0] == 'HY000' &&
+							$e->errorInfo[1] == 5 &&
+							$e->errorInfo[2] == 'database is locked')
+						{
+							return $this->sendPlainResponse($response, 200, 'OK', 'throttle');
+						}
+						else if(property_exists($e, 'errorInfo') &&
+							$e->errorInfo[0] == 'HY000' &&
+							$e->errorInfo[1] == 8 &&
+							$e->errorInfo[2] == 'attempt to write a readonly database')
+						{
+							if(file_exists($syncDb))
+								unlink($syncDb);
+						}
+
+						return $this->sendExceptionError($e);
+					}
 				}
 				else
 				{
-					$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
-					$rawResult->setHttpResponseCode(400);
-					$rawResult->setHeader('Cache-Control', 'no-cache', true);
-					$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-					$rawResult->setHeader('Pragma', 'no-cache', true);
-					$rawResult->setHeader('Content-Type', 'text/plain');
-					$rawResult->setContents('Security Error');
-					return $rawResult;
+					return $this->sendSecurityError();
 				}
 
 			case 'EXECUTECHUNK':
 
-				if (isset($server['HTTP_X_NONCE'], $server['HTTP_X_HASH']) &&
-					$this->codistoHelper->checkHash($store->getConfig('codisto/hostkey'), $server['HTTP_X_NONCE'], $server['HTTP_X_HASH']))
+				if($this->checkHash($store, $server))
 				{
 					$result = 'error';
 
-					$syncDb = $this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::VAR_DIR)
-								. '/codisto-ebay-sync-'.$storeId.'.db';
+					$syncDb = $this->codistoHelper->getSyncPath('sync-'.$storeId.'.db');
 
 					if($request->getPost('Init') == '1')
 					{
@@ -357,43 +331,27 @@ class Index extends \Magento\Framework\App\Action\Action
 						usleep(10000);
 					}
 
-					$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
-					$rawResult->setHttpResponseCode(200);
-					$rawResult->setHeader('Cache-Control', 'no-cache', true);
-					$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-					$rawResult->setHeader('Pragma', 'no-cache', true);
-					$rawResult->setHeader('Content-Type', 'text/plain');
-					$rawResult->setContents($result);
-					return $rawResult;
+					return $this->sendPlainResponse(200, 'OK', $result);
 				}
 				else
 				{
-					$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
-					$rawResult->setHttpResponseCode(400);
-					$rawResult->setHeader('Cache-Control', 'no-cache', true);
-					$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-					$rawResult->setHeader('Pragma', 'no-cache', true);
-					$rawResult->setHeader('Content-Type', 'text/plain');
-					$rawResult->setContents('Security Error');
-					return $rawResult;
+					return $this->sendExceptionError();
 				}
 
 			case 'PULL':
 
-				if (isset($server['HTTP_X_NONCE'], $server['HTTP_X_HASH']) &&
-					$this->codistoHelper->checkHash($store->getConfig('codisto/hostkey'), $server['HTTP_X_NONCE'], $server['HTTP_X_HASH']))
+				if($this->checkHash($store, $server))
 				{
 					try
 					{
-						$syncDb = $this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::VAR_DIR) .
-									'/codisto-ebay-sync-'.$storeId.'.db';
+						$syncDb = $this->codistoHelper->getSyncPath('sync-'.$storeId.'.db');
 
 						$productId = (int)$request->getPost('ProductID');
 						$productIds = array($productId);
 
 						$this->sync->UpdateProducts($syncDb, $productIds, $storeId);
 
-						$tmpDb = tempnam($this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::VAR_DIR), 'codisto-ebay-sync-');
+						$tmpDb = $this->codistoHelper->getSyncPathTemp('sync');
 
 						$db = new \PDO('sqlite:' . $tmpDb);
 						$db->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
@@ -428,49 +386,32 @@ class Index extends \Magento\Framework\App\Action\Action
 						$db->exec('DETACH DATABASE SyncDB');
 						$db->exec('VACUUM');
 
-						$this->Send($tmpDb);
+						$this->sendFile($tmpDb);
 
 						unlink($tmpDb);
 						exit(0);
 					}
 					catch(Exception $e)
 					{
-						$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
-						$rawResult->setHttpResponseCode(500);
-						$rawResult->setHeader('Cache-Control', 'no-cache', true);
-						$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-						$rawResult->setHeader('Pragma', 'no-cache', true);
-						$rawResult->setHeader('Content-Type', 'text/plain');
-						$rawResult->setContents('Exception: '.$e->getMessage().' on line: '.$e->getLine().' in file: '.$e->getFile());
-						return $rawResult;
+						return $this->sendExceptionError($e);
 					}
 				}
 				else
 				{
-					$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
-					$rawResult->setHttpResponseCode(400);
-					$rawResult->setHeader('Cache-Control', 'no-cache', true);
-					$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-					$rawResult->setHeader('Pragma', 'no-cache', true);
-					$rawResult->setHeader('Content-Type', 'text/plain');
-					$rawResult->setContents('Security Error');
-					return $rawResult;
+					return $this->sendSecurityError();
 				}
 
 			case 'TAX':
 
-				if (isset($server['HTTP_X_NONCE'], $server['HTTP_X_HASH']) &&
-					$this->codistoHelper->checkHash($store->getConfig('codisto/hostkey'), $server['HTTP_X_NONCE'], $server['HTTP_X_HASH']))
+				if($this->checkHash($store, $server))
 				{
 					try
 					{
-						$syncDb = $this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::VAR_DIR) .
-									'/codisto-ebay-sync-'.$storeId.'.db';
+						$syncDb = $this->codistoHelper->getSyncPath('sync-'.$storeId.'.db');
 
 						$this->sync->SyncTax($syncDb, $storeId);
 
-						$tmpDb = tempnam($this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::VAR_DIR),
-									'codisto-ebay-sync-');
+						$tmpDb = $this->codistoHelper->getSyncPathTemp('sync');
 
 						$db = new \PDO('sqlite:' . $tmpDb);
 						$db->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
@@ -493,48 +434,32 @@ class Index extends \Magento\Framework\App\Action\Action
 						$db->exec('COMMIT TRANSACTION');
 						$db->exec('VACUUM');
 
-						$this->Send($tmpDb);
+						$this->sendFile($tmpDb);
 
 						unlink($tmpDb);
 						exit(0);
 					}
 					catch(Exception $e)
 					{
-						$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
-						$rawResult->setHttpResponseCode(500);
-						$rawResult->setHeader('Cache-Control', 'no-cache', true);
-						$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-						$rawResult->setHeader('Pragma', 'no-cache', true);
-						$rawResult->setHeader('Content-Type', 'text/plain');
-						$rawResult->setContents('Exception: '.$e->getMessage().' on line: '.$e->getLine().' in file: '.$e->getFile());
-						return $rawResult;
+						return $this->sendExceptionError($e);
 					}
 				}
 				else
 				{
-					$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
-					$rawResult->setHttpResponseCode(400);
-					$rawResult->setHeader('Cache-Control', 'no-cache', true);
-					$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-					$rawResult->setHeader('Pragma', 'no-cache', true);
-					$rawResult->setHeader('Content-Type', 'text/plain');
-					$rawResult->setContents('Security Error');
-					return $rawResult;
+					return $this->sendSecurityError();
 				}
 
 			case 'STOREVIEW':
 
-				if (isset($server['HTTP_X_NONCE'], $server['HTTP_X_HASH']) &&
-					$this->codistoHelper->checkHash($store->getConfig('codisto/hostkey'), $server['HTTP_X_NONCE'], $server['HTTP_X_HASH']))
+				if($this->checkHash($store, $server))
 				{
 					try
 					{
-						$syncDb = $this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::VAR_DIR) .
-									'/codisto-ebay-sync-'.$storeId.'.db';
+						$syncDb = $this->codistoHelper->getSyncPath('sync-'.$storeId.'.db');
 
 						$this->sync->SyncStores($syncDb, $storeId);
 
-						$tmpDb = tempnam($this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::VAR_DIR), 'codisto-ebay-sync-');
+						$tmpDb = $this->codistoHelper->getSyncPathTemp('sync');
 
 						$db = new \PDO('sqlite:' . $tmpDb);
 						$db->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
@@ -554,44 +479,28 @@ class Index extends \Magento\Framework\App\Action\Action
 						$db->exec('COMMIT TRANSACTION');
 						$db->exec('VACUUM');
 
-						$this->Send($tmpDb);
+						$this->sendFile($tmpDb);
 
 						unlink($tmpDb);
 						exit(0);
 					}
 					catch(Exception $e)
 					{
-						$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
-						$rawResult->setHttpResponseCode(500);
-						$rawResult->setHeader('Cache-Control', 'no-cache', true);
-						$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-						$rawResult->setHeader('Pragma', 'no-cache', true);
-						$rawResult->setHeader('Content-Type', 'text/plain');
-						$rawResult->setContents('Exception: '.$e->getMessage().' on line: '.$e->getLine().' in file: '.$e->getFile());
-						return $rawResult;
+						return $this->sendExceptionError($e);
 					}
 				}
 				else
 				{
-					$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
-					$rawResult->setHttpResponseCode(400);
-					$rawResult->setHeader('Cache-Control', 'no-cache', true);
-					$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-					$rawResult->setHeader('Pragma', 'no-cache', true);
-					$rawResult->setHeader('Content-Type', 'text/plain');
-					$rawResult->setContents('Security Error');
-					return $rawResult;
+					return $this->sendSecurityError();
 				}
 
 			case 'ORDERS':
 
-				if (isset($server['HTTP_X_NONCE'], $server['HTTP_X_HASH']) &&
-					$this->codistoHelper->checkHash($store->getConfig('codisto/hostkey'), $server['HTTP_X_NONCE'], $server['HTTP_X_HASH']))
+				if($this->checkHash($store, $server))
 				{
 					try
 					{
-						$syncDb = $this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::VAR_DIR) .
-						 			'/codisto-ebay-sync-'.$storeId.'.db';
+						$syncDb = $this->codistoHelper->getSyncPath('sync-'.$storeId.'.db');
 
 						if($request->getQuery('orderid'))
 						{
@@ -602,7 +511,7 @@ class Index extends \Magento\Framework\App\Action\Action
 							$this->sync->SyncOrders($syncDb, $orders, $storeId);
 						}
 
-						$tmpDb = tempnam($this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::VAR_DIR), 'codisto-ebay-sync-');
+						$tmpDb = $this->codistoHelper->getSyncPathTemp('sync');
 
 						$db = new \PDO('sqlite:' . $tmpDb);
 						$db->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
@@ -622,39 +531,24 @@ class Index extends \Magento\Framework\App\Action\Action
 						$db->exec('COMMIT TRANSACTION');
 						$db->exec('VACUUM');
 
-						$this->Send($tmpDb);
+						$this->sendFile($tmpDb);
 
 						unlink($tmpDb);
 						exit(0);
 					}
 					catch(Exception $e)
 					{
-						$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
-						$rawResult->setHttpResponseCode(500);
-						$rawResult->setHeader('Cache-Control', 'no-cache', true);
-						$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-						$rawResult->setHeader('Pragma', 'no-cache', true);
-						$rawResult->setHeader('Content-Type', 'text/plain');
-						$rawResult->setContents('Exception: '.$e->getMessage().' on line: '.$e->getLine().' in file: '.$e->getFile());
-						return $rawResult;
+						return $this->sendExceptionError($e);
 					}
 				}
 				else
 				{
-					$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
-					$rawResult->setHttpResponseCode(400);
-					$rawResult->setHeader('Cache-Control', 'no-cache', true);
-					$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-					$rawResult->setHeader('Pragma', 'no-cache', true);
-					$rawResult->setHeader('Content-Type', 'text/plain');
-					$rawResult->setContents('Security Error');
-					return $rawResult;
+					return $this->sendSecurityError();
 				}
 
 			case 'TEMPLATE':
 
-				if (isset($server['HTTP_X_NONCE'], $server['HTTP_X_HASH']) &&
-					$this->codistoHelper->checkHash($store->getConfig('codisto/hostkey'), $server['HTTP_X_NONCE'], $server['HTTP_X_HASH']))
+				if($this->checkHash($store, $server))
 				{
 					try
 					{
@@ -662,8 +556,7 @@ class Index extends \Magento\Framework\App\Action\Action
 						{
 							$merchantid = (int)$request->getQuery('merchantid');
 
-							$templateDb = $this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::VAR_DIR) .
-											'/codisto-ebay-template-'.$merchantid.'.db';
+							$templateDb = $this->codistoHelper->getSyncPath('template-'.$merchantid.'.db');
 
 							if($request->getQuery('markreceived'))
 							{
@@ -694,33 +587,18 @@ class Index extends \Magento\Framework\App\Action\Action
 									$db->exec('COMMIT TRANSACTION');
 									$db = null;
 
-									$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_JSON);
-									$rawResult->setHttpResponseCode(200);
-									$rawResult->setHeader('Cache-Control', 'no-cache', true);
-									$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-									$rawResult->setHeader('Pragma', 'no-cache', true);
-									$rawResult->setHeader('Content-Type', 'application/json');
-									$rawResult->setData(array( 'ack' => 'ok' ));
-									return $rawResult;
+									return $this->sendJsonResponse(200, 'OK', array( 'ack' => 'ok' ));
 								}
 								catch(Exception $e)
 								{
-									$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
-									$rawResult->setHttpResponseCode(500);
-									$rawResult->setHeader('Cache-Control', 'no-cache', true);
-									$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-									$rawResult->setHeader('Pragma', 'no-cache', true);
-									$rawResult->setHeader('Content-Type', 'text/plain');
-									$rawResult->setContents('Exception: '.$e->getMessage().' on line: '.$e->getLine().' in file: '.$e->getFile());
-									return $rawResult;
+									return $this->sendExceptionError($e);
 								}
 							}
 							else
 							{
 								$this->sync->TemplateRead($templateDb);
 
-								$tmpDb = tempnam($this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::VAR_DIR),
-											'codisto-ebay-template-');
+								$tmpDb = $this->getSyncPathTemp('template');
 
 								$db = new \PDO('sqlite:' . $tmpDb);
 								$db->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
@@ -744,18 +622,11 @@ class Index extends \Magento\Framework\App\Action\Action
 
 								if($fileCount == 0)
 								{
-									$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
-									$rawResult->setHttpResponseCode(204);
-									$rawResult->setHeader('Cache-Control', 'no-cache', true);
-									$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-									$rawResult->setHeader('Pragma', 'no-cache', true);
-									$rawResult->setHeader('Content-Type', 'text/plain');
-									$rawResult->setContents('');
-									return $rawResult;
+									return $this->sendPlainResponse(204, 'No Content', '');
 								}
 								else
 								{
-									$this->Send($tmpDb);
+									$this->sendFile($tmpDb);
 								}
 
 								unlink($tmpDb);
@@ -764,8 +635,7 @@ class Index extends \Magento\Framework\App\Action\Action
 						}
 						else if($request->isPost() || $request->isPut())
 						{
-							$tmpDb = tempnam($this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::VAR_DIR),
-										'codisto-ebay-template-');
+							$tmpDb = $this->codistoHelper->getSyncPathTemp('template');
 
 							file_put_contents($tmpDb, file_get_contents('php://input'));
 
@@ -773,64 +643,107 @@ class Index extends \Magento\Framework\App\Action\Action
 
 							unlink($tmpDb);
 
-							$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_JSON);
-							$rawResult->setHttpResponseCode(200);
-							$rawResult->setHeader('Cache-Control', 'no-cache', true);
-							$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-							$rawResult->setHeader('Pragma', 'no-cache', true);
-							$rawResult->setHeader('Content-Type', 'application/json');
-							$rawResult->setData(array( 'ack' => 'ok' ));
-							return $rawResult;
+							return $this->sendJsonResponse(200, 'OK', array( 'ack' => 'ok' ));
 						}
 					}
 					catch(Exception $e)
 					{
-						$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
-						$rawResult->setHttpResponseCode(500);
-						$rawResult->setHeader('Cache-Control', 'no-cache', true);
-						$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-						$rawResult->setHeader('Pragma', 'no-cache', true);
-						$rawResult->setHeader('Content-Type', 'text/plain');
-						$rawResult->setContents('Exception: '.$e->getMessage().' on line: '.$e->getLine().' in file: '.$e->getFile());
-						return $rawResult;
+						return $this->sendExceptionError($e);
 					}
 				}
 				else
 				{
-					$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
-					$rawResult->setHttpResponseCode(400);
-					$rawResult->setHeader('Cache-Control', 'no-cache', true);
-					$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-					$rawResult->setHeader('Pragma', 'no-cache', true);
-					$rawResult->setHeader('Content-Type', 'text/plain');
-					$rawResult->setContents('Security Error');
-					return $rawResult;
+					return $this->sendSecurityError();
 				}
 
 			default:
 
-				$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
-				$rawResult->setHttpResponseCode(200);
-				$rawResult->setHeader('Cache-Control', 'no-cache', true);
-				$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-				$rawResult->setHeader('Pragma', 'no-cache', true);
-				$rawResult->setHeader('Content-Type', 'text/plain');
-				$rawResult->setContents('No Action');
-				return $rawResult;
+				return $this->sendPlainResponse(200, 'OK', 'No Action');
 
 			}
 		}
 	}
 
-	private function Send($syncDb)
+	private function checkHash($store, $server)
+	{
+		return $this->codistoHelper->checkRequestHash($store->getConfig('codisto/hostkey'), $server);
+	}
+
+	private function sendSecurityError()
+	{
+		$this->sendPlainResponse(400, 'Security Error', 'Security Error');
+	}
+
+	private function sendConfigError()
+	{
+		$this->sendPlainResponse(500, 'Config Error', 'Config Error');
+	}
+
+	private function sendExceptionError($exception)
+	{
+		$this->sendPlainResponse(500, 'Exception', 'Exception: '.$exception->getMessage().' on line: '.$exception->getLine().' in file: '.$exception->getFile().' '.$exception->getTraceAsString());
+	}
+
+	private function sendPlainResponse($status, $statustext, $body, $extraHeaders = null)
+	{
+		$response = $this->getResponse();
+		$response->clearHeaders();
+		$response->setStatusHeader($status, '1.0', $statustext);
+
+		$rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
+		$rawResult->setHttpResponseCode($status);
+		$rawResult->setHeader('Cache-Control', 'no-cache', true);
+		$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
+		$rawResult->setHeader('Pragma', 'no-cache', true);
+		$rawResult->setHeader('Content-Type', 'text/plain');
+
+		if(is_array($extraHeaders))
+		{
+			foreach($extraHeaders as $key => $value)
+			{
+				$rawResult->setHeader($key, $value);
+			}
+		}
+
+		$rawResult->setContents($body);
+		return $rawResult;
+	}
+
+	private function sendJsonResponse($status, $statustext, $body, $extraHeaders = null)
+	{
+		$response = $this->getResponse();
+		$response->clearHeaders();
+		$response->setStatusHeader($status, '1.0', $statustext);
+
+		$jsonResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_JSON);
+		$jsonResult->setHttpResponseCode($status);
+		$jsonResult->setHeader('Cache-Control', 'no-cache', true);
+		$jsonResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
+		$jsonResult->setHeader('Pragma', 'no-cache', true);
+		$jsonResult->setHeader('Content-Type', 'application/json');
+		$jsonResult->setData($body);
+		return $jsonResult;
+	}
+
+	private function sendFile($syncDb, $syncResponse = '')
 	{
 		ignore_user_abort(false);
 
+		//@codingStandardsIgnoreStart
+		if(function_exists('http_response_code'))
+			http_response_code(200);
+		//@codingStandardsIgnoreEnd
+		header('HTTP/1.0 200 OK');
+		header('Status: 200 OK');
 		header('Cache-Control: no-cache, must-revalidate'); //HTTP 1.1
 		header('Pragma: no-cache'); //HTTP 1.0
 		header('Expires: Thu, 01 Jan 1970 00:00:00 GMT'); // Date in the past
 		header('Content-Type: application/octet-stream');
 		header('Content-Disposition: attachment; filename=' . basename($syncDb));
+		if($syncResponse)
+		{
+			header('X-Codisto-SyncResponse: '.$syncResponse);
+		}
 
 		if(strtolower(ini_get('zlib.output_compression')) == 'off')
 		{

@@ -26,79 +26,124 @@ if (!function_exists('hash_equals')) {
    function hash_equals($known_string, $user_string)
    {
 
-       /**
-       * This file is part of the hash_equals library
-       *
-       * For the full copyright and license information, please view the LICENSE
-       * file that was distributed with this source code.
-       *
-       * @copyright Copyright (c) 2013-2014 Rouven Weßling <http://rouvenwessling.de>
-       * @license http://opensource.org/licenses/MIT MIT
-       */
+	   /**
+	   * This file is part of the hash_equals library
+	   *
+	   * For the full copyright and license information, please view the LICENSE
+	   * file that was distributed with this source code.
+	   *
+	   * @copyright Copyright (c) 2013-2014 Rouven Weßling <http://rouvenwessling.de>
+	   * @license http://opensource.org/licenses/MIT MIT
+	   */
 
-       // We jump trough some hoops to match the internals errors as closely as possible
-       $argc = func_num_args();
-       $params = func_get_args();
+	   // We jump trough some hoops to match the internals errors as closely as possible
+	   $argc = func_num_args();
+	   $params = func_get_args();
 
-       if ($argc < 2) {
-           trigger_error("hash_equals() expects at least 2 parameters, {$argc} given", E_USER_WARNING);
-           return null;
-       }
+	   if ($argc < 2) {
+		   trigger_error("hash_equals() expects at least 2 parameters, {$argc} given", E_USER_WARNING);
+		   return null;
+	   }
 
-       if (!is_string($known_string)) {
-           trigger_error("hash_equals(): Expected known_string to be a string, " . gettype($known_string) . " given", E_USER_WARNING);
-           return false;
-       }
-       if (!is_string($user_string)) {
-           trigger_error("hash_equals(): Expected user_string to be a string, " . gettype($user_string) . " given", E_USER_WARNING);
-           return false;
-       }
+	   if (!is_string($known_string)) {
+		   trigger_error("hash_equals(): Expected known_string to be a string, " . gettype($known_string) . " given", E_USER_WARNING);
+		   return false;
+	   }
+	   if (!is_string($user_string)) {
+		   trigger_error("hash_equals(): Expected user_string to be a string, " . gettype($user_string) . " given", E_USER_WARNING);
+		   return false;
+	   }
 
-       if (strlen($known_string) !== strlen($user_string)) {
-           return false;
-       }
-       $len = strlen($known_string);
-       $result = 0;
-       for ($i = 0; $i < $len; $i++) {
-           $result |= (ord($known_string[$i]) ^ ord($user_string[$i]));
-       }
-       // They are only identical strings if $result is exactly 0...
-       return 0 === $result;
+	   if (strlen($known_string) !== strlen($user_string)) {
+		   return false;
+	   }
+	   $len = strlen($known_string);
+	   $result = 0;
+	   for ($i = 0; $i < $len; $i++) {
+		   $result |= (ord($known_string[$i]) ^ ord($user_string[$i]));
+	   }
+	   // They are only identical strings if $result is exactly 0...
+	   return 0 === $result;
    }
 }
 
 class Data
 {
-    private $storeManager;
-    private $dirList;
-    private $syncFactory;
+	private $storeManager;
+	private $dirList;
+    private $file;
+	private $syncFactory;
 
+	private $filterProvider;
+	private $cmsProcessorStoreId;
+	private $cmsProcessor;
 
-    private $client;
-    private $phpInterpreter;
+	private $client;
+	private $phpInterpreter;
 
-    public function __construct(
-        \Magento\Store\Model\StoreManager $storeManager,
-        \Magento\Framework\Filesystem\DirectoryList $dirList,
-        \Codisto\Connect\Model\SyncFactory $syncFactory
-    ) {
-        $this->storeManager = $storeManager;
-        $this->dirList = $dirList;
-        $this->syncFactory = $syncFactory;
-    }
-
-    public function checkHash($HostKey, $Nonce, $Hash)
-	{
-		$r = $HostKey . $Nonce;
-		$base = hash('sha256', $r, true);
-		$checkHash = base64_encode($base);
-
-		return hash_equals($Hash ,$checkHash);
+	public function __construct(
+		\Magento\Store\Model\StoreManager $storeManager,
+		\Magento\Framework\Filesystem\DirectoryList $dirList,
+		\Magento\Cms\Model\Template\FilterProvider $filterProvider,
+        \Magento\Framework\Filesystem\Io\File $file,
+		\Codisto\Connect\Model\SyncFactory $syncFactory
+	) {
+		$this->storeManager = $storeManager;
+		$this->dirList = $dirList;
+		$this->filterProvider = $filterProvider;
+        $this->file = $file;
+		$this->syncFactory = $syncFactory;
 	}
 
-    public function getConfig($storeId)
+	public function checkRequestHash($key, $server)
 	{
-        $store = $this->storeManager->getStore($storeId);
+		if(!isset($server['HTTP_X_NONCE']))
+			return false;
+
+		if(!isset($server['HTTP_X_HASH']))
+			return false;
+
+		$nonce = $server['HTTP_X_NONCE'];
+		$hash = $server['HTTP_X_HASH'];
+
+		try
+		{
+			$nonceDbPath = $this->getSyncPath('nonce.db');
+
+			$nonceDb = new \PDO('sqlite:' . $nonceDbPath);
+			$nonceDb->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+			$nonceDb->exec('CREATE TABLE IF NOT EXISTS nonce (value text NOT NULL PRIMARY KEY)');
+			$qry = $nonceDb->prepare('INSERT OR IGNORE INTO nonce (value) VALUES(?)');
+			$qry->execute( array( $nonce ) );
+			if($qry->rowCount() !== 1)
+				return false;
+		}
+		catch(Exception $e)
+		{
+            if(property_exists($e, 'errorInfo') &&
+                    $e->errorInfo[0] == 'HY000' &&
+                    $e->errorInfo[1] == 8 &&
+                    $e->errorInfo[2] == 'attempt to write a readonly database')
+            {
+                if(file_exists($nonceDbPath))
+                    unlink($nonceDbPath);
+            }
+			$this->logExceptionCodisto($e, 'https://ui.codisto.com/installed');
+		}
+
+		return $this->checkHash($key, $nonce, $hash);
+	}
+
+	public function checkHash($Key, $Nonce, $Hash)
+	{
+		$Sig = base64_encode( hash('sha256', $Key . $Nonce, true) );
+
+		return hash_equals( $Hash, $Sig );
+	}
+
+	public function getConfig($storeId)
+	{
+		$store = $this->storeManager->getStore($storeId);
 
 		$merchantID = $store->getConfig('codisto/merchantid');
 		$hostKey = $store->getConfig('codisto/hostkey');
@@ -106,12 +151,12 @@ class Data
 		return isset($merchantID) && $merchantID != ""	&&	isset($hostKey) && $hostKey != "";
 	}
 
-    public function signal($merchants, $msg, $eventtype = null, $productids = null)
+	public function signal($merchants, $msg, $eventtype = null, $productids = null)
 	{
 		register_shutdown_function(array($this, 'signalOnShutdown'), $merchants, $msg, $eventtype, $productids);
 	}
 
-    public function signalOnShutdown($merchants, $msg, $eventtype, $productids)
+	public function signalOnShutdown($merchants, $msg, $eventtype, $productids)
 	{
 		try
 		{
@@ -121,7 +166,7 @@ class Data
 
 				$storeVisited = array();
 
-                $varDir = $this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::VAR_DIR);
+				$varDir = $this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::VAR_DIR);
 
 				foreach($merchants as $merchant)
 				{
@@ -133,7 +178,7 @@ class Data
 
 						if($eventtype == 'delete')
 						{
-							$sync->DeleteProduct($syncDb, $productids, $storeId);
+							$sync->DeleteProducts($syncDb, $productids, $storeId);
 						}
 						else
 						{
@@ -176,7 +221,7 @@ class Data
 		}
 	}
 
-    public function runProcessBackground($script, $args, $extensions)
+	public function runProcessBackground($script, $args, $extensions)
 	{
 		if(function_exists('proc_open'))
 		{
@@ -218,7 +263,7 @@ class Data
 
 				if(is_resource($process))
 				{
-					proc_close($process);
+					@proc_close($process);
 					return true;
 				}
 			}
@@ -227,7 +272,7 @@ class Data
 		return false;
 	}
 
-    public function runProcess($script, $args, $extensions, $stdin)
+	public function runProcess($script, $args, $extensions, $stdin)
 	{
 		if(function_exists('proc_open')
 			&& function_exists('proc_close'))
@@ -254,12 +299,16 @@ class Data
 				}
 
 				$cmdline = '';
-				if(is_array($cmdline))
+				if(is_array($args))
 				{
 					foreach($args as $arg)
 					{
 						$cmdline .= '\''.$arg.'\' ';
 					}
+				}
+				else if(isset($args) && $args != null)
+				{
+					$cmdline .= $args;
 				}
 
 				$descriptors = array(
@@ -275,24 +324,43 @@ class Data
 							$descriptors, $pipes, $this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::ROOT), array( 'CURL_CA_BUNDLE' => $curl_cainfo ));
 				if(is_resource($process))
 				{
+                    stream_set_blocking( $pipes[0], 0 );
+                    stream_set_blocking( $pipes[1], 0 );
+
+                    stream_set_timeout( $pipes[0], 5 );
+                    stream_set_timeout( $pipes[1], 30 );
+
 					if(is_string($stdin))
 					{
 						for($written = 0; $written < strlen($stdin); )
 						{
 							$writecount = fwrite($pipes[0], substr($stdin, $written));
 							if($writecount === false)
-								break;
+                            {
+                                @fclose( $pipes[0] );
+                                @fclose( $pipes[1] );
+                                @proc_terminate( $process, 9 );
+                                @proc_close( $process );
+								return null;
+                            }
 
 							$written += $writecount;
 						}
 
-						fclose($pipes[0]);
+						@fclose($pipes[0]);
 					}
 
 					$result = stream_get_contents($pipes[1]);
-					fclose($pipes[1]);
+                    if($result === false)
+                    {
+                        @fclose( $pipes[1] );
+                        @proc_terminate( $process, 9 );
+                        @proc_close( $process );
+                        return null;
+                    }
 
-					proc_close($process);
+					@fclose($pipes[1]);
+					@proc_close($process);
 					return $result;
 				}
 			}
@@ -308,16 +376,46 @@ class Data
 			array('pipe', 'w')
 		), $pipes);
 
-		@fwrite($pipes[0], $script);
-		fclose($pipes[0]);
+        stream_set_blocking( $pipes[0], 0 );
+        stream_set_blocking( $pipes[1], 0 );
+
+        stream_set_timeout( $pipes[0], 5 );
+        stream_set_timeout( $pipes[1], 10 );
+
+        $write_total = strlen( $script );
+        $written = 0;
+
+        while($write_total > 0)
+        {
+            $write_count = @fwrite($pipes[0], substr( $script, $written ) );
+            if($write_count === false)
+            {
+                @fclose( $pipes[0] );
+                @fclose( $pipes[1] );
+                @proc_terminate( $process, 9 );
+                @proc_close( $process );
+
+                return '';
+            }
+
+            $write_total -= $write_count;
+            $written += $write_count;
+        }
+
+        @fclose( $pipes[0] );
 
 		$result = @stream_get_contents($pipes[1]);
-		if(!$result)
-			$result = '';
+        if($result === false)
+        {
+            @fclose( $pipes[1] );
+            @proc_terminate( $process, 9 );
+            @proc_close( $process );
 
-		fclose($pipes[1]);
+            return '';
+        }
 
-		proc_close($process);
+		@fclose($pipes[1]);
+		@proc_close($process);
 
 		return $result;
 	}
@@ -483,4 +581,60 @@ class Data
 
 		return null;
 	}
+
+	public function prepareSqliteDatabase($db, $timeout = 60, $pagesize = 65536)
+	{
+		$db->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+		$db->setAttribute(\PDO::ATTR_TIMEOUT, $timeout);
+		$db->exec('PRAGMA synchronous=OFF');
+		$db->exec('PRAGMA temp_store=MEMORY');
+		$db->exec('PRAGMA page_size='.$pagesize);
+		$db->exec('PRAGMA encoding=\'UTF-8\'');
+		$db->exec('PRAGMA cache_size=15000');
+		$db->exec('PRAGMA soft_heap_limit=67108864');
+		$db->exec('PRAGMA journal_mode=MEMORY');
+	}
+
+	public function processCmsContent($content, $storeId)
+	{
+		if(strpos($content, '{{') === false)
+			return trim($content);
+
+		$result = $this->runProcess(realpath(dirname(__FILE__)).'/CmsContent.php', '-storeid '.$storeId, array('pdo', 'curl', 'simplexml'), $content);
+		if($result != null)
+			return $result;
+
+		if($this->cmsProcessorStoreId != $storeId)
+		{
+			$this->cmsProcessor = $this->filterProvider->getBlockFilter()->setStoreId($storeId);
+			$this->cmsProcessorStoreId = $storeId;
+		}
+
+		return $this->cmsProcessor->filter(trim($content));
+	}
+
+    public function getSyncPath($path)
+	{
+		$base_path = $this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::VAR_DIR) . '/codisto/';
+
+		try {
+
+			$this->file->checkAndCreateFolder( $base_path, 0777 );
+
+		} catch (Exception $e) {
+
+			return preg_replace( '/\/+/', '/', Mage::getBaseDir('var') . '/' . $path );
+
+		}
+
+		return preg_replace( '/\/+/', '/', $base_path . $path );
+	}
+
+	public function getSyncPathTemp($path)
+	{
+		$base_path = $this->getSyncPath('');
+
+		return tempnam( $base_path , $path . '-' );
+	}
+
 }

@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?php
 
 /**
  * Codisto eBay Sync Extension
@@ -20,8 +19,11 @@
  * @license     http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
  */
 
--->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../lib/internal/Magento/Framework/Module/etc/module.xsd">
-	<module name="Codisto_Connect" schema_version="0" active="true" setup_version="1.90.11">
-	</module>
-</config>
+namespace Codisto\Connect\Controller\Adminhtml\Account;
+
+class Index extends \Codisto\Connect\Controller\Adminhtml\CodistoController
+{
+	protected $view = 'account';
+	protected $breadCrumb = 'Account';
+	protected $frameUrl = 'codisto/ebaytab/account';
+}
