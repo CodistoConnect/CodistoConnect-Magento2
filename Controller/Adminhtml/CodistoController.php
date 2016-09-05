@@ -27,6 +27,7 @@ use \Magento\Store\Model\ScopeInterface;
 class CodistoController extends \Magento\Backend\App\Action
 {
 	private $context;
+	private $productMetaData;
 	private $scopeConfig;
 	private $reinitConfig;
 	private $assetRepository;
@@ -42,6 +43,7 @@ class CodistoController extends \Magento\Backend\App\Action
 
 	public function __construct(
 		\Magento\Backend\App\Action\Context $context,
+		\Magento\Framework\App\ProductMetadata $productMetaData,
 		\Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
 		\Magento\Framework\App\Config\ReinitableConfigInterface $reinitConfig,
 		\Magento\Framework\View\Asset\Repository $assetRepository,
@@ -56,6 +58,7 @@ class CodistoController extends \Magento\Backend\App\Action
 		parent::__construct($context);
 
 		$this->context = $context;
+		$this->productMetaData = $productMetaData;
 		$this->scopeConfig = $scopeConfig;
 		$this->reinitConfig = $reinitConfig;
 		$this->assetRepository = $assetRepository;
@@ -112,7 +115,7 @@ class CodistoController extends \Magento\Backend\App\Action
 				$client->setHeaders('Content-Type', 'application/json' );
 				$client->setRawData($this->json->jsonEncode(
 					[ 	'type' => 'magento',
-				 		'version' => \Magento\Framework\AppInterface::VERSION,
+				 		'version' => $this->productMetaData->getVersion(),
 						'url' => $store->getBaseUrl(),
 						'email' => $request->getPost('email'),
 						'storename' => $storeName,

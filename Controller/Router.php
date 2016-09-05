@@ -21,17 +21,14 @@
 
 namespace Codisto\Connect\Controller;
 
-use \Magento\Framework\App\RouterInterface;
-use \Magento\Backend\Helper\Data;
-
-class Router implements RouterInterface
+class Router implements \Magento\Framework\App\RouterInterface
 {
 	private $actionFactory;
 	private $backendHelper;
 
 	public function __construct(
-						Data $backendHelper,
-						CodistoActionInstanceFactory $actionFactory
+						\Magento\Backend\Helper\Data $backendHelper,
+						\Codisto\Connect\Controller\CodistoActionInstanceFactory $actionFactory
 						)
 	{
 		$this->backendHelper = $backendHelper;
@@ -45,7 +42,7 @@ class Router implements RouterInterface
 		$path = $request->getPathInfo();
 
 		if(preg_match('/^\/'.preg_quote($adminUrl, '/').'\/codisto\/'.
-			'(?!listings\/index\/|orders\/index\/|categories\/index\/|attributes\/index|profiles\/index|import\/index|settings\/index)/',
+			'(?!listings\/index\/|orders\/index\/|categories\/index\/|attributes\/index|profiles\/index|import\/index|settings\/index|account\/index)/',
 			$path))
 		{
 			return $this->actionFactory->create();

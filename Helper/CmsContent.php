@@ -37,6 +37,10 @@ try
 	$filterProvider = $om->create('Magento\Cms\Model\Template\FilterProvider');
 	$blockFilter = $filterProvider->getBlockFilter();
 
+	// TODO: write out argv and find storeid
+
+	$blockFilter->setStoreId(0);
+
 	echo $blockFilter->filter($contents);
 }
 catch(Exception $e)
