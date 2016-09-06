@@ -231,7 +231,7 @@ class Sync
 			}
 			$db->exec('COMMIT TRANSACTION');
 		}
-		catch(Exception $e)
+		catch(\Exception $e)
 		{
 			return $e->getMessage();
 		}
@@ -275,7 +275,7 @@ class Sync
 				}
 			}
 		}
-		catch(Exception $e)
+		catch(\Exception $e)
 		{
 			return $e->getMessage();
 		}
@@ -297,9 +297,11 @@ class Sync
 							->addAttributeToSelect(array('name', 'image', 'is_active', 'updated_at', 'parent_id', 'position'), 'left')
 							->addAttributeToFilter('entity_id', array('eq' => $id));
 
+		$iterator = $this->iteratorFactory->create();
+
 		$db->exec('BEGIN EXCLUSIVE TRANSACTION');
 
-		Mage::getSingleton('core/resource_iterator')->walk($category->getSelect(), array(array($this, 'SyncCategoryData')), array( 'db' => $db, 'preparedStatement' => $insertCategory, 'store' => $store ));
+		$iterator->walk($category->getSelect(), array(array($this, 'SyncCategoryData')), array( 'db' => $db, 'preparedStatement' => $insertCategory, 'store' => $store ));
 
 		$db->exec('COMMIT TRANSACTION');
 	}
@@ -394,7 +396,7 @@ class Sync
 		{
 			$db->exec('DELETE FROM ProductDelete WHERE ExternalReference IN (SELECT entity_id FROM TmpChanged)');
 		}
-		catch(Exception $e)
+		catch(\Exception $e)
 		{
 
 		}
@@ -1087,7 +1089,7 @@ class Sync
 								$this->optionCache[$store->getId().'-'.$attribute->getId()] = $attributeData['source'];
 							}
 						}
-						catch(Exception $e)
+						catch(\Exception $e)
 						{
 
 						}
@@ -1200,7 +1202,7 @@ class Sync
 
 										$attributeValueSet[] = $attributeText;
 									}
-									catch(Exception $e)
+									catch(\Exception $e)
 									{
 
 									}
@@ -1229,7 +1231,7 @@ class Sync
 
 									$attributeValue = $attributeText;
 								}
-								catch(Exception $e)
+								catch(\Exception $e)
 								{
 									$attributeValue = null;
 								}
@@ -1709,7 +1711,7 @@ class Sync
 							'varchar(10)'
 						);
 				}
-				catch(Exception $e)
+				catch(\Exception $e)
 				{
 				}
 			}
@@ -2152,7 +2154,7 @@ class Sync
 		{
 			$db->exec('SELECT 1 FROM [Order] WHERE Carrier IS NULL LIMIT 1');
 		}
-		catch(Exception $e)
+		catch(\Exception $e)
 		{
 			$db->exec('CREATE TABLE NewOrder (ID integer NOT NULL PRIMARY KEY, Status text NOT NULL, PaymentDate datetime NULL, ShipmentDate datetime NULL, Carrier text NOT NULL, TrackingNumber text NOT NULL)');
 			$db->exec('INSERT INTO NewOrder SELECT ID, Status, PaymentDate, ShipmentDate, \'Unknown\', TrackingNumber FROM [Order]');
@@ -2203,7 +2205,7 @@ class Sync
 				}
 			}
 		}
-		catch(Exception $e)
+		catch(\Exception $e)
 		{
 
 		}

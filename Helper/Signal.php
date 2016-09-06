@@ -53,7 +53,7 @@ foreach($merchants as $merchant)
 			$client->setRawData($msg)->request('POST');
 			break;
 		}
-		catch(Exception $e)
+		catch(\Exception $e)
 		{
 			if($Retry >= 3)
 			{

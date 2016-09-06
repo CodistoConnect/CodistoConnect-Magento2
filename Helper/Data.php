@@ -118,7 +118,7 @@ class Data
 			if($qry->rowCount() !== 1)
 				return false;
 		}
-		catch(Exception $e)
+		catch(\Exception $e)
 		{
             if(property_exists($e, 'errorInfo') &&
                     $e->errorInfo[0] == 'HY000' &&
@@ -237,13 +237,13 @@ class Data
 				{
 					$curl_cainfo = $_SERVER['SSL_CERT_FILE'];
 				}
-				if(!$curl_cainfo && isset($_SERVER['CURL_CA_BUNDLE']))
+				if(!$curl_cainfo && getenv('CURL_CA_BUNDLE'))
 				{
-					$curl_cainfo = $_ENV['CURL_CA_BUNDLE'];
+					$curl_cainfo = getenv('CURL_CA_BUNDLE');
 				}
-				if(!$curl_cainfo && isset($_ENV['SSL_CERT_FILE']))
+				if(!$curl_cainfo && getenv('SSL_CERT_FILE'))
 				{
-					$curl_cainfo = $_ENV['SSL_CERT_FILE'];
+					$curl_cainfo = getenv('SSL_CERT_FILE');
 				}
 
 				$cmdline = '';
@@ -289,13 +289,14 @@ class Data
 				{
 					$curl_cainfo = $_SERVER['SSL_CERT_FILE'];
 				}
-				if(!$curl_cainfo && isset($_ENV['CURL_CA_BUNDLE']))
+
+				if(!$curl_cainfo && getenv('CURL_CA_BUNDLE'))
 				{
-					$curl_cainfo = $_ENV['CURL_CA_BUNDLE'];
+					$curl_cainfo = getenv('CURL_CA_BUNDLE');
 				}
-				if(!$curl_cainfo && isset($_ENV['SSL_CERT_FILE']))
+				if(!$curl_cainfo && getenv('SSL_CERT_FILE'))
 				{
-					$curl_cainfo = $_ENV['SSL_CERT_FILE'];
+					$curl_cainfo = getenv('SSL_CERT_FILE');
 				}
 
 				$cmdline = '';
@@ -621,7 +622,7 @@ class Data
 
 			$this->file->checkAndCreateFolder( $base_path, 0777 );
 
-		} catch (Exception $e) {
+		} catch (\Exception $e) {
 
 			return preg_replace( '/\/+/', '/', Mage::getBaseDir('var') . '/' . $path );
 
