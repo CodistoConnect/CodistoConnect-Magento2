@@ -174,7 +174,7 @@ class Index extends \Magento\Framework\App\Action\Action
 								'varchar(10)'
 							);
 					}
-					catch(Exception $e)
+					catch(\Exception $e)
 					{
 
 					}
@@ -207,7 +207,7 @@ class Index extends \Magento\Framework\App\Action\Action
 
 							$this->ProcessQuote($quote, $xml, $store, $request);
 						}
-						catch(Exception $e)
+						catch(\Exception $e)
 						{
 							$response->clearHeaders();
 							$jsonResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_JSON);
@@ -240,7 +240,7 @@ class Index extends \Magento\Framework\App\Action\Action
 							$connection->commit();
 							break;
 						}
-						catch(Exception $e)
+						catch(\Exception $e)
 						{
 							if($Retry < 5)
 							{
@@ -397,7 +397,7 @@ class Index extends \Magento\Framework\App\Action\Action
 				if(!$product)
 				{
 					if($request->getQuery('checkproduct')) {
-						throw new Exception("external reference not found");
+						throw new \Exception("external reference not found");
 					}
 					$product = $this->productFactory->create();
 					$adjustStock = false;
@@ -585,7 +585,7 @@ class Index extends \Magento\Framework\App\Action\Action
 				$this->orderRepository->save($order);
 			}
 		}
-		catch(Exception $e)
+		catch(\Exception $e)
 		{
 			$order->addStatusToHistory(\Magento\Sales\Model\Order::STATE_PROCESSING, "Exception Occurred Placing Order : ".$e->getMessage());
 		}
@@ -903,7 +903,7 @@ class Index extends \Magento\Framework\App\Action\Action
 				if(!$product)
 				{
 					if($request->getQuery('checkproduct')) {
-						throw new Exception('externalreference not found');
+						throw new \Exception('externalreference not found');
 					}
 					$product = $this->productFactory->create();
 					$adjustStock = false;
@@ -1449,7 +1449,7 @@ class Index extends \Magento\Framework\App\Action\Action
 					$connection->commit();
 					break;
 				}
-				catch(Exception $e)
+				catch(\Exception $e)
 				{
 					if($Retry < 5)
 					{
@@ -1548,7 +1548,7 @@ class Index extends \Magento\Framework\App\Action\Action
 				if(!$product)
 				{
 					if($request->getQuery('checkproduct')) {
-						throw new Exception('externalreference not found');
+						throw new \Exception('externalreference not found');
 					}
 					$product = $this->productFactory->create();
 				}
@@ -1755,7 +1755,7 @@ class Index extends \Magento\Framework\App\Action\Action
 				}
 			}
 		}
-		catch(Exception $e)
+		catch(\Exception $e)
 		{
 
 		}

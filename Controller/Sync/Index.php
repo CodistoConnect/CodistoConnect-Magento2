@@ -30,6 +30,7 @@ class Index extends \Magento\Framework\App\Action\Action
 	private $dirList;
 	private $storeManager;
 	private $json;
+	private $fileFactory;
 	private $codistoHelper;
 	private $sync;
 
@@ -38,6 +39,7 @@ class Index extends \Magento\Framework\App\Action\Action
 		\Magento\Framework\Filesystem\DirectoryList $dirList,
 		\Magento\Store\Model\StoreManager $storeManager,
 		\Magento\Framework\Json\Helper\Data $json,
+		\Magento\Framework\App\Response\Http\FileFactory $fileFactory,
 		\Codisto\Connect\Helper\Data $codistoHelper,
 		\Codisto\Connect\Model\Sync $sync
 	) {
@@ -47,6 +49,7 @@ class Index extends \Magento\Framework\App\Action\Action
 		$this->dirList = $dirList;
 		$this->storeManager = $storeManager;
 		$this->json = $json;
+		$this->fileFactory = $fileFactory;
 		$this->codistoHelper = $codistoHelper;
 		$this->sync = $sync;
 	}
@@ -183,16 +186,12 @@ class Index extends \Magento\Framework\App\Action\Action
 						$db->exec('DETACH DATABASE SyncDB');
 						$db->exec('VACUUM');
 
-						$this->sendFile($tmpDb);
-
-						unlink($tmpDb);
+						return $this->sendFile($tmpDb, [ 'remove' => true ]);
 					}
 					else
 					{
-						$this->sendFile($syncDb);
+						return $this->sendFile($syncDb);
 					}
-
-					exit(0);
 				}
 				else
 				{
@@ -249,12 +248,12 @@ class Index extends \Magento\Framework\App\Action\Action
 						}
 						else
 						{
-							throw new Exception('First page execution failed');
+							throw new \Exception('First page execution failed');
 						}
 
 						return $this->sendPlainResponse(200, 'OK', $result);
 					}
-					catch(Exception $e)
+					catch(\Exception $e)
 					{
 						if(property_exists($e, 'errorInfo') &&
 							$e->errorInfo[0] == 'HY000' &&
@@ -386,12 +385,9 @@ class Index extends \Magento\Framework\App\Action\Action
 						$db->exec('DETACH DATABASE SyncDB');
 						$db->exec('VACUUM');
 
-						$this->sendFile($tmpDb);
-
-						unlink($tmpDb);
-						exit(0);
+						return $this->sendFile($tmpDb, [ 'remove' => true ]);
 					}
-					catch(Exception $e)
+					catch(\Exception $e)
 					{
 						return $this->sendExceptionError($e);
 					}
@@ -434,12 +430,9 @@ class Index extends \Magento\Framework\App\Action\Action
 						$db->exec('COMMIT TRANSACTION');
 						$db->exec('VACUUM');
 
-						$this->sendFile($tmpDb);
-
-						unlink($tmpDb);
-						exit(0);
+						return $this->sendFile($tmpDb, [ 'remove' => true ]);
 					}
-					catch(Exception $e)
+					catch(\Exception $e)
 					{
 						return $this->sendExceptionError($e);
 					}
@@ -479,12 +472,9 @@ class Index extends \Magento\Framework\App\Action\Action
 						$db->exec('COMMIT TRANSACTION');
 						$db->exec('VACUUM');
 
-						$this->sendFile($tmpDb);
-
-						unlink($tmpDb);
-						exit(0);
+						return $this->sendFile($tmpDb, [ 'remove' => true ]);
 					}
-					catch(Exception $e)
+					catch(\Exception $e)
 					{
 						return $this->sendExceptionError($e);
 					}
@@ -531,12 +521,9 @@ class Index extends \Magento\Framework\App\Action\Action
 						$db->exec('COMMIT TRANSACTION');
 						$db->exec('VACUUM');
 
-						$this->sendFile($tmpDb);
-
-						unlink($tmpDb);
-						exit(0);
+						return $this->sendFile($tmpDb, [ 'remove' => true ]);
 					}
-					catch(Exception $e)
+					catch(\Exception $e)
 					{
 						return $this->sendExceptionError($e);
 					}
@@ -589,7 +576,7 @@ class Index extends \Magento\Framework\App\Action\Action
 
 									return $this->sendJsonResponse(200, 'OK', array( 'ack' => 'ok' ));
 								}
-								catch(Exception $e)
+								catch(\Exception $e)
 								{
 									return $this->sendExceptionError($e);
 								}
@@ -626,11 +613,8 @@ class Index extends \Magento\Framework\App\Action\Action
 								}
 								else
 								{
-									$this->sendFile($tmpDb);
+									return $this->sendFile($tmpDb, [ 'remove' => true ]);
 								}
-
-								unlink($tmpDb);
-								exit(0);
 							}
 						}
 						else if($request->isPost() || $request->isPut())
@@ -646,7 +630,7 @@ class Index extends \Magento\Framework\App\Action\Action
 							return $this->sendJsonResponse(200, 'OK', array( 'ack' => 'ok' ));
 						}
 					}
-					catch(Exception $e)
+					catch(\Exception $e)
 					{
 						return $this->sendExceptionError($e);
 					}
@@ -725,39 +709,24 @@ class Index extends \Magento\Framework\App\Action\Action
 		return $jsonResult;
 	}
 
-	private function sendFile($syncDb, $syncResponse = '')
+	private function sendFile($syncDb, $sendOptions = [])
 	{
-		ignore_user_abort(false);
+		$response = $this->getResponse();
+		$response->clearHeaders();
+		$response->setStatusHeader(200, '1.0', 'OK');
+		$response->setHeader('Content-Type', 'application/octet-stream');
+		$response->setHeader('Pragma', 'no-cache');
+		$response->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT');
 
-		//@codingStandardsIgnoreStart
-		if(function_exists('http_response_code'))
-			http_response_code(200);
-		//@codingStandardsIgnoreEnd
-		header('HTTP/1.0 200 OK');
-		header('Status: 200 OK');
-		header('Cache-Control: no-cache, must-revalidate'); //HTTP 1.1
-		header('Pragma: no-cache'); //HTTP 1.0
-		header('Expires: Thu, 01 Jan 1970 00:00:00 GMT'); // Date in the past
-		header('Content-Type: application/octet-stream');
-		header('Content-Disposition: attachment; filename=' . basename($syncDb));
-		if($syncResponse)
-		{
-			header('X-Codisto-SyncResponse: '.$syncResponse);
-		}
+		if(isset($sendOptions['syncresponse']))
+			$response->setHeader('X-Codisto-SyncResponse', $sendOptions['syncresponse']);
 
-		if(strtolower(ini_get('zlib.output_compression')) == 'off')
-		{
-			header('Content-Length: ' . filesize($syncDb));
-		}
+		$filename = basename($syncDb);
 
-		while(ob_get_level() > 0)
-		{
-			if(!@ob_end_clean())
-				break;
-		}
+		$fileOptions = [ 'type' => 'filename', 'value' => '/codisto/'.$filename ];
+		if(isset($sendOptions['remove']) && $sendOptions['remove'])
+			$fileOption['rm'] = true;
 
-		flush();
-
-		readfile($syncDb);
+		return $this->fileFactory->create($filename, $fileOptions, \Magento\Framework\App\Filesystem\DirectoryList::VAR_DIR);
 	}
 }
