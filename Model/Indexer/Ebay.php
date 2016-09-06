@@ -13,8 +13,6 @@ class Ebay implements \Magento\Framework\Indexer\ActionInterface, \Magento\Frame
 		\Magento\Framework\Json\Helper\Data $json,
 		\Codisto\Connect\Helper\Data $codistoHelper
 	){
-		syslog(LOG_INFO, 'INDEXER LAUNCHED');
-
 		$this->storeManager = $storeManager;
 		$this->json = $json;
 		$this->codistoHelper = $codistoHelper;
@@ -22,14 +20,14 @@ class Ebay implements \Magento\Framework\Indexer\ActionInterface, \Magento\Frame
 
 	public function execute($ids)
 	{
-syslog(LOG_INFO, 'execute mview '.print_r($ids, true));
+
 	}
 
 	public function executeFull()
 	{
 		$merchants = array();
 		$visited = array();
-syslog(LOG_INFO, 'executeFull');
+
 		$stores = $this->storeManager->getStores(true);
 
 		foreach($stores as $store)
@@ -52,17 +50,17 @@ syslog(LOG_INFO, 'executeFull');
 		}
 
 		unset($visited);
-syslog(LOG_INFO, print_r($merchants, true));
+
 		$this->codistoHelper->signal($merchants, 'action=sync');
 	}
 
 	public function executeList(array $ids)
 	{
-syslog(LOG_INFO, 'execute list '.print_r($ids, true));
+
 	}
 
 	public function executeRow($id)
 	{
-syslog(LOG_INFO, 'execute row '.print_r($ids, true));
+
 	}
 }
