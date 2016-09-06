@@ -71,7 +71,7 @@ class Data
 {
 	private $storeManager;
 	private $dirList;
-    private $file;
+	private $file;
 	private $syncFactory;
 
 	private $filterProvider;
@@ -85,13 +85,13 @@ class Data
 		\Magento\Store\Model\StoreManager $storeManager,
 		\Magento\Framework\Filesystem\DirectoryList $dirList,
 		\Magento\Cms\Model\Template\FilterProvider $filterProvider,
-        \Magento\Framework\Filesystem\Io\File $file,
+		\Magento\Framework\Filesystem\Io\File $file,
 		\Codisto\Connect\Model\SyncFactory $syncFactory
 	) {
 		$this->storeManager = $storeManager;
 		$this->dirList = $dirList;
 		$this->filterProvider = $filterProvider;
-        $this->file = $file;
+		$this->file = $file;
 		$this->syncFactory = $syncFactory;
 	}
 
@@ -120,14 +120,14 @@ class Data
 		}
 		catch(\Exception $e)
 		{
-            if(property_exists($e, 'errorInfo') &&
-                    $e->errorInfo[0] == 'HY000' &&
-                    $e->errorInfo[1] == 8 &&
-                    $e->errorInfo[2] == 'attempt to write a readonly database')
-            {
-                if(file_exists($nonceDbPath))
-                    unlink($nonceDbPath);
-            }
+			if(property_exists($e, 'errorInfo') &&
+					$e->errorInfo[0] == 'HY000' &&
+					$e->errorInfo[1] == 8 &&
+					$e->errorInfo[2] == 'attempt to write a readonly database')
+			{
+				if(file_exists($nonceDbPath))
+					unlink($nonceDbPath);
+			}
 			$this->logExceptionCodisto($e, 'https://ui.codisto.com/installed');
 		}
 
@@ -166,15 +166,13 @@ class Data
 
 				$storeVisited = array();
 
-				$varDir = $this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::VAR_DIR);
-
 				foreach($merchants as $merchant)
 				{
 					$storeId = $merchant['storeid'];
 
 					if(!isset($storeVisited[$storeId]))
 					{
-						$syncDb = $varDir . '/codisto-ebay-sync-'.$storeId.'.db';
+						$syncDb = $this->getSyncPath('sync-'.$storeId.'.db');
 
 						if($eventtype == 'delete')
 						{
@@ -190,7 +188,7 @@ class Data
 				}
 			}
 
-			$backgroundSignal = $this->runProcessBackground('app/code/Codisto/Connect/Helper/Signal.php', array(serialize($merchants), $msg), array('pdo', 'curl', 'simplexml'));
+			$backgroundSignal = $this->runProcessBackground(realpath(dirname(__FILE__)).'/Signal.php', array(serialize($merchants), $msg), array('pdo', 'curl', 'simplexml'));
 			if($backgroundSignal)
 				return;
 
@@ -209,13 +207,13 @@ class Data
 					$this->client->setHeaders('X-HostKey', $merchant['hostkey']);
 					$this->client->setRawData($msg)->request('POST');
 				}
-				catch(Exception $e)
+				catch(\Exception $e)
 				{
 
 				}
 			}
 		}
-		catch(Exception $e)
+		catch(\Exception $e)
 		{
 
 		}
@@ -226,6 +224,7 @@ class Data
 		if(function_exists('proc_open'))
 		{
 			$interpreter = $this->phpPath($extensions);
+
 			if($interpreter)
 			{
 				$curl_cainfo = ini_get('curl.cainfo');
@@ -325,11 +324,11 @@ class Data
 							$descriptors, $pipes, $this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::ROOT), array( 'CURL_CA_BUNDLE' => $curl_cainfo ));
 				if(is_resource($process))
 				{
-                    stream_set_blocking( $pipes[0], 0 );
-                    stream_set_blocking( $pipes[1], 0 );
+					stream_set_blocking( $pipes[0], 0 );
+					stream_set_blocking( $pipes[1], 0 );
 
-                    stream_set_timeout( $pipes[0], 5 );
-                    stream_set_timeout( $pipes[1], 30 );
+					stream_set_timeout( $pipes[0], 5 );
+					stream_set_timeout( $pipes[1], 30 );
 
 					if(is_string($stdin))
 					{
@@ -337,13 +336,13 @@ class Data
 						{
 							$writecount = fwrite($pipes[0], substr($stdin, $written));
 							if($writecount === false)
-                            {
-                                @fclose( $pipes[0] );
-                                @fclose( $pipes[1] );
-                                @proc_terminate( $process, 9 );
-                                @proc_close( $process );
+							{
+								@fclose( $pipes[0] );
+								@fclose( $pipes[1] );
+								@proc_terminate( $process, 9 );
+								@proc_close( $process );
 								return null;
-                            }
+							}
 
 							$written += $writecount;
 						}
@@ -351,14 +350,19 @@ class Data
 						@fclose($pipes[0]);
 					}
 
-					$result = stream_get_contents($pipes[1]);
-                    if($result === false)
-                    {
-                        @fclose( $pipes[1] );
-                        @proc_terminate( $process, 9 );
-                        @proc_close( $process );
-                        return null;
-                    }
+					$result = '';
+					while(!feof($pipes[1]))
+					{
+						$result .= @fread($pipes[1], 8192);
+						if($result === false)
+						{
+							@fclose( $pipes[1] );
+							@proc_terminate( $process, 9 );
+							@proc_close( $process );
+
+							return '';
+						}
+					}
 
 					@fclose($pipes[1]);
 					@proc_close($process);
@@ -377,43 +381,47 @@ class Data
 			array('pipe', 'w')
 		), $pipes);
 
-        stream_set_blocking( $pipes[0], 0 );
-        stream_set_blocking( $pipes[1], 0 );
+		stream_set_blocking( $pipes[0], 0 );
+		stream_set_blocking( $pipes[1], 1 );
 
-        stream_set_timeout( $pipes[0], 5 );
-        stream_set_timeout( $pipes[1], 10 );
+		stream_set_timeout( $pipes[0], 5 );
+		stream_set_timeout( $pipes[1], 10 );
 
-        $write_total = strlen( $script );
-        $written = 0;
+		$write_total = strlen( $script );
+		$written = 0;
 
-        while($write_total > 0)
-        {
-            $write_count = @fwrite($pipes[0], substr( $script, $written ) );
-            if($write_count === false)
-            {
-                @fclose( $pipes[0] );
-                @fclose( $pipes[1] );
-                @proc_terminate( $process, 9 );
-                @proc_close( $process );
+		while($write_total > 0)
+		{
+			$write_count = @fwrite($pipes[0], substr( $script, $written ) );
+			if($write_count === false)
+			{
+				@fclose( $pipes[0] );
+				@fclose( $pipes[1] );
+				@proc_terminate( $process, 9 );
+				@proc_close( $process );
 
-                return '';
-            }
+				return '';
+			}
 
-            $write_total -= $write_count;
-            $written += $write_count;
-        }
+			$write_total -= $write_count;
+			$written += $write_count;
+		}
 
-        @fclose( $pipes[0] );
+		@fclose( $pipes[0] );
 
-		$result = @stream_get_contents($pipes[1]);
-        if($result === false)
-        {
-            @fclose( $pipes[1] );
-            @proc_terminate( $process, 9 );
-            @proc_close( $process );
+		$result = '';
+		while(!feof($pipes[1]))
+		{
+			$result .= @fread($pipes[1], 8192);
+			if($result === false)
+			{
+				@fclose( $pipes[1] );
+				@proc_terminate( $process, 9 );
+				@proc_close( $process );
 
-            return '';
-        }
+				return '';
+			}
+		}
 
 		@fclose($pipes[1]);
 		@proc_close($process);
@@ -507,7 +515,7 @@ class Data
 		if(isset($this->phpInterpreter))
 			return $this->phpInterpreter;
 
-		$interpreterName = array( 'php', 'php5', 'php-cli', 'hhvm' );
+		$interpreterName = array( 'php', 'php5', 'php7', 'php-cli', 'hhvm' );
 		$extension = '';
 		if('\\' === DIRECTORY_SEPARATOR)
 		{
@@ -614,7 +622,7 @@ class Data
 		return $this->cmsProcessor->filter(trim($content));
 	}
 
-    public function getSyncPath($path)
+	public function getSyncPath($path)
 	{
 		$base_path = $this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::VAR_DIR) . '/codisto/';
 
@@ -624,7 +632,7 @@ class Data
 
 		} catch (\Exception $e) {
 
-			return preg_replace( '/\/+/', '/', Mage::getBaseDir('var') . '/' . $path );
+			return preg_replace( '/\/+/', '/', $this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::VAR_DIR) . '/' . $path );
 
 		}
 

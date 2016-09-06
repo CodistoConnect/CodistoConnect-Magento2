@@ -37,13 +37,26 @@ try
 	$filterProvider = $om->create('Magento\Cms\Model\Template\FilterProvider');
 	$blockFilter = $filterProvider->getBlockFilter();
 
-	// TODO: write out argv and find storeid
+	$response = $om->create('Magento\Framework\App\Console\Response');
+	$response->terminateOnSend(true);
 
-	$blockFilter->setStoreId(0);
+	$storeId = 0;
+	foreach($argv as $idx => $arg)
+	{
+		if($arg == '-storeid')
+		{
+			$storeId = intval($argv[$idx + 1]);
+			break;
+		}
+	}
 
-	echo $blockFilter->filter($contents);
+	$blockFilter->setStoreId($storeId);
+
+	$response->setBody($blockFilter->filter($contents));
 }
 catch(\Exception $e)
 {
-	echo $e->getMessage();
+	$response->setBody($e->getMessage());
 }
+
+$response->sendResponse();

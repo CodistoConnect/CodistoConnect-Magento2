@@ -33,9 +33,9 @@ $msg = $argv[2];
 
 $curlOptions = array( CURLOPT_TIMEOUT => 10 );
 
-if(isset($_ENV['CURL_CA_BUNDLE']) && $_ENV['CURL_CA_BUNDLE'])
+if(getenv('CURL_CA_BUNDLE'))
 {
-	$curlOptions[CURLOPT_CAINFO] = $_ENV['CURL_CA_BUNDLE'];
+	$curlOptions[CURLOPT_CAINFO] = getenv('CURL_CA_BUNDLE');
 }
 
 $client = new \Zend_Http_Client();
