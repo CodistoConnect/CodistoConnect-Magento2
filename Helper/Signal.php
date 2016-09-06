@@ -57,7 +57,7 @@ foreach($merchants as $merchant)
 		{
 			if($Retry >= 3)
 			{
-				Mage::logException($e);
+				
 				break;
 			}
 
