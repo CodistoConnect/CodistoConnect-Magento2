@@ -410,6 +410,7 @@ class Sync
 		$insertAttributeGroup = $db->prepare('INSERT OR IGNORE INTO AttributeGroup(ID, Name) VALUES(?, ?)');
 		$insertAttributeGroupMap = $db->prepare('INSERT OR IGNORE INTO AttributeGroupMap(GroupID, AttributeID) VALUES(?,?)');
 		$insertProductAttribute = $db->prepare('INSERT OR IGNORE INTO ProductAttributeValue(ProductExternalReference, AttributeID, Value) VALUES (?, ?, ?)');
+		$insertProductAttributeDefault = $db->prepare('INSERT OR IGNORE INTO ProductAttributeDefaultValue(ProductExternalReference, AttributeID, Value) VALUES (?, ?, ?)');
 		$insertProductQuestion = $db->prepare('INSERT OR REPLACE INTO ProductQuestion(ExternalReference, ProductExternalReference, Name, Type, Sequence) VALUES (?, ?, ?, ?, ?)');
 		$insertProductAnswer = $db->prepare('INSERT INTO ProductQuestionAnswer(ProductQuestionExternalReference, Value, PriceModifier, SKUModifier, Sequence) VALUES (?, ?, ?, ?, ?)');
 
@@ -433,6 +434,7 @@ class Sync
 				'preparedattributegroupStatement' => $insertAttributeGroup,
 				'preparedattributegroupmapStatement' => $insertAttributeGroupMap,
 				'preparedproductattributeStatement' => $insertProductAttribute,
+				'preparedproductattributedefaultStatement' => $insertProductAttributeDefault,
 				'preparedproductquestionStatement' => $insertProductQuestion,
 				'preparedproductanswerStatement' => $insertProductAnswer,
 				'store' => $store )
@@ -452,6 +454,7 @@ class Sync
 				'preparedattributegroupStatement' => $insertAttributeGroup,
 				'preparedattributegroupmapStatement' => $insertAttributeGroupMap,
 				'preparedproductattributeStatement' => $insertProductAttribute,
+				'preparedproductattributedefaultStatement' => $insertProductAttributeDefault,
 				'preparedproductquestionStatement' => $insertProductQuestion,
 				'preparedproductanswerStatement' => $insertProductAnswer,
 				'store' => $store )
@@ -474,6 +477,7 @@ class Sync
 				'preparedattributegroupStatement' => $insertAttributeGroup,
 				'preparedattributegroupmapStatement' => $insertAttributeGroupMap,
 				'preparedproductattributeStatement' => $insertProductAttribute,
+				'preparedproductattributedefaultStatement' => $insertProductAttributeDefault,
 				'preparedproductquestionStatement' => $insertProductQuestion,
 				'preparedproductanswerStatement' => $insertProductAnswer,
 				'store' => $store )
@@ -893,8 +897,37 @@ class Sync
 		$insertAttributeGroupSQL = $args['preparedattributegroupStatement'];
 		$insertAttributeGroupMapSQL = $args['preparedattributegroupmapStatement'];
 		$insertProductAttributeSQL = $args['preparedproductattributeStatement'];
+		$insertProductAttributeDefaultSQL = $args['preparedproductattributedefaultStatement'];
 		$insertProductQuestionSQL = $args['preparedproductquestionStatement'];
 		$insertProductAnswerSQL = $args['preparedproductanswerStatement'];
+
+		$badoptiondata = false;
+
+		if($type == 'configurable')
+		{
+			$attributes = null;
+			try
+			{
+				$configurableData = $this->configurableTypeFactory->create();
+				$attributes = $configurableData->getConfigurableAttributes($product);
+			}
+			catch(\Exception $e)
+			{
+				$badoptiondata = true;
+			}
+
+			if($attributes)
+			{
+				foreach($attributes as $attribute)
+				{
+					$prodAttr = $attribute->getProductAttribute();
+					if(!is_object($prodAttr) || !$prodAttr->getAttributeCode())
+					{
+						$badoptiondata = true;
+					}
+				}
+			}
+		}
 
 		$price = $this->SyncProductPrice($store, $product);
 
@@ -1028,7 +1061,12 @@ class Sync
 
 				$attributeTypes[$attributeTable][$attributeID] = $attributeCode;
 
-				$attributeGroupID = $attribute->getAttributeGroupId();
+				$attributeSetInfo = $attribute->getAttributeSetInfo();
+				$attributeGroupID = is_array($attributeSetInfo)
+										&& array_key_exists($attributeSetID, $attributeSetInfo)
+										&& is_array($attributeSetInfo[$attributeSetID])
+										&& array_key_exists('group_id', $attributeSetInfo[$attributeSetID]) ?
+										$attributeSetInfo[$attributeSetID]['group_id'] : null;
 				$attributeGroupName = '';
 
 				if($attributeGroupID)
@@ -1121,13 +1159,18 @@ class Sync
 			if($store->getId() == \Magento\Store\Model\Store::DEFAULT_STORE_ID)
 			{
 				$attrTypeSelect->columns(array('attr_value' => new \Zend_Db_Expr('CAST(value AS CHAR)')), 'default_value');
+				$attrTypeSelect->columns(array('default_value' => 'value'), 'default_value');
 				$attrTypeSelect->where('default_value.value IS NOT NULL');
 			}
 			else
 			{
+				$attrTypeSelect->columns(array('default_value' => 'value'), 'default_value');
 				$attrTypeSelect->joinLeft(
 					array('store_value' => $table),
-					'store_value.attribute_id = default_value.attribute_id AND store_value.entity_id = default_value.entity_id AND store_value.store_id = :store_id ',
+					'store_value.attribute_id = default_value.attribute_id '.
+					'AND store_value.attribute_id IN (SELECT attribute_id FROM `'.$this->resourceConnection->getTableName('catalog_eav_attribute').'` WHERE is_global != 0) '.
+					'AND store_value.entity_id = default_value.entity_id '.
+					'AND store_value.store_id = :store_id ',
 					array('attr_value' => new \Zend_Db_Expr('CAST(COALESCE(store_value.value, default_value.value) AS CHAR)'))
 				);
 				$attrTypeSelect->where('store_value.value IS NOT NULL OR default_value.value IS NOT NULL');
@@ -1147,24 +1190,38 @@ class Sync
 				'store_id' => $store->getId()
 			);
 
-			$attributeRows = $adapter->fetchPairs($attrSelect, $attrArgs);
-			foreach ($attributeRows as $attributeId => $attributeValue)
+			foreach($adapter->fetchAll($attrSelect, $attrArgs, \Zend_Db::FETCH_NUM) as $attributeRow)
 			{
+				$attributeId = $attributeRow[0];
+
 				$attributeCode = $attributeCodeIDMap[$attributeId];
-				$attributeValues[$attributeCode] = $attributeValue;
+				$attributeValues[$attributeCode] = $attributeRow;
 			}
 
 			foreach($attributeSet as $attributeData)
 			{
 				if(isset($attributeValues[$attributeData['code']]))
-					$attributeValue = $attributeValues[$attributeData['code']];
+				{
+					$attributeRow = $attributeValues[$attributeData['code']];
+
+					$defaultValue = $attributeRow[1];
+					$attributeValue = $attributeRow[2];
+				}
 				else
+				{
+					$defaultValue = null;
 					$attributeValue = null;
+				}
 
 				if(isset($attributeData['source']) &&
 					$attributeData['source_model'] == 'eav/entity_attribute_source_boolean')
 				{
 					$attributeData['backend_type'] = 'boolean';
+
+					if(isset($defaultValue) && $defaultValue)
+						$defaultValue = -1;
+					else
+						$defaultValue = 0;
 
 					if(isset($attributeValue) && $attributeValue)
 						$attributeValue = -1;
@@ -1174,11 +1231,87 @@ class Sync
 
 				else if($attributeData['html'])
 				{
-					$attributeValue = $this->codistoHelper->processCmsContent($attributeValue, $store->getId());
+					if($defaultValue == $attributeValue)
+					{
+						$defaultValue = $attributeValue = $this->codistoHelper->processCmsContent($attributeValue, $store->getId());
+					}
+					else
+					{
+						$defaultValue = $this->codistoHelper->processCmsContent($defaultValue, $store->getId());
+						$attributeValue = $this->codistoHelper->processCmsContent($attributeValue, $store->getId());
+					}
 				}
 
 				else if( in_array($attributeData['frontend_type'], array( 'select', 'multiselect' ) ) )
 				{
+					if(is_array($attributeValue))
+					{
+						if(isset($attributeData['source']) &&
+							method_exists( $attributeData['source'], 'getOptionText') )
+						{
+							$defaultValueSet = array();
+
+							foreach($attributeValue as $attributeOptionId)
+							{
+								if(isset($this->optionTextCache['0-'.$attributeData['id'].'-'.$attributeOptionId]))
+								{
+									$defaultValueSet[] = $this->optionTextCache['0-'.$attributeData['id'].'-'.$attributeOptionId];
+								}
+								else
+								{
+									try
+									{
+										$attributeData['source']->getAttribute()->setStoreId(0);
+
+										$attributeText = $attributeData['source']->getOptionText($attributeOptionId);
+
+										$attributeData['source']->getAttribute()->setStoreId($store->getId());
+
+										$this->optionTextCache['0-'.$attributeData['id'].'-'.$attributeOptionId] = $attributeText;
+
+										$defaultValueSet[] = $attributeText;
+									}
+									catch(\Exception $e)
+									{
+
+									}
+								}
+							}
+
+							$defaultValue = $defaultValueSet;
+						}
+					}
+					else
+					{
+						if(isset($attributeData['source'])  &&
+							method_exists( $attributeData['source'], 'getOptionText') )
+						{
+							if(isset($this->optionTextCache['0-'.$attributeData['id'].'-'.$attributeValue]))
+							{
+								$defaultValue = $this->optionTextCache['0-'.$attributeData['id'].'-'.$attributeValue];
+							}
+							else
+							{
+								try
+								{
+									$attributeData['source']->getAttribute()->setStoreId(0);
+
+									$attributeText = $attributeData['source']->getOptionText($attributeValue);
+
+									$attributeData['source']->getAttribute()->setStoreId($store->getId());
+
+									$this->optionTextCache['0-'.$attributeData['id'].'-'.$attributeValue] = $attributeText;
+
+									$defaultValue = $attributeText;
+								}
+								catch(\Exception $e)
+								{
+									$defaultValue = null;
+								}
+							}
+						}
+					}
+
 					if(is_array($attributeValue))
 					{
 						if(isset($attributeData['source']) &&
@@ -1259,6 +1392,17 @@ class Sync
 						$attributeValue = implode(',', $attributeValue);
 
 					$insertProductAttributeSQL->execute(array($product_id, $attributeData['id'], $attributeValue));
+				}
+
+				if(isset($defaultValue) && !is_null($defaultValue))
+				{
+					if(is_array($defaultValue))
+						$defaultValue = implode(',', $defaultValue);
+
+					if($defaultValue != $attributeValue)
+					{
+						$insertProductAttributeDefaultSQL->execute(array($product_id, $attributeData['id'], $defaultValue));
+					}
 				}
 			}
 		}
@@ -1470,9 +1614,10 @@ class Sync
 		$insertAttributeGroup = $db->prepare('INSERT OR REPLACE INTO AttributeGroup(ID, Name) VALUES(?, ?)');
 		$insertAttributeGroupMap = $db->prepare('INSERT OR IGNORE INTO AttributeGroupMap(GroupID, AttributeID) VALUES(?,?)');
 		$insertProductAttribute = $db->prepare('INSERT OR IGNORE INTO ProductAttributeValue(ProductExternalReference, AttributeID, Value) VALUES (?, ?, ?)');
+		$insertProductAttributeDefault = $db->prepare('INSERT OR IGNORE INTO ProductAttributeDefaultValue(ProductExternalReference, AttributeID, Value) VALUES (?, ?, ?)');
 		$insertProductQuestion = $db->prepare('INSERT OR REPLACE INTO ProductQuestion(ExternalReference, ProductExternalReference, Name, Type, Sequence) VALUES (?, ?, ?, ?, ?)');
 		$insertProductAnswer = $db->prepare('INSERT INTO ProductQuestionAnswer(ProductQuestionExternalReference, Value, PriceModifier, SKUModifier, Sequence) VALUES (?, ?, ?, ?, ?)');
-		$insertOrders = $db->prepare('INSERT OR REPLACE INTO [Order] (ID, Status, PaymentDate, ShipmentDate, Carrier, TrackingNumber) VALUES (?, ?, ?, ?, ?, ?)');
+		$insertOrders = $db->prepare('INSERT OR REPLACE INTO [Order] (ID, Status, PaymentDate, ShipmentDate, Carrier, TrackingNumber, ExternalReference) VALUES (?, ?, ?, ?, ?, ?, ?)');
 
 		$db->exec('BEGIN EXCLUSIVE TRANSACTION');
 
@@ -1586,6 +1731,7 @@ class Sync
 					'preparedattributegroupStatement' => $insertAttributeGroup,
 					'preparedattributegroupmapStatement' => $insertAttributeGroupMap,
 					'preparedproductattributeStatement' => $insertProductAttribute,
+					'preparedproductattributedefaultStatement' => $insertProductAttributeDefault,
 					'preparedproductquestionStatement' => $insertProductQuestion,
 					'preparedproductanswerStatement' => $insertProductAnswer,
 					'store' => $store ));
@@ -1634,6 +1780,7 @@ class Sync
 					'preparedattributegroupStatement' => $insertAttributeGroup,
 					'preparedattributegroupmapStatement' => $insertAttributeGroupMap,
 					'preparedproductattributeStatement' => $insertProductAttribute,
+					'preparedproductattributedefaultStatement' => $insertProductAttributeDefault,
 					'preparedproductquestionStatement' => $insertProductQuestion,
 					'preparedproductanswerStatement' => $insertProductAnswer,
 					'store' => $store )
@@ -1682,6 +1829,7 @@ class Sync
 					'preparedattributegroupStatement' => $insertAttributeGroup,
 					'preparedattributegroupmapStatement' => $insertAttributeGroupMap,
 					'preparedproductattributeStatement' => $insertProductAttribute,
+					'preparedproductattributedefaultStatement' => $insertProductAttributeDefault,
 					'preparedproductquestionStatement' => $insertProductQuestion,
 					'preparedproductanswerStatement' => $insertProductAnswer,
 					'store' => $store )
@@ -1735,6 +1883,7 @@ class Sync
 
 			$orders = $this->salesOrderCollectionFactory->create()
 						->addFieldToSelect(array('codisto_orderid', 'status'))
+						->addFieldToSelect('entity_id','externalreference')
 						->addAttributeToFilter('entity_id', array('gt' => (int)$this->currentEntityId ))
 						->addAttributeToFilter('main_table.store_id', array('eq' => $orderStoreId ))
 						->addAttributeToFilter('main_table.updated_at', array('gteq' => date('Y-m-d H:i:s', $ts)))
@@ -2061,7 +2210,7 @@ class Sync
 
 		$db = $this->GetSyncDb( $syncDb, 5 );
 
-		$insertOrders = $db->prepare('INSERT OR REPLACE INTO [Order] (ID, Status, PaymentDate, ShipmentDate, Carrier, TrackingNumber) VALUES (?, ?, ?, ?, ?, ?)');
+		$insertOrders = $db->prepare('INSERT OR REPLACE INTO [Order] (ID, Status, PaymentDate, ShipmentDate, Carrier, TrackingNumber, ExternalReference) VALUES (?, ?, ?, ?, ?, ?, ?)');
 
 		$coreResource = $this->resourceConnection;
 
@@ -2073,6 +2222,7 @@ class Sync
 
 		$orders = $this->salesOrderCollectionFactory->create()
 					->addFieldToSelect(array('codisto_orderid', 'status'))
+					->addFieldToSelect('entity_id','externalreference')
 					->addAttributeToFilter('codisto_orderid', array('in' => $orders ));
 
 		$orders->getSelect()->joinLeft( array('i' => $invoiceName), 'i.order_id = main_table.entity_id AND i.state = 2', array('pay_date' => 'MIN(i.created_at)'));
@@ -2133,7 +2283,8 @@ class Sync
 		$db->exec('CREATE TABLE IF NOT EXISTS Attribute (ID integer NOT NULL PRIMARY KEY, Code text NOT NULL, Label text NOT NULL, Type text NOT NULL, Input text NOT NULL)');
 		$db->exec('CREATE TABLE IF NOT EXISTS AttributeGroupMap (AttributeID integer NOT NULL, GroupID integer NOT NULL, PRIMARY KEY(AttributeID, GroupID))');
 		$db->exec('CREATE TABLE IF NOT EXISTS AttributeGroup (ID integer NOT NULL PRIMARY KEY, Name text NOT NULL)');
-		$db->exec('CREATE TABLE IF NOT EXISTS ProductAttributeValue (ProductExternalReference text NOT NULL, AttributeID integer NOT NULL, Value any, PRIMARY KEY (ProductExternalReference, AttributeID))');
+		$db->exec('CREATE TABLE IF NOT EXISTS ProductAttributeValue (ProductExternalReference text NOT NULL, AttributeID integer NOT NULL, Value text, PRIMARY KEY (ProductExternalReference, AttributeID))');
+		$db->exec('CREATE TABLE IF NOT EXISTS ProductAttributeDefaultValue (ProductExternalReference text NOT NULL, AttributeID integer NOT NULL, Value text, PRIMARY KEY (ProductExternalReference, AttributeID))');
 
 		$db->exec('CREATE TABLE IF NOT EXISTS TaxClass (ID integer NOT NULL PRIMARY KEY, Type text NOT NULL, Name text NOT NULL)');
 		$db->exec('CREATE TABLE IF NOT EXISTS TaxCalculation(ID integer NOT NULL PRIMARY KEY, TaxRateID integer NOT NULL, TaxRuleID integer NOT NULL, ProductTaxClassID integer NOT NULL, CustomerTaxClassID integer NOT NULL)');
@@ -2144,7 +2295,7 @@ class Sync
 		$db->exec('CREATE TABLE IF NOT EXISTS Store(ID integer NOT NULL PRIMARY KEY, Code text NOT NULL, Name text NOT NULL, Currency text NOT NULL)');
 		$db->exec('CREATE TABLE IF NOT EXISTS StoreMerchant(StoreID integer NOT NULL, MerchantID integer NOT NULL, PRIMARY KEY (StoreID, MerchantID))');
 
-		$db->exec('CREATE TABLE IF NOT EXISTS [Order](ID integer NOT NULL PRIMARY KEY, Status text NOT NULL, PaymentDate datetime NULL, ShipmentDate datetime NULL, Carrier text NOT NULL, TrackingNumber text NOT NULL)');
+		$db->exec('CREATE TABLE IF NOT EXISTS [Order](ID integer NOT NULL PRIMARY KEY, Status text NOT NULL, PaymentDate datetime NULL, ShipmentDate datetime NULL, Carrier text NOT NULL, TrackingNumber text NOT NULL, ExternalReference text NOT NULL DEFAULT \'\')');
 
 		$db->exec('CREATE TABLE IF NOT EXISTS StaticBlock(BlockID integer NOT NULL PRIMARY KEY, Title text NOT NULL, Identifier text NOT NULL, Content text NOT NULL)');
 
@@ -2156,10 +2307,19 @@ class Sync
 		}
 		catch(\Exception $e)
 		{
-			$db->exec('CREATE TABLE NewOrder (ID integer NOT NULL PRIMARY KEY, Status text NOT NULL, PaymentDate datetime NULL, ShipmentDate datetime NULL, Carrier text NOT NULL, TrackingNumber text NOT NULL)');
-			$db->exec('INSERT INTO NewOrder SELECT ID, Status, PaymentDate, ShipmentDate, \'Unknown\', TrackingNumber FROM [Order]');
+			$db->exec('CREATE TABLE NewOrder (ID integer NOT NULL PRIMARY KEY, Status text NOT NULL, PaymentDate datetime NULL, ShipmentDate datetime NULL, Carrier text NOT NULL, TrackingNumber text NOT NULL, ExternalReference text NOT NULL DEFAULT \'\')');
+			$db->exec('INSERT INTO NewOrder SELECT ID, Status, PaymentDate, ShipmentDate, \'Unknown\', TrackingNumber, \'\' FROM [Order]');
 			$db->exec('DROP TABLE [Order]');
 			$db->exec('ALTER TABLE NewOrder RENAME TO [Order]');
+		}
+
+		try
+		{
+			$db->exec('SELECT 1 FROM [Order] WHERE ExternalReference IS NULL LIMIT 1');
+		}
+		catch(\Exception $e)
+		{
+			$db->exec('ALTER TABLE [Order] ADD COLUMN ExternalReference text NOT NULL DEFAULT \'\'');
 		}
 
 		$db->exec('COMMIT TRANSACTION');

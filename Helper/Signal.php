@@ -31,7 +31,7 @@ $bootstrap = \Magento\Framework\App\Bootstrap::create(BP, $params);
 $merchants = unserialize($argv[1]);
 $msg = $argv[2];
 
-$curlOptions = array( CURLOPT_TIMEOUT => 10 );
+$curlOptions = array( CURLOPT_TIMEOUT => 20 );
 
 if(getenv('CURL_CA_BUNDLE'))
 {
@@ -57,7 +57,7 @@ foreach($merchants as $merchant)
 		{
 			if($Retry >= 3)
 			{
-				
+
 				break;
 			}
 

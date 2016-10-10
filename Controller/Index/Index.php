@@ -126,6 +126,9 @@ class Index extends \Magento\Framework\App\Action\Action
 	{
 		set_time_limit(0);
 		ignore_user_abort(false);
+		@ini_set('display_errors', 1);
+		@ini_set('display_startup_errors', 1);
+		@error_reporting(E_ALL);
 
 		$request = $this->getRequest();
 		$response = $this->getResponse();
@@ -179,6 +182,20 @@ class Index extends \Magento\Framework\App\Action\Action
 
 					}
 
+					try
+					{
+						$connection->addColumn(
+								$this->resourceConnection->getTableName('sales_order'),
+								'codisto_merchantid',
+								'varchar(10)'
+							);
+					}
+					catch(\Exception $e)
+					{
+
+					}
+
+
 					if($storeId == 0)
 					{
 						$stores = $this->storeManager->getStores();
@@ -226,7 +243,15 @@ class Index extends \Magento\Framework\App\Action\Action
 
 						try
 						{
-							$order = $this->order->getCollection()->addAttributeToFilter('codisto_orderid', $ordercontent->orderid)->getFirstItem();
+							$order = $this->order->getCollection()
+							->addFieldToFilter('codisto_orderid', $ordercontent->orderid)
+							->addFieldToFilter(
+								array('codisto_merchantid', 'codisto_merchantid'),
+								array(
+									array('in'=> array($ordercontent->merchantid, '')),
+									array('null'=> true)
+								)
+							)->getFirstItem();
 
 							if($order && $order->getId())
 							{
@@ -336,6 +361,7 @@ class Index extends \Magento\Framework\App\Action\Action
 		$order->setPayment($this->orderPaymentConverter->convert($quote->getPayment()));
 		$order->setCustomer($quote->getCustomer());
 		$order->setCodistoOrderid((string)$ordercontent->orderid);
+		$order->setCodistoMerchantid((string)$ordercontent->merchantid);
 
 		if(preg_match('/\{ordernumber\}|\{ebaysalesrecordnumber\}|\{ebaytransactionid\}/', $ordernumberformat))
 		{
@@ -524,7 +550,35 @@ class Index extends \Magento\Framework\App\Action\Action
 
 		if(strtolower($freightservice) != 'freight')
 		{
-			$order->setShippingDescription($freightservice);
+			$matchFound = false;
+
+			$shippingDescription = $quote->getShippingAddress()->getShippingDescription();
+			if($shippingDescription)
+			{
+				$shippingRates = $quote->getShippingAddress()->getAllShippingRates();
+
+				foreach($shippingRates as $rate)
+				{
+					$shippingMethodTitle = $rate->getMethodTitle();
+
+					if(strpos($shippingDescription, $shippingMethodTitle) !== false)
+					{
+						$shippingDescription = str_replace($shippingMethodTitle, $freightservice, $shippingDescription);
+						$matchFound = true;
+						break;
+					}
+				}
+			}
+
+			if(!$matchFound)
+			{
+				$shippingDescription = $freightservice;
+			}
+		}
+
+		if($shippingDescription)
+		{
+			$order->setShippingDescription($shippingDescription);
 		}
 
 		$ordersubtotal -= $freighttotalextax;
@@ -725,6 +779,8 @@ class Index extends \Magento\Framework\App\Action\Action
 		$orderstatus = $order->getStatus();
 		$ordercontent = $xml->entry->content->children('http://api.codisto.com/schemas/2009/');
 
+		$order->setCodistoMerchantid((string)$ordercontent->merchantid);
+
 		$paypaltransactionid = $ordercontent->orderpayments[0]->orderpayment->transactionid;
 
 		$customer = $quote->getCustomer();
@@ -803,7 +859,35 @@ class Index extends \Magento\Framework\App\Action\Action
 
 		if(strtolower($freightservice) != 'freight')
 		{
-			$order->setShippingDescription($freightservice);
+			$matchFound = false;
+
+			$shippingDescription = $quote->getShippingAddress()->getShippingDescription();
+			if($shippingDescription)
+			{
+				$shippingRates = $quote->getShippingAddress()->getAllShippingRates();
+
+				foreach($shippingRates as $rate)
+				{
+					$shippingMethodTitle = $rate->getMethodTitle();
+
+					if(strpos($shippingDescription, $shippingMethodTitle) !== false)
+					{
+						$shippingDescription = str_replace($shippingMethodTitle, $freightservice, $shippingDescription);
+						$matchFound = true;
+						break;
+					}
+				}
+			}
+
+			if(!$matchFound)
+			{
+				$shippingDescription = $freightservice;
+			}
+		}
+
+		if($shippingDescription)
+		{
+			$order->setShippingDescription($shippingDescription);
 		}
 
 		$ordersubtotal -= $freighttotalextax;
