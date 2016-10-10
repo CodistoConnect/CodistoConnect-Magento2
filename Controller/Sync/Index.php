@@ -61,6 +61,9 @@ class Index extends \Magento\Framework\App\Action\Action
 		@ini_set('zlib.output_compression', 'Off');
 		@ini_set('output_buffering', 'Off');
 		@ini_set('output_handler', '');
+		@ini_set('display_errors', 1);
+		@ini_set('display_startup_errors', 1);
+		@error_reporting(E_ALL);
 
 		ignore_user_abort(true);
 
@@ -270,6 +273,14 @@ class Index extends \Magento\Framework\App\Action\Action
 							if(file_exists($syncDb))
 								unlink($syncDb);
 						}
+						else if(property_exists($e, 'errorInfo') &&
+							$e->errorInfo[0] == 'HY000' &&
+							$e->errorInfo[1] == 11 &&
+							$e->errorInfo[2] == 'database disk image is malformed')
+						{
+							if(file_exists($syncDb))
+								unlink($syncDb);
+						}
 
 						return $this->sendExceptionError($e);
 					}
@@ -283,58 +294,89 @@ class Index extends \Magento\Framework\App\Action\Action
 
 				if($this->checkHash($store, $server))
 				{
-					$result = 'error';
-
-					$syncDb = $this->codistoHelper->getSyncPath('sync-'.$storeId.'.db');
-
-					if($request->getPost('Init') == '1')
+					try
 					{
-						if(file_exists($syncDb))
-							unlink($syncDb);
-					}
+						$result = 'error';
 
-					$configurableCount = (int)$request->getQuery('configurablecount');
-					if(!$configurableCount || !is_numeric($configurableCount))
-						$configurableCount = $this->defaultConfigurableCount;
+						$syncDb = $this->codistoHelper->getSyncPath('sync-'.$storeId.'.db');
 
-					$simpleCount = (int)$request->getQuery('simplecount');
-					if(!$simpleCount || !is_numeric($simpleCount))
-						$simpleCount = $this->defaultSimpleCount;
-
-					$timeout = (int)$request->getQuery('timeout');
-					if(!$timeout || !is_numeric($timeout))
-						$timeout = $this->defaultSyncTimeout;
-
-					if($timeout < 5)
-						$timeout = 5;
-
-					$startTime = microtime(true);
-
-					for($chunkCount = 0; $chunkCount < 2; $chunkCount++)
-					{
-						$result = $this->sync->SyncChunk($syncDb, $simpleCount, $configurableCount, $storeId, false);
-
-						if($result == 'complete')
+						if($request->getPost('Init') == '1')
 						{
-							$this->sync->SyncTax($syncDb, $storeId);
-							$this->sync->SyncStaticBlocks($syncDb, $storeId);
-							$this->sync->SyncStores($syncDb, $storeId);
-							break;
+							if(file_exists($syncDb))
+								unlink($syncDb);
 						}
 
-						$duration = microtime(true) - $startTime;
+						$configurableCount = (int)$request->getQuery('configurablecount');
+						if(!$configurableCount || !is_numeric($configurableCount))
+							$configurableCount = $this->defaultConfigurableCount;
 
-						if(($duration / ($chunkCount + 1)) * 2 > $timeout)
-							break;
+						$simpleCount = (int)$request->getQuery('simplecount');
+						if(!$simpleCount || !is_numeric($simpleCount))
+							$simpleCount = $this->defaultSimpleCount;
 
-						usleep(10000);
+						$timeout = (int)$request->getQuery('timeout');
+						if(!$timeout || !is_numeric($timeout))
+							$timeout = $this->defaultSyncTimeout;
+
+						if($timeout < 5)
+							$timeout = 5;
+
+						$startTime = microtime(true);
+
+						for($chunkCount = 0; $chunkCount < 2; $chunkCount++)
+						{
+							$result = $this->sync->SyncChunk($syncDb, $simpleCount, $configurableCount, $storeId, false);
+
+							if($result == 'complete')
+							{
+								$this->sync->SyncTax($syncDb, $storeId);
+								$this->sync->SyncStaticBlocks($syncDb, $storeId);
+								$this->sync->SyncStores($syncDb, $storeId);
+								break;
+							}
+
+							$duration = microtime(true) - $startTime;
+
+							if(($duration / ($chunkCount + 1)) * 2 > $timeout)
+								break;
+
+							usleep(10000);
+						}
+
+						return $this->sendPlainResponse(200, 'OK', $result);
 					}
+					catch(\Exception $e)
+					{
+						if(property_exists($e, 'errorInfo') &&
+							$e->errorInfo[0] == 'HY000' &&
+							$e->errorInfo[1] == 5 &&
+							$e->errorInfo[2] == 'database is locked')
+						{
+							return $this->sendPlainResponse(200, 'OK', 'throttle');
+						}
+						else if(property_exists($e, 'errorInfo') &&
+							$e->errorInfo[0] == 'HY000' &&
+							$e->errorInfo[1] == 8 &&
+							$e->errorInfo[2] == 'attempt to write a readonly database')
+						{
+							if(file_exists($syncDb))
+								unlink($syncDb);
+						}
+						else if(property_exists($e, 'errorInfo') &&
+							$e->errorInfo[0] == 'HY000' &&
+							$e->errorInfo[1] == 11 &&
+							$e->errorInfo[2] == 'database disk image is malformed')
+						{
+							if(file_exists($syncDb))
+								unlink($syncDb);
+						}
 
-					return $this->sendPlainResponse(200, 'OK', $result);
+						return $this->sendExceptionError($e);
+					}
 				}
 				else
 				{
-					return $this->sendExceptionError();
+					return $this->sendSecurityError();
 				}
 
 			case 'PULL':
@@ -585,7 +627,7 @@ class Index extends \Magento\Framework\App\Action\Action
 							{
 								$this->sync->TemplateRead($templateDb);
 
-								$tmpDb = $this->getSyncPathTemp('template');
+								$tmpDb = $this->codistoHelper->getSyncPathTemp('template');
 
 								$db = new \PDO('sqlite:' . $tmpDb);
 								$db->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
