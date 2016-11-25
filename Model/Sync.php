@@ -600,8 +600,17 @@ class Sync
 		$parentProduct->unsetData('final_price');
 
 		$parentProduct->getTypeInstance(true)->processConfiguration($addInfo, $parentProduct, \Magento\Catalog\Model\Product\Type\AbstractType::PROCESS_MODE_LITE);
+		
+		try
+		{
+			$finalPrice = $parentProduct->getFinalPrice();
+		}
+		catch(\Magento\Framework\Exception\LocalizedException $e)
+		{
+			$finalPrice = 0.0;
+		}
 
-		$price = $this->taxHelper->getTaxPrice($parentProduct, $parentProduct->getFinalPrice(), false, null, null, null, $store, null, false);
+		$price = $this->taxHelper->getTaxPrice($parentProduct, $finalPrice, false, null, null, null, $store, null, false);
 
 		return $price;
 	}
@@ -1463,11 +1472,9 @@ class Sync
 
 				$parentProduct = $this->productFactory->create()
 									->setData(array('entity_id' => $parentid, 'type_id' => 'simple' ));
-
-				$attributes = $parentProduct->getTypeInstance(true)->getSetAttributes($parentProduct);
-				$media_gallery = $attributes['media_gallery'];
-				$backend = $media_gallery->getBackend();
-				$backend->afterLoad($parentProduct);
+									
+				$parentProduct->load('media_gallery');
+				
 
 				$mediaGallery = $parentProduct->getMediaGallery('images');
 

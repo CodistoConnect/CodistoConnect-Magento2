@@ -103,6 +103,11 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
 		{
 			$merchantID = $this->scopeConfig->getValue('codisto/merchantid', 'stores', $storeId);
 		}
+		$merchantID = $this->json->jsonDecode($merchantID);
+		if(is_array($merchantID))
+		{
+			$merchantID = $merchantID[0];
+		}
 
 		$hostKey = $this->scopeConfig->getValue('codisto/hostkey', \Magento\Framework\App\Config\ScopeConfigInterface::SCOPE_TYPE_DEFAULT, $storeId);
 
