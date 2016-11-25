@@ -759,6 +759,7 @@ class Index extends \Magento\Framework\App\Action\Action
 		$response->setHeader('Content-Type', 'application/octet-stream');
 		$response->setHeader('Pragma', 'no-cache');
 		$response->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT');
+		$response->setHeader('Cache-Control', 'no-cache', true);
 
 		if(isset($sendOptions['syncresponse']))
 			$response->setHeader('X-Codisto-SyncResponse', $sendOptions['syncresponse']);
