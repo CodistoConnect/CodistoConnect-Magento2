@@ -335,6 +335,7 @@ class Index extends \Magento\Framework\App\Action\Action
 		$ordertotal = floatval($ordercontent->ordertotal[0]);
 		$ordersubtotal = floatval($ordercontent->ordersubtotal[0]);
 		$ordertaxtotal = floatval($ordercontent->ordertaxtotal[0]);
+		$weightunit = (string)$ordercontent->weightunit;
 
 		$ordersubtotal = $this->priceCurrency->round($ordersubtotal);
 		$ordersubtotalincltax = $this->priceCurrency->round($ordersubtotal + $ordertaxtotal);
@@ -437,9 +438,22 @@ class Index extends \Magento\Framework\App\Action\Action
 				$priceinctax = floatval($orderline->priceinctax[0]);
 				$taxamount = $priceinctax - $price;
 				$taxpercent = $price == 0 ? 0 : round($priceinctax / $price - 1.0, 2) * 100;
-				$weight = floatval($orderline->weight[0]);
-				if($weight == 0)
-					$weight = 1;
+
+				$weight = $orderline->weight[0];
+
+				if($weightunit = 'g')
+					$weightactual = floatval($weight);
+				else if($weightunit = 'kg')
+					$weightactual = floatval($weight / 1000);
+				else if($weightunit = 'pounds')
+					$weightactual = floatval($weight / 453.592);
+				else if($weightunit = 'ounces')
+					$weightactual = floatval($weight / 28.3495);
+
+				if($weightactual == 0)
+					$weightactual = 1;
+
+				$weight = $weightactual;
 
 				$weight_total += $weight;
 
@@ -778,6 +792,7 @@ class Index extends \Magento\Framework\App\Action\Action
 
 		$orderstatus = $order->getStatus();
 		$ordercontent = $xml->entry->content->children('http://api.codisto.com/schemas/2009/');
+		$weightunit = (string)$ordercontent->weightunit;
 
 		$order->setCodistoMerchantid((string)$ordercontent->merchantid);
 
@@ -1003,10 +1018,21 @@ class Index extends \Magento\Framework\App\Action\Action
 				$priceinctax = floatval($orderline->priceinctax[0]);
 				$taxamount = $priceinctax - $price;
 				$taxpercent = $price == 0 ? 0 : round($priceinctax / $price - 1.0, 2) * 100;
-				$weight = floatval($orderline->weight[0]);
-				if($weight == 0)
-					$weight = 1;
+				$weight = $orderline->weight[0];
 
+				if($weightunit = 'g')
+					$weightactual = floatval($weight);
+				else if($weightunit = 'kg')
+					$weightactual = floatval($weight / 1000);
+				else if($weightunit = 'pounds')
+					$weightactual = floatval($weight / 453.592);
+				else if($weightunit = 'ounces')
+					$weightactual = floatval($weight / 28.3495);
+
+				if($weightactual == 0)
+					$weightactual = 1;
+
+				$weight = $weightactual;
 				$weight_total += $weight;
 
 				$itemFound = false;
