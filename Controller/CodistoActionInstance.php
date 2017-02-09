@@ -33,6 +33,7 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
 	private $moduleList;
 	private $storeManager;
 	private $redirectResponseFactory;
+	private $auth;
 	private $rawResponseFactory;
 
 	public function __construct(
@@ -44,6 +45,7 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
 		\Magento\Backend\Helper\Data $backendHelper,
 		\Magento\Framework\Module\ModuleListInterface $moduleList,
 		\Magento\Store\Model\StoreManager $storeManager,
+		\Magento\Backend\Model\Auth $auth,
 		\Magento\Framework\Controller\Result\RawFactory $rawResponseFactory
 	) {
 		parent::__construct($context);
@@ -56,6 +58,7 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
 		$this->backendHelper = $backendHelper;
 		$this->moduleList = $moduleList;
 		$this->storeManager = $storeManager;
+		$this->auth = $auth;
 		$this->rawResponseFactory = $rawResponseFactory;
 	}
 
@@ -65,6 +68,13 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
 
 	public function dispatch(\Magento\Framework\App\RequestInterface $request)
 	{
+
+		if (!$this->auth->isLoggedIn()) {
+			$response = $this->context->getResultRedirectFactory()->create();
+			$response->setPath('*/*/');
+			return $response;
+		}
+
 		$request->setDispatched(true);
 
 		$storeId = 0;
