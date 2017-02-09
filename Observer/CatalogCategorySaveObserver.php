@@ -98,20 +98,22 @@ class CatalogCategorySaveObserver implements ObserverInterface
 			$merchantid = $store->getConfig('codisto/merchantid');
 			$hostkey = $store->getConfig('codisto/hostkey');
 
-			$merchantlist = $this->json->jsonDecode($merchantid);
-			if(!is_array($merchantlist))
-				$merchantlist = array($merchantlist);
+			if($merchantid && $merchantid != '') {
+				$merchantlist = $this->json->jsonDecode($merchantid);
+				if(!is_array($merchantlist))
+					$merchantlist = array($merchantlist);
 
-			foreach($merchantlist as $merchantid)
-			{
-				if(!in_array($merchantid, $merchantSignalled, true))
+				foreach($merchantlist as $merchantid)
 				{
-					$syncDb = $this->codistoHelper->getSyncPath('sync-'.$storeId.'.db');
+					if(!in_array($merchantid, $merchantSignalled, true))
+					{
+						$syncDb = $this->codistoHelper->getSyncPath('sync-'.$storeId.'.db');
 
-					$this->sync->UpdateCategory($syncDb, $categoryId, $storeId);
+						$this->sync->UpdateCategory($syncDb, $categoryId, $storeId);
 
-					$merchantSignalled[] = $merchantid;
-					$merchants[] = array('merchantid' => $merchantid, 'hostkey' => $hostkey, 'storeid' => $storeId );
+						$merchantSignalled[] = $merchantid;
+						$merchants[] = array('merchantid' => $merchantid, 'hostkey' => $hostkey, 'storeid' => $storeId );
+					}
 				}
 			}
 		}
