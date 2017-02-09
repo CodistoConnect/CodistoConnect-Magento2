@@ -126,18 +126,20 @@ class CatalogProductSaveObserver implements ObserverInterface
             $merchantid = $store->getConfig('codisto/merchantid');
             $hostkey = $store->getConfig('codisto/hostkey');
 
-            $merchantlist = $this->json->jsonDecode($merchantid);
-            if(!is_array($merchantlist))
-                $merchantlist = array($merchantlist);
+						if($merchantid && $merchantid != '') {
+	            $merchantlist = $this->json->jsonDecode($merchantid);
+	            if(!is_array($merchantlist))
+	                $merchantlist = array($merchantlist);
 
-            foreach($merchantlist as $merchantid)
-            {
-                if(!in_array($merchantid, $merchantSignalled, true))
-                {
-                    $merchantSignalled[] = $merchantid;
-                    $merchants[] = array('merchantid' => $merchantid, 'hostkey' => $hostkey, 'storeid' => $storeId );
-                }
-            }
+	            foreach($merchantlist as $merchantid)
+	            {
+	                if(!in_array($merchantid, $merchantSignalled, true))
+	                {
+	                    $merchantSignalled[] = $merchantid;
+	                    $merchants[] = array('merchantid' => $merchantid, 'hostkey' => $hostkey, 'storeid' => $storeId );
+	                }
+	            }
+						}
         }
 
         $this->codistoHelper->signal($merchants, 'action=sync&productid='.$productIds, 'update', $syncIds);
