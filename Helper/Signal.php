@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Codisto eBay Sync Extension
+ * Codisto Marketplace Sync Extension
  *
  * NOTICE OF LICENSE
  *
@@ -13,56 +13,60 @@
  * obtain it through the world-wide-web, please send an email
  * to license@magentocommerce.com so we can send you a copy immediately.
  *
- * @category	Codisto
- * @package	 codisto/codisto-connect
- * @copyright   Copyright (c) 2016 On Technology Pty. Ltd. (http://codisto.com/)
- * @license	 http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ * @package   Codisto_Connect
+ * @copyright 2016-2017 On Technology Pty. Ltd. (http://codisto.com/)
+ * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ * @link      https://codisto.com/connect/
  */
 
-require 'app/bootstrap.php';
+// bootstrap magento environment for signal sub-process
+require 'app/bootstrap.php'; // @codingStandardsIgnoreLine MEQP1.Security.IncludeFile.FoundIncludeFile
 
-$params = $_SERVER;
+// use superglobal here instead of request object as we aren't in http context
+$params = $_SERVER; // @codingStandardsIgnoreLine MEQP2.Security.Superglobal.SuperglobalUsageWarning
 $params[\Magento\Framework\App\Bootstrap::PARAM_REQUIRE_MAINTENANCE] = false;
 $params[\Magento\Framework\App\Bootstrap::PARAM_REQUIRE_IS_INSTALLED] = false;
 
 $bootstrap = \Magento\Framework\App\Bootstrap::create(BP, $params);
 
-
-$merchants = unserialize($argv[1]);
+// using unserialize purely as IPC messaging format between parent
+// and child process
+$merchants = unserialize($argv[1]); // @codingStandardsIgnoreLine
 $msg = $argv[2];
 
-$curlOptions = array( CURLOPT_TIMEOUT => 20 );
+$curlOptions = [ CURLOPT_TIMEOUT => 20 ];
 
-if(getenv('CURL_CA_BUNDLE'))
-{
-	$curlOptions[CURLOPT_CAINFO] = getenv('CURL_CA_BUNDLE');
+// using getenv to receive CURL certificate bundle from parent process without
+// instantiating all of a HTTP request object to retrieve 'server' state
+if (getenv('CURL_CA_BUNDLE')) { // @codingStandardsIgnoreLine
+    $curlOptions[CURLOPT_CAINFO] = getenv('CURL_CA_BUNDLE'); // @codingStandardsIgnoreLine
 }
 
-$client = new \Zend_Http_Client();
-$client->setConfig(array( 'adapter' => 'Zend_Http_Client_Adapter_Curl', 'curloptions' => $curlOptions, 'keepalive' => true, 'maxredirects' => 0 ));
+// using zend http client directly in sub process
+$client = new \Zend_Http_Client(); // @codingStandardsIgnoreLine
+$client->setConfig(
+    [
+        'adapter' => 'Zend_Http_Client_Adapter_Curl',
+        'curloptions' => $curlOptions,
+        'keepalive' => true,
+        'maxredirects' => 0
+    ]
+);
 $client->setStream();
 
-foreach($merchants as $merchant)
-{
-	for($Retry = 0; ; $Retry++)
-	{
-		try
-		{
-			$client->setUri('https://api.codisto.com/'.$merchant['merchantid']);
-			$client->setHeaders('X-HostKey', $merchant['hostkey']);
-			$client->setRawData($msg)->request('POST');
-			break;
-		}
-		catch(\Exception $e)
-		{
-			if($Retry >= 3)
-			{
-
-				break;
-			}
-
-			usleep(100000);
-			continue;
-		}
-	}
+foreach ($merchants as $merchant) {
+    for ($Retry = 0;; $Retry++) {
+        try {
+            $client->setUri('https://api.codisto.com/'.$merchant['merchantid']);
+            $client->setHeaders('X-HostKey', $merchant['hostkey']);
+            $client->setRawData($msg)->request('POST');
+            break;
+        } catch (\Exception $e) {
+            if ($Retry >= 3) {
+                break;
+            }
+            usleep(100000);
+            continue;
+        }
+    }
 }

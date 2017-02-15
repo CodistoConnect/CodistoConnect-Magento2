@@ -19,15 +19,38 @@
  * @link      https://codisto.com/connect/
  */
 
-namespace Codisto\Connect\Observer;
+namespace Codisto\Connect\Model\Indexer;
 
-use Magento\Framework\Event\ObserverInterface;
-use Magento\Framework\Event\Observer as EventObserver;
-
-class SalesOrderItemCancelObserver implements ObserverInterface
+class Marketplace implements \Magento\Framework\Indexer\ActionInterface, \Magento\Framework\Mview\ActionInterface
 {
-    public function execute(EventObserver $observer)
+    private $codistoHelper;
+
+    public function __construct(
+        \Codisto\Connect\Helper\Data $codistoHelper
+    ) {
+        $this->codistoHelper = $codistoHelper;
+    }
+
+    public function execute($ids)
     {
-        return $this;
+        $ids;
+    }
+
+    public function executeFull()
+    {
+        $merchants = $this->codistoHelper->syncAllMerchants();
+        if (!empty($merchants)) {
+            $this->codistoHelper->signal($merchants, 'action=sync');
+        }
+    }
+
+    public function executeList(array $ids)
+    {
+        $ids;
+    }
+
+    public function executeRow($id)
+    {
+        $id;
     }
 }
