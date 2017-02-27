@@ -36,9 +36,9 @@ class CodistoController extends \Magento\Backend\App\Action
     private $json;
     private $session;
 
-    public $view;
-    public $breadCrumb;
-    public $frameUrl;
+    protected $view;
+    protected $breadCrumb;
+    protected $frameUrl;
 
     public function __construct(
         \Magento\Backend\App\Action\Context $context,

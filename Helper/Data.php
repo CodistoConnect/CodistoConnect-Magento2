@@ -717,19 +717,19 @@ class Data
             $this->bundleType = $this->bundleTypeFactory->create();
         }
 
-        $configurableParents = $configurableType->getParentIdsByChild($productId);
+        $configurableParents = $this->configurableType->getParentIdsByChild($productId);
         if (is_array($configurableParents) && !empty($configurableParents)) {
             $set = array_merge($set, $configurableParents);
         }
 
-        $groupedParents = $groupedType->getParentIdsByChild($productId);
+        $groupedParents = $this->groupedType->getParentIdsByChild($productId);
         if (is_array($groupedParents) && !empty($groupedParents)) {
             $set = array_merge($set, $groupedParents);
         }
 
         $set[] = $productId;
 
-        return array_unqiue($set);
+        return array_unique($set);
     }
 
     public function createSqliteConnection($path)

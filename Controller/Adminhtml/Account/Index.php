@@ -23,7 +23,7 @@ namespace Codisto\Connect\Controller\Adminhtml\Account;
 
 class Index extends \Codisto\Connect\Controller\Adminhtml\CodistoController
 {
-    public $view = 'account';
-    public $breadCrumb = 'Account';
-    public $frameUrl = 'codisto/ebaytab/account';
+    protected $view = 'account';
+    protected $breadCrumb = 'Account';
+    protected $frameUrl = 'codisto/ebaytab/account';
 }

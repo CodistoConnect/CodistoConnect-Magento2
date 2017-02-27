@@ -35,4 +35,22 @@
 			<table name="cataloginventory_stock_item" entity_column="product_id" />
 		</subscriptions>
 	</view>
+	<view id="codisto_index_category_store" class="Codisto\Connect\Model\Indexer\Categories" group="indexer">
+		<subscriptions>
+			<table name="catalog_category_entity" entity_column="entity_id" />
+			<table name="catalog_category_entity_datetime" entity_column="entity_id" />
+			<table name="catalog_category_entity_decimal" entity_column="entity_id" />
+			<table name="catalog_category_entity_int" entity_column="entity_id" />
+			<table name="catalog_category_entity_text" entity_column="entity_id" />
+			<table name="catalog_category_entity_varchar" entity_column="entity_id" />
+		</subscriptions>
+	</view>
+	<view id="codisto_index_order_store" class="Codisto\Connect\Model\Indexer\Orders" group="indexer">
+		<subscriptions>
+			<table name="sales_order" entity_column="entity_id" />
+			<table name="sales_invoice" entity_column="order_id" />
+			<table name="sales_shipment" entity_column="order_id" />
+			<table name="sales_shipment_track" entity_column="order_id" />
+		</subscriptions>
+	</view>
 </config>

@@ -23,7 +23,7 @@ namespace Codisto\Connect\Controller\Adminhtml\Import;
 
 class Index extends \Codisto\Connect\Controller\Adminhtml\CodistoController
 {
-    public $view = 'import';
-    public $breadCrumb = 'Import Listings';
-    public $frameUrl = 'codisto/ebaytab/importlistings';
+    protected $view = 'import';
+    protected $breadCrumb = 'Import Listings';
+    protected $frameUrl = 'codisto/ebaytab/importlistings';
 }

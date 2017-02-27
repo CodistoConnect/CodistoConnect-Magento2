@@ -106,7 +106,7 @@ class Index extends \Magento\Framework\App\Action\Action
 
         switch ($server['HTTP_X_ACTION']) {
             case 'GET':
-                if ($this->checkHash($store, $server)) {
+                if ($this->_checkHash($store, $server)) {
                     if ($request->getQuery('first')) {
                         $syncDb = $this->codistoHelper->getSyncPath('sync-first-'.$storeId.'.db');
                     } else {
@@ -269,14 +269,14 @@ class Index extends \Magento\Framework\App\Action\Action
                 }
                 break;
             case 'PRODUCTCOUNT':
-                if ($this->checkHash($store, $server)) {
+                if ($this->_checkHash($store, $server)) {
                     return $this->_sendJsonResponse(200, 'OK', $this->sync->productTotals($storeId));
                 } else {
                     return $this->_sendSecurityError();
                 }
                 break;
             case 'EXECUTEFIRST':
-                if ($this->checkHash($store, $server)) {
+                if ($this->_checkHash($store, $server)) {
                     try {
                         $result = 'error';
 
@@ -340,8 +340,10 @@ class Index extends \Magento\Framework\App\Action\Action
                     return $this->_sendSecurityError();
                 }
                 break;
+
+            case 'EXECUTEINCREMENT':
             case 'EXECUTECHUNK':
-                if ($this->checkHash($store, $server)) {
+                if ($this->_checkHash($store, $server)) {
                     try {
                         $result = 'error';
 
@@ -429,7 +431,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 }
                 break;
             case 'PULL':
-                if ($this->checkHash($store, $server)) {
+                if ($this->_checkHash($store, $server)) {
                     try {
                         $syncDb = $this->codistoHelper->getSyncPath('sync-'.$storeId.'.db');
 
@@ -539,7 +541,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 }
                 break;
             case 'TAX':
-                if ($this->checkHash($store, $server)) {
+                if ($this->_checkHash($store, $server)) {
                     try {
                         $syncDb = $this->codistoHelper->getSyncPath('sync-'.$storeId.'.db');
 
@@ -575,7 +577,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 }
                 break;
             case 'STOREVIEW':
-                if ($this->checkHash($store, $server)) {
+                if ($this->_checkHash($store, $server)) {
                     try {
                         $syncDb = $this->codistoHelper->getSyncPath('sync-'.$storeId.'.db');
 
@@ -608,7 +610,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 }
                 break;
             case 'ORDERS':
-                if ($this->checkHash($store, $server)) {
+                if ($this->_checkHash($store, $server)) {
                     try {
                         $syncDb = $this->codistoHelper->getSyncPath('sync-'.$storeId.'.db');
 
@@ -648,7 +650,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 }
                 break;
             case 'TEMPLATE':
-                if ($this->checkHash($store, $server)) {
+                if ($this->_checkHash($store, $server)) {
                     try {
                         if ($request->isGet()) {
                             $merchantid = (int)$request->getQuery('merchantid');

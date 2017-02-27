@@ -19,12 +19,9 @@
  * @link      https://codisto.com/connect/
  */
 
-namespace Codisto\Connect\Observer;
+namespace Codisto\Connect\Model\Indexer;
 
-use Magento\Framework\Event\ObserverInterface;
-use Magento\Framework\Event\Observer as EventObserver;
-
-class CatalogCategorySaveObserver implements ObserverInterface
+class Marketplace implements \Magento\Framework\Indexer\ActionInterface, \Magento\Framework\Mview\ActionInterface
 {
     private $codistoHelper;
 
@@ -34,17 +31,27 @@ class CatalogCategorySaveObserver implements ObserverInterface
         $this->codistoHelper = $codistoHelper;
     }
 
-    public function execute(EventObserver $observer)
+    public function execute($ids)
     {
-        $category = $observer->getEvent()->getCategory();
-        $categoryId = $category->getId();
-        $storeId = $category->getStoreId();
+        $this->codistoHelper
+        $ids;
+    }
 
-        $merchants = $this->codistoHelper->syncMerchantsFromStoreId($storeId);
+    public function executeFull()
+    {
+        $merchants = $this->codistoHelper->syncAllMerchants();
         if (!empty($merchants)) {
-            $this->codistoHelper->signal($merchants, 'action=sync&categoryid='.$categoryId);
+            $this->codistoHelper->signal($merchants, 'action=sync');
         }
+    }
 
-        return $this;
+    public function executeList(array $ids)
+    {
+        $ids;
+    }
+
+    public function executeRow($id)
+    {
+        $id;
     }
 }

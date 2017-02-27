@@ -23,7 +23,7 @@ namespace Codisto\Connect\Controller\Adminhtml\Attributes;
 
 class Index extends \Codisto\Connect\Controller\Adminhtml\CodistoController
 {
-    public $view = 'attributes';
-    public $breadCrumb = 'Attributes';
-    public $frameUrl = 'codisto/ebaytab/attributemapping';
+    protected $view = 'attributes';
+    protected $breadCrumb = 'Attributes';
+    protected $frameUrl = 'codisto/ebaytab/attributemapping';
 }
