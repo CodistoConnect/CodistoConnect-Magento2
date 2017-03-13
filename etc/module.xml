@@ -2,7 +2,7 @@
 <!--
 
 /**
- * Codisto eBay Sync Extension
+ * Codisto Marketplace Connect Sync Extension
  *
  * NOTICE OF LICENSE
  *
@@ -14,14 +14,14 @@
  * obtain it through the world-wide-web, please send an email
  * to license@magentocommerce.com so we can send you a copy immediately.
  *
- * @category    Codisto
- * @package     codisto/codisto-connect
- * @copyright   Copyright (c) 2016 On Technology Pty. Ltd. (http://codisto.com/)
- * @license     http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ * @package   Codisto_Connect
+ * @copyright 2016-2017 On Technology Pty. Ltd. (http://codisto.com/)
+ * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ * @link      https://codisto.com/connect/
  */
 
 -->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../../../../lib/internal/Magento/Framework/Module/etc/module.xsd">
-	<module name="Codisto_Connect" schema_version="0" active="true" setup_version="1.90.22">
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Module/etc/module.xsd">
+	<module name="Codisto_Connect" schema_version="0" active="true" setup_version="1.90.26">
 	</module>
 </config>
