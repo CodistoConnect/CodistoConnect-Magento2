@@ -20,7 +20,7 @@
  */
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Mview/etc/mview.xsd">
-	<view id="codisto_index_store" class="Codisto\Connect\Model\Indexer\Marketplace" group="indexer">
+	<view id="codisto_index_product" class="Codisto\Connect\Model\Indexer\Marketplace" group="indexer">
 		<subscriptions>
 			<table name="catalog_product_entity" entity_column="entity_id" />
 			<table name="catalog_product_entity_datetime" entity_column="entity_id" />
@@ -35,7 +35,7 @@
 			<table name="cataloginventory_stock_item" entity_column="product_id" />
 		</subscriptions>
 	</view>
-	<view id="codisto_index_category_store" class="Codisto\Connect\Model\Indexer\Categories" group="indexer">
+	<view id="codisto_index_category" class="Codisto\Connect\Model\Indexer\Marketplace" group="indexer">
 		<subscriptions>
 			<table name="catalog_category_entity" entity_column="entity_id" />
 			<table name="catalog_category_entity_datetime" entity_column="entity_id" />
@@ -45,7 +45,7 @@
 			<table name="catalog_category_entity_varchar" entity_column="entity_id" />
 		</subscriptions>
 	</view>
-	<view id="codisto_index_order_store" class="Codisto\Connect\Model\Indexer\Orders" group="indexer">
+	<view id="codisto_index_order" class="Codisto\Connect\Model\Indexer\Marketplace" group="indexer">
 		<subscriptions>
 			<table name="sales_order" entity_column="entity_id" />
 			<table name="sales_invoice" entity_column="order_id" />

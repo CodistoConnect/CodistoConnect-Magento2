@@ -271,6 +271,7 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
         $remoteUrl = $this->_getRemoteURL($request, $path, $adminPath, $merchant['merchantid']);
 
         $codistoModule = $this->moduleList->getOne('Codisto_Connect');
+
         $codistoVersion = $codistoModule['setup_version'];
 
         $curlOptions = [ CURLOPT_TIMEOUT => 60, CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_0 ];

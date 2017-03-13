@@ -36,9 +36,12 @@ class CodistoController extends \Magento\Backend\App\Action
     private $json;
     private $session;
 
-    protected $view;
-    protected $breadCrumb;
-    protected $frameUrl;
+    // protected class members used here so that the only
+    // thing needed in each of the descendant controllers
+    // is overriding of the member variables
+    protected $view;        // @codingStandardsIgnoreLine
+    protected $breadCrumb;  // @codingStandardsIgnoreLine
+    protected $frameUrl;    // @codingStandardsIgnoreLine
 
     public function __construct(
         \Magento\Backend\App\Action\Context $context,
@@ -102,7 +105,8 @@ class CodistoController extends \Magento\Backend\App\Action
 
                 $curlOptions = [CURLOPT_TIMEOUT => 60, CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_0];
 
-                $client = new \Zend_Http_Client(
+                // impossible to use the object manager because di on non-namespaced classes is broken
+                $client = new \Zend_Http_Client( // @codingStandardsIgnoreLine MEQP2.Classes.ObjectInstantiation.FoundDirectInstantiation
                     'https://ui.codisto.com/create',
                     [
                         'adapter' => 'Zend_Http_Client_Adapter_Curl',
@@ -192,7 +196,8 @@ class CodistoController extends \Magento\Backend\App\Action
         } else {
             $curlOptions = [ CURLOPT_TIMEOUT => 60, CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_0 ];
 
-            $client = new \Zend_Http_Client(
+            // impossible to use the object manager because di on non-namespaced classes is broken
+            $client = new \Zend_Http_Client( // @codingStandardsIgnoreLine MEQP2.Classes.ObjectInstantiation.FoundDirectInstantiation
                 'https://ui.codisto.com/create',
                 [
                     'adapter' => 'Zend_Http_Client_Adapter_Curl',
@@ -286,7 +291,8 @@ class CodistoController extends \Magento\Backend\App\Action
         return $page;
     }
 
-    protected function _isAllowed()
+    // using protected as it's an override from Magento core
+    protected function _isAllowed() // @codingStandardsIgnoreLine MEQP2.PHP.ProtectedClassMember.FoundProtected
     {
         return $this->_authorization->isAllowed('Codisto_Connect::'.$this->view);
     }

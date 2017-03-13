@@ -23,7 +23,9 @@ namespace Codisto\Connect\Controller\Adminhtml\Import;
 
 class Index extends \Codisto\Connect\Controller\Adminhtml\CodistoController
 {
+    // @codingStandardsIgnoreStart
     protected $view = 'import';
     protected $breadCrumb = 'Import Listings';
     protected $frameUrl = 'codisto/ebaytab/importlistings';
+    // @codingStandardsIgnoreEnd
 }

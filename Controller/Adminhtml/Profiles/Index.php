@@ -23,7 +23,9 @@ namespace Codisto\Connect\Controller\Adminhtml\Profiles;
 
 class Index extends \Codisto\Connect\Controller\Adminhtml\CodistoController
 {
+    // @codingStandardsIgnoreStart
     protected $view = 'profiles';
     protected $breadCrumb = 'Profiles';
     protected $frameUrl = 'codisto/profiles';
+    // @codingStandardsIgnoreEnd
 }

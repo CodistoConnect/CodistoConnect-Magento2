@@ -19,7 +19,7 @@
  * @link      https://codisto.com/connect/
  */
 
-namespace Codisto\Connect\Controller;
+namespace Codisto\Connect\Router;
 
 class Router implements \Magento\Framework\App\RouterInterface
 {
@@ -35,7 +35,7 @@ class Router implements \Magento\Framework\App\RouterInterface
     }
 
     // this is a public method of the RouterInterface
-    public function match(\Magento\Framework\App\RequestInterface $request) // @codingStandardsIgnoreLine MEQP2.Classes.PublicNonInterfaceMethods.PublicMethodFound
+    public function match(\Magento\Framework\App\RequestInterface $request)
     {
         $adminUrl = $this->backendHelper->getAreaFrontName();
 

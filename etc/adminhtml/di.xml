@@ -26,7 +26,7 @@
 		<arguments>
 			<argument name="routerList" xsi:type="array">
 				<item name="codisto_router" xsi:type="array">
-					<item name="class" xsi:type="string">Codisto\Connect\Controller\Router</item>
+					<item name="class" xsi:type="string">Codisto\Connect\Router\Router</item>
 					<item name="disable" xsi:type="boolean">false</item>
 					<item name="sortOrder" xsi:type="string">1</item>
 				</item>

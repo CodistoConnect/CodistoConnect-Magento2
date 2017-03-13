@@ -23,7 +23,9 @@ namespace Codisto\Connect\Controller\Adminhtml\Categories;
 
 class Index extends \Codisto\Connect\Controller\Adminhtml\CodistoController
 {
+    // @codingStandardsIgnoreStart
     protected $view = 'categories';
     protected $breadCrumb = 'Categories';
     protected $frameUrl = 'codisto/ebaytab/categories';
+    // @codingStandardsIgnoreEnd
 }

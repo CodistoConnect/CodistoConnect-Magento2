@@ -42,6 +42,20 @@ class TestHash extends \Magento\Framework\App\Action\Action
         $this->codistoHelper = $codistoHelper;
     }
 
+    private function _createResponse($statusCode, $result)
+    {
+        $rawResult = $this->context->getResultFactory()->create(
+            \Magento\Framework\Controller\ResultFactory::TYPE_RAW
+        );
+        $rawResult->setHttpResponseCode($statusCode);
+        $rawResult->setHeader('Cache-Control', 'no-cache', true);
+        $rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
+        $rawResult->setHeader('Pragma', 'no-cache', true);
+        $rawResult->setHeader('Content-Type', 'text/plain');
+        $rawResult->setContents($result);
+        return $rawResult;
+    }
+
     public function execute()
     {
         $request = $this->getRequest();
@@ -54,42 +68,17 @@ class TestHash extends \Magento\Framework\App\Action\Action
         $codistoVersion = $codistoModule['setup_version'];
 
         if (!$this->codistoHelper->getConfig($storeId)) {
-            $rawResult = $this->context->getResultFactory()->create(
-                \Magento\Framework\Controller\ResultFactory::TYPE_RAW
-            );
-            $rawResult->setHttpResponseCode(400);
-            $rawResult->setHeader('Cache-Control', 'no-cache', true);
-            $rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-            $rawResult->setHeader('Pragma', 'no-cache', true);
-            $rawResult->setHeader('Content-Type', 'text/plain');
-            $rawResult->setContents('Config Error');
-            return $rawResult;
+            return $this->_createResponse(400, 'Config Error');
         }
 
         $store = $this->storeManager->getStore($storeId);
 
         if ($this->codistoHelper->checkRequestHash($store->getConfig('codisto/hostkey'), $server)) {
-            $rawResult = $this->context->getResultFactory()->create(
-                \Magento\Framework\Controller\ResultFactory::TYPE_RAW
-            );
-            $rawResult->setHttpResponseCode(200);
-            $rawResult->setHeader('Cache-Control', 'no-cache', true);
-            $rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-            $rawResult->setHeader('Pragma', 'no-cache', true);
-            $rawResult->setHeader('X-Codisto-Version', $codistoVersion, true);
-            $rawResult->setContents('OK');
-            return $rawResult;
+            $result = $this->_createResponse(200, 'OK');
+            $result->setHeader('X-Codisto-Version', $codistoVersion, true);
+            return $result;
         } else {
-            $rawResult = $this->context->getResultFactory()->create(
-                \Magento\Framework\Controller\ResultFactory::TYPE_RAW
-            );
-            $rawResult->setHttpResponseCode(400);
-            $rawResult->setHeader('Cache-Control', 'no-cache', true);
-            $rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-            $rawResult->setHeader('Pragma', 'no-cache', true);
-            $rawResult->setHeader('Content-Type', 'text/plain');
-            $rawResult->setContents('Security Error');
-            return $rawResult;
+            return $this->_createResponse(400, 'Security Error');
         }
     }
 }

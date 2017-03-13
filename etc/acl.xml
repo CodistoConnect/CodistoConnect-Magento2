@@ -26,8 +26,14 @@
 		<resources>
 			<resource id="Magento_Backend::admin">
 				<resource id="Magento_Backend::marketing">
-					<resource id="Codisto_Connect::ebay" title="eBay | Codisto" sortOrder="10" >
-						<resource id="Codisto_Connect::listings" title="Listings" sortOrder="40" />
+					<resource id="Codisto_Connect::marketplaces" title="Marketplaces | Codisto" sortOrder="10" >
+						<resource id="Codisto_Connect::listings" title="Marketplace Listings" sortOrder="40" />
+						<resource id="Codisto_Connect::orders" title="Marketplace Orders" sortOrder="50"/>
+						<resource id="Codisto_Connect::attributes" title="Attribute Mapping" sortOrder="60"/>
+						<resource id="Codisto_Connect::categories" title="eBay Store Categories" sortOrder="70"/>
+						<resource id="Codisto_Connect::import" title="Link eBay Listings" sortOrder="80"/>
+						<resource id="Codisto_Connect::settings" title="Settings" sortOrder="90"/>
+						<resource id="Codisto_Connect::account" title="Account" sortOrder="100"/>
 					</resource>
 				</resource>
 			</resource>

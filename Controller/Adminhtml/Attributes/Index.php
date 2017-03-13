@@ -23,7 +23,9 @@ namespace Codisto\Connect\Controller\Adminhtml\Attributes;
 
 class Index extends \Codisto\Connect\Controller\Adminhtml\CodistoController
 {
+    // @codingStandardsIgnoreStart
     protected $view = 'attributes';
     protected $breadCrumb = 'Attributes';
     protected $frameUrl = 'codisto/ebaytab/attributemapping';
+    // @codingStandardsIgnoreEnd
 }

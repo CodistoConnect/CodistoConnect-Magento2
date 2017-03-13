@@ -23,7 +23,9 @@ namespace Codisto\Connect\Controller\Adminhtml\Settings;
 
 class Index extends \Codisto\Connect\Controller\Adminhtml\CodistoController
 {
+    // @codingStandardsIgnoreStart
     protected $view = 'settings';
     protected $breadCrumb = 'Settings';
     protected $frameUrl = 'codisto/settings';
+    // @codingStandardsIgnoreEnd
 }
