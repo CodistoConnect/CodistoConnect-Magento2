@@ -46,6 +46,7 @@ class Calc extends \Magento\Framework\App\Action\Action
         \Magento\Catalog\Model\Product $product,
         \Magento\Checkout\Model\Session\Proxy $session,
         \Magento\Shipping\Model\Shipment\RequestFactory $shipmentRequestFactory,
+        \Magento\Customer\Model\Visitor $visitor,
         \Magento\Shipping\Model\Shipping $shipping
     ) {
         parent::__construct($context);
@@ -62,6 +63,8 @@ class Calc extends \Magento\Framework\App\Action\Action
         $this->shipping = $shipping;
 
         $this->pickupRegex = '/(?:^|\W|_)pick\s*up(?:\W|_|$)/i';
+
+        $visitor->setSkipRequestLogging(true);
     }
 
     private function _storeId()

@@ -42,6 +42,7 @@ class Index extends \Magento\Framework\App\Action\Action
         \Magento\Framework\Json\Helper\Data $json,
         \Magento\Framework\Filesystem\Io\File $file,
         \Magento\Framework\App\Response\Http\FileFactory $fileFactory,
+        \Magento\Customer\Model\Visitor $visitor,
         \Codisto\Connect\Helper\Data $codistoHelper,
         \Codisto\Connect\Model\Sync $sync
     ) {
@@ -55,6 +56,8 @@ class Index extends \Magento\Framework\App\Action\Action
         $this->fileFactory = $fileFactory;
         $this->codistoHelper = $codistoHelper;
         $this->sync = $sync;
+
+        $visitor->setSkipRequestLogging(true);
     }
 
     private function _storeId($request)
