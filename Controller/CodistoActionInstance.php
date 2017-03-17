@@ -203,14 +203,30 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
         $config = $this->configFactory->create();
 
         $storeViewMapping = $this->json->jsonDecode($storeviewmap);
+
+        $mappedStores = [];
+
         foreach ($storeViewMapping as $mapping) {
             $storeId = $mapping['storeid'];
-            $merchantList = $mapping['merchants'];
+
+            if (count($mapping['merchants']) == 1) { // @codingStandardsIgnoreLine
+                $merchantList = (string)$mapping['merchants'][0];
+            } else {
+                $merchantList = $this->json->jsonEncode($mapping['merchants']);
+            }
 
             if ($storeId == 0) {
                 $config->saveConfig('codisto/merchantid', $merchantList, 'default', 0);
             } else {
                 $config->saveConfig('codisto/merchantid', $merchantList, 'stores', $storeId);
+            }
+
+            $mappedStores[] = $storeId;
+        }
+
+        foreach ($this->storeManager->getStores(true) as $store) {
+            if (!isset($mappedStores[$store->getId()])) {
+                $config->deleteConfig('codisto/merchantid', 'stores', $store->getId());
             }
         }
 
