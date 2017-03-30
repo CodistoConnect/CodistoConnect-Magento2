@@ -2030,7 +2030,7 @@ class Sync
 
         $data = [];
         $data[] = $productId;
-        $data[] = $type = 'configurable' ? 'c' : ($type == 'grouped' ? 'g' : ($type == 'virtual' ? 'v' : 's'));
+        $data[] = $type == 'configurable' ? 'c' : ($type == 'grouped' ? 'g' : ($type == 'virtual' ? 'v' : 's'));
         $data[] = $productData['sku'];
         $data[] = $productName;
         $data[] = $price;
@@ -4128,7 +4128,7 @@ class Sync
         } catch (\Exception $e) {
             $db->exec('ALTER TABLE [Order] ADD COLUMN ExternalReference text NOT NULL DEFAULT \'\'');
         }
-        
+
         try {
             $db->exec('SELECT 1 FROM [Order] WHERE MerchantID IS NULL LIMIT 1');
         } catch (\Exception $e) {
