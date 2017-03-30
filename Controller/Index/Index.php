@@ -86,6 +86,7 @@ class Index extends \Magento\Framework\App\Action\Action
         \Magento\Sales\Api\InvoiceManagementInterface $orderService,
         \Magento\CatalogInventory\Api\StockManagementInterface $stockManagement,
         \Magento\CatalogInventory\Observer\ItemsForReindex $itemsForReindex,
+        \Magento\Customer\Model\Visitor $visitor,
         \Codisto\Connect\Helper\Data $codistoHelper
     ) {
         parent::__construct($context);
@@ -120,6 +121,8 @@ class Index extends \Magento\Framework\App\Action\Action
         $this->stockManagement = $stockManagement;
         $this->itemsForReindex = $itemsForReindex;
         $this->codistoHelper = $codistoHelper;
+
+        $visitor->setSkipRequestLogging(true);
     }
 
     private function _storeId($storeId)
