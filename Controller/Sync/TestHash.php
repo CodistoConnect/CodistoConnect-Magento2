@@ -32,6 +32,7 @@ class TestHash extends \Magento\Framework\App\Action\Action
         \Magento\Framework\App\Action\Context $context,
         \Magento\Framework\Module\ModuleListInterface $moduleList,
         \Magento\Store\Model\StoreManager $storeManager,
+        \Magento\Customer\Model\Visitor $visitor,
         \Codisto\Connect\Helper\Data $codistoHelper
     ) {
         parent::__construct($context);
@@ -40,6 +41,8 @@ class TestHash extends \Magento\Framework\App\Action\Action
         $this->moduleList = $moduleList;
         $this->storeManager = $storeManager;
         $this->codistoHelper = $codistoHelper;
+
+        $visitor->setSkipRequestLogging(true);
     }
 
     private function _createResponse($statusCode, $result)
