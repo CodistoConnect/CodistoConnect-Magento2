@@ -1358,7 +1358,7 @@ class Sync
                         $baseImageFound = true;
                     } else {
                         $imageData['sequence'] += $baseSequence;
-                        $maxSequence = max($sequence, $maxSequence);
+                        $maxSequence = max($imageData['sequence'], $maxSequence);
                     }
 
                     $insertImageSQL->execute(
@@ -1381,7 +1381,7 @@ class Sync
         }
     }
 
-    private function _syncProductRelatedProducts($product, $args)
+    private function _syncProductRelatedProducts($product, $productId, $args)
     {
         $insertRelatedSQL = $args['preparedproductrelatedStatement'];
 
@@ -2064,7 +2064,7 @@ class Sync
         $this->_syncProductImages($storeId, $product, $productId, $type, $productData, $args, $parentids);
 
         // process related products
-        $this->_syncProductRelatedProducts($product, $args);
+        $this->_syncProductRelatedProducts($product, $productId, $args);
 
         // process simple product question/answers
         $this->_syncProductQuestions($product, $productId, $args);
