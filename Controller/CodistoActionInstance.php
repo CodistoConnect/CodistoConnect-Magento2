@@ -245,6 +245,70 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
         return $response;
     }
 
+    private function _errorResponse($response, $e)
+    {
+        // set proxied status and headers
+        $response->setHttpResponseCode(500);
+        $response->setHeader('Pragma', 'no-cache', true);
+        $response->setHeader('Cache-Control', 'no-cache', true);
+
+        $response->setContents(
+            '<!DOCTYPE html>'.
+            '<html>'.
+            '<head>'.
+                '<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:500,900,700,400" type="text/css"/>'.
+                '<style>'.
+                'BODY { font-family: Roboto;
+                        padding: 0;
+                        margin: 0;
+                        background-color: #fff; } '.
+                'H1 { background-color: #1565C0;
+                    color: #fff;
+                    padding: 12px;
+                    margin-top: 0;
+                    margin-bottom: 16px;
+                    box-shadow: -2px 0 8px rgba(0,0,0,0.5); '.
+                '} '.
+                'A.retry { font-size: 14px; '.
+                    'border: 1px solid #3333ee; '.
+                    'padding: 8px; '.
+                    'border-radius: 3px; '.
+                    'background-color: #4444ff; '.
+                    'color: #fff; '.
+                    'text-shadow: 0px 0px 10px rgba(255,255,255,0.5); '.
+                    'display: inline-block; '.
+                    'margin-left: 8px; '.
+                    'text-decoration: none; '.
+                    'box-shadow: 0px 0px 3px rgba(0,0,0,0.2); '.
+                    'min-width: 40px; '.
+                    'text-align: center; '.
+                    'margin-top: 6px;'.
+                '} '.
+                'P.error { margin-left: 8px; margin-right: 8px;} '.
+                'P.resolve { margin-left: 12px; margin-right: 12px; }'.
+                'P.detail { margin-left: 8px; font-size: 12px; color: #666; }'.
+                '</style>'.
+                '<script>'.
+                'document.addEventListener("DOMContentLoaded", function() { '.
+                    'document.getElementsByClassName("retry")[0].addEventListener("click", function(e) { '.
+                        'document.location.reload(); '.
+                        'e.preventDefault(); '.
+                    '}); '.
+                '});'.
+                '</script>'.
+            '</head>'.
+            '<body>'.
+                '<h1>Communications Error</h1>'.
+                '<p class="error">There was an error communicating with <a href="https://ui.codisto.com/" target="_blank">https://ui.codisto.com/</a></p>'.
+                '<p class="resolve">Check outbound firewall rules and connectivity from your server to port 443 on ui.codisto.com</p>'.
+                '<p class="detail">'.htmlspecialchars($e->getMessage()).'</p>'.
+                '<a class="retry" href="#">Retry</a>'.
+            '</body>'.
+            '</html>');
+
+        return $response;
+    }
+
     public function dispatch(\Magento\Framework\App\RequestInterface $request)
     {
         $request->setDispatched(true);
@@ -304,19 +368,24 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
             ]
         );
 
-        $remoteResponse = $this->_proxyRequest(
-            $request,
-            $client,
-            [
-                'X-Admin-Base-Url' => $adminBaseURL,
-                'X-Codisto-Version' => $codistoVersion,
-                'X-HostKey' => $merchant['hostkey']
-            ]
-        );
-
         $response = $this->rawResponseFactory->create();
 
-        return $this->_proxyResponse($response, $remoteResponse, $acceptEncoding);
+        try {
+            $remoteResponse = $this->_proxyRequest(
+                $request,
+                $client,
+                [
+                    'X-Admin-Base-Url' => $adminBaseURL,
+                    'X-Codisto-Version' => $codistoVersion,
+                    'X-HostKey' => $merchant['hostkey']
+                ]
+            );
+
+            return $this->_proxyResponse($response, $remoteResponse, $acceptEncoding);
+        } catch (\Exception $e) {
+
+            return $this->_errorResponse($response, $e);
+        }
     }
 
     private function _getAllHeaders($request, $extra = false)

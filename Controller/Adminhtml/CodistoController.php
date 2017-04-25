@@ -124,7 +124,7 @@ class CodistoController extends \Magento\Backend\App\Action
                     $this->json->jsonEncode(
                         [
                             'type' => 'magento',
-                             'version' => $this->productMetaData->getVersion(),
+                            'version' => $this->productMetaData->getVersion(),
                             'url' => $store->getBaseUrl(),
                             'email' => $request->getPost('email'),
                             'storename' => $storeName,
@@ -161,7 +161,7 @@ class CodistoController extends \Magento\Backend\App\Action
                 $store = $this->storeManager->getStore();
 
                 $type = 'magento';
-                $version = \Magento\Framework\AppInterface::VERSION;
+                $version = $this->productMetaData->getVersion();
                 $url = $store->getBaseUrl();
                 $storeName = $store->getWebsite()->getName();
                 $storeInfo = $this->scopeConfig->getValue(
