@@ -256,7 +256,8 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
             '<!DOCTYPE html>'.
             '<html>'.
             '<head>'.
-                '<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:500,900,700,400" type="text/css"/>'.
+                '<link rel="stylesheet" '.
+                'href="https://fonts.googleapis.com/css?family=Roboto:500,900,700,400" type="text/css"/>'.
                 '<style>'.
                 'BODY { font-family: Roboto;
                         padding: 0;
@@ -299,12 +300,15 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
             '</head>'.
             '<body>'.
                 '<h1>Communications Error</h1>'.
-                '<p class="error">There was an error communicating with <a href="https://ui.codisto.com/" target="_blank">https://ui.codisto.com/</a></p>'.
-                '<p class="resolve">Check outbound firewall rules and connectivity from your server to port 443 on ui.codisto.com</p>'.
+                '<p class="error">There was an error communicating with '.
+                '<a href="https://ui.codisto.com/" target="_blank">https://ui.codisto.com/</a></p>'.
+                '<p class="resolve">Check outbound firewall rules and connectivity '.
+                'from your server to port 443 on ui.codisto.com</p>'.
                 '<p class="detail">'.htmlspecialchars($e->getMessage()).'</p>'.
                 '<a class="retry" href="#">Retry</a>'.
             '</body>'.
-            '</html>');
+            '</html>'
+        );
 
         return $response;
     }
@@ -383,7 +387,6 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
 
             return $this->_proxyResponse($response, $remoteResponse, $acceptEncoding);
         } catch (\Exception $e) {
-
             return $this->_errorResponse($response, $e);
         }
     }
