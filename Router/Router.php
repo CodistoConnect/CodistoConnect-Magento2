@@ -43,14 +43,14 @@ class Router implements \Magento\Framework\App\RouterInterface
 
         if (preg_match(
             '/^\/'.preg_quote($adminUrl, '/').'\/codisto\/'.
-            '(?!listings\/index\/|'.
-            'orders\/index\/|'.
-            'categories\/index\/|'.
-            'attributes\/index|'.
-            'profiles\/index|'.
-            'import\/index|'.
-            'settings\/index|'.
-            'account\/index)/',
+            '(?!listings(?:\/index(?:\/|\?))?|'.
+            'orders(?:\/index(?:\/|\?))?|'.
+            'categories(?:\/index(?:\/|\?))?|'.
+            'attributes(?:\/index(?:\/|\?))?|'.
+            'profiles(?:\/index(?:\/|\?))?|'.
+            'import(?:\/index(?:\/|\?))?|'.
+            'settings(?:\/index(?:\/|\?))?|'.
+            'account(?:\/index(?:\/|\?))?)/',
             $path
         )) {
             return $this->actionFactory->create();
