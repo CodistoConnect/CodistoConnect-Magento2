@@ -113,7 +113,7 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
         $request;
 
         $matches = [];
-        $merchantIDFromPath;
+        $merchantIDFromPath = '';
 
         preg_match('/\/'.preg_quote($adminPath, '/').'\/codisto\/(?:ebaytab\/)?(\d+)\//', $path, $matches);
 
@@ -136,10 +136,12 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
         }
         $merchantID = $this->json->jsonDecode($merchantID);
         if (is_array($merchantID)) {
-            foreach ($merchantID as $targetMerchant) {
-                if ($targetMerchant == $merchantIDFromPath) {
-                    $merchantID = $targetMerchant;
-                    break;
+            if ($merchantIDFromPath) {
+                foreach ($merchantID as $targetMerchant) {
+                    if ($targetMerchant == $merchantIDFromPath) {
+                        $merchantID = $targetMerchant;
+                        break;
+                    }
                 }
             }
 
