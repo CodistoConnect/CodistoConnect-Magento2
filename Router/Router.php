@@ -49,7 +49,7 @@ class Router implements \Magento\Framework\App\RouterInterface
             'attributes(?:\/index(?:\/|\?))?|'.
             'profiles(?:\/index(?:\/|\?))?|'.
             'import(?:\/index(?:\/|\?))?|'.
-            'settings(?:\/index(?:\/|\?))?|'.
+            'settings\/index(?:\/index(?:\/|\?))?|'.
             'account(?:\/index(?:\/|\?))?)/',
             $path
         )) {
