@@ -111,8 +111,15 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
     private function _getMerchantFromRequest($request, $path, $adminPath, $storeId)
     {
         $request;
-        $path;
-        $adminPath;
+
+        $matches = [];
+        $merchantIDFromPath = '';
+
+        preg_match('/\/'.preg_quote($adminPath, '/').'\/codisto\/(?:ebaytab\/)?(\d+)\//', $path, $matches);
+
+        if (is_array($matches) && count($matches) == 2) {
+            $merchantIDFromPath = $matches[1];
+        }
 
         if ($storeId == 0) {
             $merchantID = $this->scopeConfig->getValue(
@@ -129,7 +136,18 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
         }
         $merchantID = $this->json->jsonDecode($merchantID);
         if (is_array($merchantID)) {
-            $merchantID = $merchantID[0];
+            if ($merchantIDFromPath) {
+                foreach ($merchantID as $targetMerchant) {
+                    if ($targetMerchant == $merchantIDFromPath) {
+                        $merchantID = $targetMerchant;
+                        break;
+                    }
+                }
+            }
+
+            if (is_array($merchantID)) {
+                $merchantID = $merchantID[0];
+            }
         }
 
         $hostKey = $this->scopeConfig->getValue(
