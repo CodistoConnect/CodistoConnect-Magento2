@@ -2122,20 +2122,26 @@ class Sync
 
         if ($path) {
             //Invoice and Packing Slip image location isn't accessible from frontend place into DB
-            $data = file_get_contents($path); // @codingStandardsIgnoreLine
-            $base64 = base64_encode($data);
+            $data = @file_get_contents($path); // @codingStandardsIgnoreLine
+            if ($data) {
+                $base64 = base64_encode($data);
 
-            $config['logobase64'] = $base64;
-            //still stuff url in so we can get the MIME type to determine extra conversion on the other side
-            $config['logourl'] = $path;
-        } else {
+                $config['logobase64'] = $base64;
+                //still stuff url in so we can get the MIME type to determine extra conversion on the other side
+                $config['logourl'] = $path;
+
+                $data = null;
+            }
+        }
+
+        if (!isset($config['logobase64'])) {
             $logo_src = $store->getConfig('design/header/logo_src');
             if ($logo_src) {
                 $logoUploadFolder= \Magento\Config\Model\Config\Backend\Image\Logo::UPLOAD_DIR;
                 $logoPath = $logoUploadFolder . '/' . $logo_src;
 
                 $config['logourl'] = $this->urlBuilder
-                ->getBaseUrl(['_type' => \Magento\Framework\UrlInterface::URL_TYPE_MEDIA]) . $logoPath;
+                    ->getBaseUrl(['_type' => \Magento\Framework\UrlInterface::URL_TYPE_MEDIA]) . $logoPath;
             }
         }
 
