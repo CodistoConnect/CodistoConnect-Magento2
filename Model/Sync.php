@@ -2114,12 +2114,12 @@ class Sync
 
         $path = null;
         if ($imagepdf) {
-            $path = $store->getBaseMediaDir() . '/sales/store/logo/' . $imagepdf;
+            $path = $this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::MEDIA). '/sales/store/logo/' . $imagepdf;
         }
         if ($imagehtml) {
-            $path = $store->getBaseMediaDir() . '/sales/store/logo_html/' . $imagehtml;
+            $path = $this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::MEDIA). '/sales/store/logo_html/' . $imagehtml;
         }
-
+        
         if ($path) {
             //Invoice and Packing Slip image location isn't accessible from frontend place into DB
             $data = @file_get_contents($path); // @codingStandardsIgnoreLine
