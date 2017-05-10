@@ -227,7 +227,7 @@ class Sync
             $insert = $db->prepare('INSERT OR IGNORE INTO File(Name, Content, LastModified) VALUES (?, ?, ?)');
             $update = $db->prepare('UPDATE File SET Content = ?, Changed = -1 WHERE Name = ? AND LastModified != ?');
 
-            $filelist = $this->_fileInDir($ebayDesignDir);
+            $filelist = $this->_filesInDir($ebayDesignDir);
 
             $db->exec('BEGIN EXCLUSIVE TRANSACTION');
 
@@ -2119,7 +2119,7 @@ class Sync
         if ($imagehtml) {
             $path = $this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::MEDIA). '/sales/store/logo_html/' . $imagehtml;
         }
-        
+
         if ($path) {
             //Invoice and Packing Slip image location isn't accessible from frontend place into DB
             $data = @file_get_contents($path); // @codingStandardsIgnoreLine
