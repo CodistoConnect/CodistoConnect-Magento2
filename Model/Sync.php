@@ -2114,10 +2114,12 @@ class Sync
 
         $path = null;
         if ($imagepdf) {
-            $path = $this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::MEDIA). '/sales/store/logo/' . $imagepdf;
+            $path = $this->dirList->
+                getPath(\Magento\Framework\App\Filesystem\DirectoryList::MEDIA). '/sales/store/logo/' . $imagepdf;
         }
         if ($imagehtml) {
-            $path = $this->dirList->getPath(\Magento\Framework\App\Filesystem\DirectoryList::MEDIA). '/sales/store/logo_html/' . $imagehtml;
+            $path = $this->dirList->
+                getPath(\Magento\Framework\App\Filesystem\DirectoryList::MEDIA). '/sales/store/logo_html/' . $imagehtml;
         }
 
         if ($path) {

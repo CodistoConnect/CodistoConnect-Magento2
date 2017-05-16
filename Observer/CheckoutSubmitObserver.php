@@ -37,27 +37,36 @@ class CheckoutSubmitObserver implements ObserverInterface
 
     public function execute(EventObserver $observer)
     {
-        $order = $observer->getEvent()->getData('order');
-        $storeId = $order->getStoreId();
+        try {
+            $order = $observer->getEvent()->getData('order');
+            $storeId = $order->getStoreId();
 
-        $merchants = $this->codistoHelper->syncMerchantsFromStoreId($storeId);
-        if (!empty($merchants)) {
-            $syncIds = [];
+            $merchants = $this->codistoHelper->syncMerchantsFromStoreId($storeId);
+            if (!empty($merchants)) {
+                $syncIds = [];
 
-            foreach ($order->getAllItems() as $item) {
-                $syncIds = $this->codistoHelper->addProductToSyncSet($product->getId(), $syncIds);
-            }
+                foreach ($order->getAllItems() as $item) {
+                    $productId = $item->getProductId();
 
-            if (!empty($syncIds)) {
-                $productIds = '';
-                if (count($syncIds) == 1) {
-                    $productIds = $syncIds[0];
-                } else {
-                    $productIds = '['.implode(',', $syncIds).']';
+                    if (isset($productId)) {
+                        $syncIds = $this->codistoHelper->addProductToSyncSet($item->getProductId(), $syncIds);
+                    }
                 }
 
-                $this->codistoHelper->signal($merchants, 'action=sync&productid='.$productIds, 'update', $syncIds);
+                if (!empty($syncIds)) {
+                    $productIds = '';
+                    if (count($syncIds) == 1) {
+                        $productIds = $syncIds[0];
+                    } else {
+                        $productIds = '['.implode(',', $syncIds).']';
+                    }
+
+                    $this->codistoHelper->signal($merchants, 'action=sync&productid='.$productIds, 'update', $syncIds);
+                }
             }
+        } catch (\Exception $e) {
+            // ignore exception
+            $e->getMessage();
         }
 
         return $this;
