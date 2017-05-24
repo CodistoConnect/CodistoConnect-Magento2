@@ -1521,19 +1521,36 @@ class Index extends \Magento\Framework\App\Action\Action
         return $jsonResult;
     }
 
-    private function _processCustomerData($customer, $websiteId, $email, $addressBilling, $addressShipping)
+    private function _processCustomerData($customer, $websiteId, $email, $addressBilling, $addressShipping, $order_source)
     {
         $customer->loadByEmail($email);
 
         if (!$customer->getId()) {
-            $ebayGroup = $this->customerGroupFactory->create();
-            $ebayGroup->load('eBay', 'customer_group_code');
-            if (!$ebayGroup->getId()) {
-                $defaultGroup = $this->customerGroupFactory->create()->load(1);
 
-                $ebayGroup->setCode('eBay');
-                $ebayGroup->setTaxClassId($defaultGroup->getTaxClassId());
-                $ebayGroup->save();
+            $customerGroupId = null;
+
+            if ($order_source == 'ebay') {
+                $ebayGroup = $this->customerGroupFactory->create();
+                $ebayGroup->load('eBay', 'customer_group_code');
+                if (!$ebayGroup->getId()) {
+                    $defaultGroup = $this->customerGroupFactory->create()->load(1);
+
+                    $ebayGroup->setCode('eBay');
+                    $ebayGroup->setTaxClassId($defaultGroup->getTaxClassId());
+                    $ebayGroup->save();
+                }
+                $customerGroupId = $ebayGroup->getId();
+            } else if ($order_source == 'amazon') {
+                $amazonGroup = $this->customerGroupFactory->create();
+                $amazonGroup->load('Amazon', 'customer_group_code');
+                if (!$amazonGroup->getId()) {
+                    $defaultGroup = $this->customerGroupFactory->create()->load(1);
+
+                    $amazonGroup->setCode('Amazon');
+                    $amazonGroup->setTaxClassId($defaultGroup->getTaxClassId());
+                    $amazonGroup->save();
+                }
+                $customerGroupId = $amazonGroup->getId();
             }
 
             $customer->setWebsiteId($websiteId);
@@ -1542,7 +1559,9 @@ class Index extends \Magento\Framework\App\Action\Action
             $customer->setFirstname((string)$addressBilling['firstname']);
             $customer->setLastname((string)$addressBilling['lastname']);
             $customer->setPassword('');
-            $customer->setGroupId($ebayGroup->getId());
+            if ($customerGroupId) {
+                $customer->setGroupId($customerGroupId);
+            }
             $customer->save();
             $customer->setConfirmation(null);
             $customer->save();
@@ -1562,7 +1581,7 @@ class Index extends \Magento\Framework\App\Action\Action
         }
     }
 
-    private function _processCustomer($connection, $store, $websiteId, $email, $addressBilling, $addressShipping)
+    private function _processCustomer($connection, $store, $websiteId, $email, $addressBilling, $addressShipping, $order_source)
     {
         $customer = $this->customerFactory->create();
         $customer->setWebsiteId($websiteId);
@@ -1577,7 +1596,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 $connection->exec('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE'); // @codingStandardsIgnoreLine MEQP2.Classes.ResourceModel.OutsideOfResourceModel
                 $connection->beginTransaction();
 
-                $this->_processCustomerData($customer, $websiteId, $email, $addressBilling, $addressShipping);
+                $this->_processCustomerData($customer, $websiteId, $email, $addressBilling, $addressShipping, $order_source);
 
                 $connection->commit();
                 $connection->exec('SET TRANSACTION ISOLATION LEVEL '.$txIsoLevel);
@@ -1750,6 +1769,7 @@ class Index extends \Magento\Framework\App\Action\Action
         $ordercontent = $xml->entry->content->children('http://api.codisto.com/schemas/2009/');
 
         $register_customer = (string)$ordercontent->register_customer == 'false' ? false : true;
+        $order_source = (string)$ordercontent->source;
 
         $websiteId = $store->getWebsiteId();
 
@@ -1773,7 +1793,8 @@ class Index extends \Magento\Framework\App\Action\Action
                 $websiteId,
                 $email,
                 $addressBilling,
-                $addressShipping
+                $addressShipping,
+                $order_source
             );
         }
 
