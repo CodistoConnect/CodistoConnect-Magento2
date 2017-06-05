@@ -1059,10 +1059,10 @@ class Sync
         if (!empty($productOptions)) {
             $price = $this->_syncProductPrice($store, $productParent, $productOptions);
             if (!$price) {
-                $price = 0;
+                $price = $this->_syncProductPrice($store, $product);
             }
         } else {
-            $price = 0;
+            $price = $this->_syncProductPrice($store, $product);
         }
 
         $insertSKULinkSQL->execute([$skuEntityId, $productParentId, $price]);
