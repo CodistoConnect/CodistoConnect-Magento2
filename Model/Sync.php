@@ -1309,6 +1309,8 @@ class Sync
         $insertImageSQL = $args['preparedimageStatement'];
 
         $hasImage = false;
+
+        $product->load('media_gallery');
         $primaryImage = isset($productData['image']) ? $productData['image'] : '';
         $galleryImages = $product->getMediaGalleryImages();
 
