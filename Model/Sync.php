@@ -1059,10 +1059,10 @@ class Sync
         if (!empty($productOptions)) {
             $price = $this->_syncProductPrice($store, $productParent, $productOptions);
             if (!$price) {
-                $price = 0;
+                $price = $this->_syncProductPrice($store, $product);
             }
         } else {
-            $price = 0;
+            $price = $this->_syncProductPrice($store, $product);
         }
 
         $insertSKULinkSQL->execute([$skuEntityId, $productParentId, $price]);
@@ -1277,7 +1277,12 @@ class Sync
 
         $mediaConfig = $this->mediaConfig;
 
-        $imgUrl = $mediaConfig->getMediaUrl($image['file']);
+        if (preg_match('/^https?:\/\//', $image['file'])) {
+            $imgUrl = $image['file'];
+        } else {
+            $imgUrl = $mediaConfig->getMediaUrl($image['file']);
+        }
+
         $enabled = ($image['disabled'] == 0 ? -1 : 0);
         $tag = $image['label'];
         if (!$tag) {
@@ -1304,17 +1309,18 @@ class Sync
         $insertImageSQL = $args['preparedimageStatement'];
 
         $hasImage = false;
+
         $product->load('media_gallery');
-
         $primaryImage = isset($productData['image']) ? $productData['image'] : '';
+        $galleryImages = $product->getMediaGalleryImages();
 
-        foreach ($product->getMediaGallery('images') as $image) {
-            $imageData = $this->_syncProductImage($image);
-
-            if ($image['file'] == $primaryImage) {
-                $imageData['tag'] = '';
-                $imageData['sequence'] = 0;
-            }
+        if ($primaryImage && $galleryImages->getSize() == 0) {
+            $imageData = $this->_syncProductImage([
+                'file' => $primaryImage,
+                'disabled' => 0,
+                'label' => '',
+                'position' => 0
+            ]);
 
             $insertImageSQL->execute(
                 [
@@ -1322,11 +1328,68 @@ class Sync
                     $imageData['url'],
                     $imageData['tag'],
                     $imageData['sequence'],
-                    $imageData['enabled']
+                    -1
                 ]
             );
 
             $hasImage = true;
+        } else {
+
+            $imagesVisited = [];
+
+            foreach ($galleryImages as $image) {
+                $imagesVisited[$image['file']] = true;
+
+                $imageData = $this->_syncProductImage($image);
+
+                if ($image['file'] == $primaryImage) {
+                    $imageData['tag'] = '';
+                    $imageData['sequence'] = 0;
+                }
+
+                $insertImageSQL->execute(
+                    [
+                        $productId,
+                        $imageData['url'],
+                        $imageData['tag'],
+                        $imageData['sequence'],
+                        -1
+                    ]
+                );
+
+                $hasImage = true;
+            }
+
+            $product->load('media_gallery');
+
+            foreach ($product->getMediaGallery('images') as $image) {
+                if (isset($image['disabled']) && $image['disabled'] == 0) {
+                    continue;
+                }
+
+                if (isset($imagesVisited[$image['file']])) {
+                    continue;
+                }
+
+                $imageData = $this->_syncProductImage($image);
+
+                if ($image['file'] == $primaryImage) {
+                    $imageData['tag'] = '';
+                    $imageData['sequence'] = 0;
+                }
+
+                $insertImageSQL->execute(
+                    [
+                        $productId,
+                        $imageData['url'],
+                        $imageData['tag'],
+                        $imageData['sequence'],
+                        0
+                    ]
+                );
+
+                $hasImage = true;
+            }
         }
 
         if (($type == 'simple' || $type == 'virtual')
