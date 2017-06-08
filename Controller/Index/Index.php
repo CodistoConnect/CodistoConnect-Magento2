@@ -1521,8 +1521,14 @@ class Index extends \Magento\Framework\App\Action\Action
         return $jsonResult;
     }
 
-    private function _processCustomerData($customer, $websiteId, $email, $addressBilling, $addressShipping, $order_source)
-    {
+    private function _processCustomerData(
+        $customer,
+        $websiteId,
+        $email,
+        $addressBilling,
+        $addressShipping,
+        $order_source
+    ) {
         $customer->loadByEmail($email);
 
         if (!$customer->getId()) {

@@ -1723,7 +1723,7 @@ class Sync
                 try {
                     $attributeText = $source->getOptionText($attributeOptionId);
                     $attributeText = $attributeText ? $attributeText : '';
-                    $attributeText = html_entity_decode($attributeText, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                    $attributeText = html_entity_decode($attributeText, ENT_QUOTES | ENT_HTML5, 'UTF-8'); // @codingStandardsIgnoreLine
 
                     $this->optionTextCache[$storeId.'-'.$attributeData['id'].'-'.$attributeOptionId] =
                         $attributeText;
@@ -1761,7 +1761,7 @@ class Sync
                 }
 
                 $attributeText = $attributeText ? $attributeText : '';
-                $attributeText = html_entity_decode($attributeText, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                $attributeText = html_entity_decode($attributeText, ENT_QUOTES | ENT_HTML5, 'UTF-8'); // @codingStandardsIgnoreLine
 
                 $this->optionTextCache[$storeId.'-'.$attributeData['id'].'-'.$attributeValue] =
                     $attributeText;
@@ -1889,7 +1889,7 @@ class Sync
                 $attributeCode = $attribute->getAttributeCode();
                 $attributeName = $attribute->getName();
                 $attributeName = $attributeName ? $attributeName : '';
-                $attributeName = html_entity_decode($attributeName, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                $attributeName = html_entity_decode($attributeName, ENT_QUOTES | ENT_HTML5, 'UTF-8'); // @codingStandardsIgnoreLine
                 $attributeTable = $backend->getTable();
                 $attributeLabel = $this->_syncProductAttributeLabel($connection, $storeId, $attribute);
                 $attributeBackendType = $attribute->getBackendType();
