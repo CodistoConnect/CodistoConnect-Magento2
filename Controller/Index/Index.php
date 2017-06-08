@@ -1532,7 +1532,6 @@ class Index extends \Magento\Framework\App\Action\Action
         $customer->loadByEmail($email);
 
         if (!$customer->getId()) {
-
             $customerGroupId = null;
 
             if ($order_source == 'ebay') {
@@ -1587,8 +1586,15 @@ class Index extends \Magento\Framework\App\Action\Action
         }
     }
 
-    private function _processCustomer($connection, $store, $websiteId, $email, $addressBilling, $addressShipping, $order_source)
-    {
+    private function _processCustomer(
+        $connection,
+        $store,
+        $websiteId,
+        $email,
+        $addressBilling,
+        $addressShipping,
+        $order_source
+    ) {
         $customer = $this->customerFactory->create();
         $customer->setWebsiteId($websiteId);
         $customer->setStoreId($store->getId());
