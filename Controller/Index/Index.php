@@ -1608,7 +1608,14 @@ class Index extends \Magento\Framework\App\Action\Action
                 $connection->exec('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE'); // @codingStandardsIgnoreLine MEQP2.Classes.ResourceModel.OutsideOfResourceModel
                 $connection->beginTransaction();
 
-                $this->_processCustomerData($customer, $websiteId, $email, $addressBilling, $addressShipping, $order_source);
+                $this->_processCustomerData(
+                    $customer,
+                    $websiteId,
+                    $email,
+                    $addressBilling,
+                    $addressShipping,
+                    $order_source
+                );
 
                 $connection->commit();
                 $connection->exec('SET TRANSACTION ISOLATION LEVEL '.$txIsoLevel);
