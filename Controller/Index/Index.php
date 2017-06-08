@@ -1546,7 +1546,7 @@ class Index extends \Magento\Framework\App\Action\Action
                     $ebayGroup->save();
                 }
                 $customerGroupId = $ebayGroup->getId();
-            } else if ($order_source == 'amazon') {
+            } elseif ($order_source == 'amazon') {
                 $amazonGroup = $this->customerGroupFactory->create();
                 $amazonGroup->load('Amazon', 'customer_group_code');
                 if (!$amazonGroup->getId()) {
