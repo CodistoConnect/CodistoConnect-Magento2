@@ -927,7 +927,17 @@ class Sync
             $productName = '';
         }
 
-        return html_entity_decode($productName); // @codingStandardsIgnoreLine
+        return html_entity_decode($productName, ENT_QUOTES | ENT_HTML5, 'UTF-8'); // @codingStandardsIgnoreLine
+    }
+
+    private function _syncProductCode($productData)
+    {
+        $productCode = $productData['sku'];
+        if (!$productCode) {
+            $productCode = '';
+        }
+
+        return html_entity_decode($productCode, ENT_QUOTES | ENT_HTML5, 'UTF-8'); // @codingStandardsIgnoreLine
     }
 
     private function _syncProductParentIds($productId, &$parentIds)
@@ -1083,6 +1093,8 @@ class Sync
 
                 if ($productOptionValueId != null) {
                     $attributeName = $attribute->getLabel();
+                    $attributeName = $attributeName ? $attributeName : '';
+                    $attributeName = html_entity_decode($attributeName, ENT_QUOTES | ENT_HTML5, 'UTF-8'); // @codingStandardsIgnoreLine
                     $attributeValue = $productAttribute->getSource()->getOptionText($productOptionValueId);
 
                     $insertSKUMatrixSQL->execute(
@@ -1639,7 +1651,9 @@ class Sync
                 $attributeGroup = $this->productAttributeGroupFactory->create();
                 $attributeGroup->load($attributeGroupId);
 
-                $attributeGroupName = html_entity_decode($attributeGroup->getAttributeGroupName()); // @codingStandardsIgnoreLine
+                $attributeGroupName = $attributeGroup->getAttributeGroupName();
+                $attributeGroupName = $attributeGroupName ? $attributeGroupName : '';
+                $attributeGroupName = html_entity_decode($attributeGroupName, ENT_QUOTES | ENT_HTML5, 'UTF-8'); // @codingStandardsIgnoreLine
 
                 $this->groupCache[$attributeGroupId] = $attributeGroupName;
             }
@@ -1771,6 +1785,8 @@ class Sync
             } else {
                 try {
                     $attributeText = $source->getOptionText($attributeOptionId);
+                    $attributeText = $attributeText ? $attributeText : '';
+                    $attributeText = html_entity_decode($attributeText, ENT_QUOTES | ENT_HTML5, 'UTF-8'); // @codingStandardsIgnoreLine
 
                     $this->optionTextCache[$storeId.'-'.$attributeData['id'].'-'.$attributeOptionId] =
                         $attributeText;
@@ -1806,6 +1822,9 @@ class Sync
                 } else {
                     $attributeText = $source->getOptionText($attributeValue);
                 }
+
+                $attributeText = $attributeText ? $attributeText : '';
+                $attributeText = html_entity_decode($attributeText, ENT_QUOTES | ENT_HTML5, 'UTF-8'); // @codingStandardsIgnoreLine
 
                 $this->optionTextCache[$storeId.'-'.$attributeData['id'].'-'.$attributeValue] =
                     $attributeText;
@@ -1932,6 +1951,8 @@ class Sync
                 $attributeId = $attribute->getId();
                 $attributeCode = $attribute->getAttributeCode();
                 $attributeName = $attribute->getName();
+                $attributeName = $attributeName ? $attributeName : '';
+                $attributeName = html_entity_decode($attributeName, ENT_QUOTES | ENT_HTML5, 'UTF-8'); // @codingStandardsIgnoreLine
                 $attributeTable = $backend->getTable();
                 $attributeLabel = $this->_syncProductAttributeLabel($connection, $storeId, $attribute);
                 $attributeBackendType = $attribute->getBackendType();
@@ -2066,7 +2087,7 @@ class Sync
         $invalidoptionstate = $this->_syncConfigurableInvalidOptionState($type, $product);
 
         $productName = $this->_syncProductName($productData);
-
+        $productCode = $this->_syncProductCode($productData);
         $description = $this->_syncProductDescription(
             $store,
             $storeId,
@@ -2094,7 +2115,7 @@ class Sync
         $data = [];
         $data[] = $productId;
         $data[] = $type == 'configurable' ? 'c' : ($type == 'grouped' ? 'g' : ($type == 'virtual' ? 'v' : 's'));
-        $data[] = $productData['sku'];
+        $data[] = $productCode;
         $data[] = $productName;
         $data[] = $price;
         $data[] = $listPrice;
