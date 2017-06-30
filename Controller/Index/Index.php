@@ -1521,12 +1521,17 @@ class Index extends \Magento\Framework\App\Action\Action
         return $jsonResult;
     }
 
-    private function _processCustomerData($customer, $websiteId, $email, $addressBilling, $addressShipping, $order_source)
-    {
+    private function _processCustomerData(
+        $customer,
+        $websiteId,
+        $email,
+        $addressBilling,
+        $addressShipping,
+        $order_source
+    ) {
         $customer->loadByEmail($email);
 
         if (!$customer->getId()) {
-
             $customerGroupId = null;
 
             if ($order_source == 'ebay') {
@@ -1540,7 +1545,7 @@ class Index extends \Magento\Framework\App\Action\Action
                     $ebayGroup->save();
                 }
                 $customerGroupId = $ebayGroup->getId();
-            } else if ($order_source == 'amazon') {
+            } elseif ($order_source == 'amazon') {
                 $amazonGroup = $this->customerGroupFactory->create();
                 $amazonGroup->load('Amazon', 'customer_group_code');
                 if (!$amazonGroup->getId()) {
@@ -1581,8 +1586,15 @@ class Index extends \Magento\Framework\App\Action\Action
         }
     }
 
-    private function _processCustomer($connection, $store, $websiteId, $email, $addressBilling, $addressShipping, $order_source)
-    {
+    private function _processCustomer(
+        $connection,
+        $store,
+        $websiteId,
+        $email,
+        $addressBilling,
+        $addressShipping,
+        $order_source
+    ) {
         $customer = $this->customerFactory->create();
         $customer->setWebsiteId($websiteId);
         $customer->setStoreId($store->getId());
@@ -1596,7 +1608,14 @@ class Index extends \Magento\Framework\App\Action\Action
                 $connection->exec('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE'); // @codingStandardsIgnoreLine MEQP2.Classes.ResourceModel.OutsideOfResourceModel
                 $connection->beginTransaction();
 
-                $this->_processCustomerData($customer, $websiteId, $email, $addressBilling, $addressShipping, $order_source);
+                $this->_processCustomerData(
+                    $customer,
+                    $websiteId,
+                    $email,
+                    $addressBilling,
+                    $addressShipping,
+                    $order_source
+                );
 
                 $connection->commit();
                 $connection->exec('SET TRANSACTION ISOLATION LEVEL '.$txIsoLevel);
