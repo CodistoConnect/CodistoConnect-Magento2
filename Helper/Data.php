@@ -92,6 +92,7 @@ class Data
 
     private $client;
     private $phpInterpreter;
+    private $logger;
 
     public function __construct(
         \Magento\Framework\App\ResourceConnectionFactory $resourceConnectionFactory,
@@ -104,7 +105,8 @@ class Data
         \Magento\ConfigurableProduct\Model\Product\Type\ConfigurableFactory $configurableTypeFactory,
         \Magento\GroupedProduct\Model\Product\Type\GroupedFactory $groupedTypeFactory,
         \Magento\Bundle\Model\Product\TypeFactory $bundleTypeFactory,
-        \Codisto\Connect\Model\SyncFactory $syncFactory
+        \Codisto\Connect\Model\SyncFactory $syncFactory,
+        \Psr\Log\LoggerInterface $logger
     ) {
         $this->resourceConnectionFactory = $resourceConnectionFactory;
         $this->deploymentConfigFactory = $deploymentConfigFactory;
@@ -114,6 +116,7 @@ class Data
         $this->file = $file;
         $this->json = $json;
         $this->syncFactory = $syncFactory;
+        $this->logger = $logger;
 
         $this->configurableTypeFactory = $configurableTypeFactory;
         $this->configurableType = null;
@@ -125,6 +128,7 @@ class Data
 
     public function checkRequestHash($key, $server)
     {
+
         if (!isset($server['HTTP_X_NONCE'])) {
             return false;
         }
@@ -166,7 +170,10 @@ class Data
                     $this->file->rm($nonceDbPath);
                 }
             } else {
-                $this->logExceptionCodisto($e, 'https://ui.codisto.com/installed');
+                $this->logger->info('Exception: '.$e->getMessage()
+                .' on line: '.$e->getLine()
+                .' in file: '.$e->getFile());
+                return false;
             }
         }
 
@@ -1009,7 +1016,7 @@ class Data
         if (!$this->getTriggerMode()) {
             return false;
         }
-        
+
         $coreResource = $this->resourceConnectionFactory->create();
         $adapter = $coreResource->getConnection();
 
