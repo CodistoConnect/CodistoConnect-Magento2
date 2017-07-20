@@ -1,7 +1,7 @@
 <?php
 
 /**
- * Codisto Marketplace Connect Sync Extension
+ * Codisto LINQ Sync Extension
  *
  * NOTICE OF LICENSE
  *

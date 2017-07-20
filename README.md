@@ -1,7 +1,7 @@
 # MarketPlace Connect
-Codisto MarketPlace Connect for Magento2
+Codisto LINQ for Magento2
 
-### **To install Codisto MarketPlace Connect on Magento 2, perform the following:**
+### **To install Codisto LINQ on Magento 2, perform the following:**
 
 1.  Log in to your Magento server via **SSH** with an account that has sufficient permissions to make changes to your installation.
 2.  Locate and open your **`composer.json`** file for editing in the root of the Magento 2 installation.
