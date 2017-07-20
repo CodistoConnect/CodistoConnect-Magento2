@@ -1,4 +1,4 @@
-# MarketPlace Connect
+# Codisto LINQ
 Codisto LINQ for Magento2
 
 ### **To install Codisto LINQ on Magento 2, perform the following:**
