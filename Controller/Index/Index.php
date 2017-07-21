@@ -413,34 +413,43 @@ class Index extends \Magento\Framework\App\Action\Action
 
     private function _processOrderCreateState($order, $ordercontent, $adjustStock, $ebaysalesrecordnumber)
     {
+
+        // ignore count failure on simple_xml - treat count failure as no customer instruction
+        $customerInstruction = @count($ordercontent->instructions) ? (string)($ordercontent->instructions) : ''; // @codingStandardsIgnoreLine Generic.PHP.NoSilencedErrors.Discouraged
+
+        $customerNote = '';
+        if($customerInstruction) {
+            $customerNote = " <br><b>Checkout message from buyer:</b><br> " . $customerInstruction;
+        }
+
         /* cancelled, processing, captured, inprogress, complete */
         if ($ordercontent->orderstate == 'cancelled') {
             $order->setData('state', \Magento\Sales\Model\Order::STATE_CANCELED);
             $order->setData('status', \Magento\Sales\Model\Order::STATE_CANCELED);
             $order->addStatusToHistory(
                 \Magento\Sales\Model\Order::STATE_CANCELED,
-                "eBay Order $ebaysalesrecordnumber has been cancelled"
+                "eBay Order $ebaysalesrecordnumber has been cancelled" . $customerNote
             );
         } elseif ($ordercontent->orderstate == 'inprogress' || $ordercontent->orderstate == 'processing') {
             $order->setData('state', \Magento\Sales\Model\Order::STATE_PROCESSING);
             $order->setData('status', \Magento\Sales\Model\Order::STATE_PROCESSING);
             $order->addStatusToHistory(
                 \Magento\Sales\Model\Order::STATE_PROCESSING,
-                "eBay Order $ebaysalesrecordnumber is in progress"
+                "eBay Order $ebaysalesrecordnumber is in progress" . $customerNote
             );
         } elseif ($ordercontent->orderstate == 'complete') {
             $order->setData('state', \Magento\Sales\Model\Order::STATE_COMPLETE);
             $order->setData('status', \Magento\Sales\Model\Order::STATE_COMPLETE);
             $order->addStatusToHistory(
                 \Magento\Sales\Model\Order::STATE_COMPLETE,
-                "eBay Order $ebaysalesrecordnumber is complete"
+                "eBay Order $ebaysalesrecordnumber is complete" . $customerNote
             );
         } else {
             $order->setData('state', \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT);
             $order->setData('status', \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT);
             $order->addStatusToHistory(
                 \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT,
-                "eBay Order $ebaysalesrecordnumber has been captured"
+                "eBay Order $ebaysalesrecordnumber has been captured" . $customerNote
             );
         }
 
