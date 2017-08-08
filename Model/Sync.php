@@ -1423,29 +1423,33 @@ class Sync
                 $maxSequence = 0;
                 $baseImageFound = false;
 
-                foreach ($mediaGallery as $image) {
-                    $imageData = $this->_syncProductImage($image);
+                if($mediaGallery) {
 
-                    if (!$baseImageFound &&
-                        ($image['file'] == $baseImagePath)) {
-                        $imageData['tag'] = '';
-                        $imageData['sequence'] = 0;
-                        $baseImageFound = true;
-                    } else {
-                        $imageData['sequence'] += $baseSequence;
-                        $maxSequence = max($imageData['sequence'], $maxSequence);
+                    foreach ($mediaGallery as $image) {
+
+                        $imageData = $this->_syncProductImage($image);
+                        if (!$baseImageFound &&
+                            ($image['file'] == $baseImagePath)) {
+                            $imageData['tag'] = '';
+                            $imageData['sequence'] = 0;
+                            $baseImageFound = true;
+                        } else {
+                            $imageData['sequence'] += $baseSequence;
+                            $maxSequence = max($imageData['sequence'], $maxSequence);
+                        }
+
+                        $insertImageSQL->execute(
+                            [
+                                $productId,
+                                $imageData['url'],
+                                $imageData['tag'],
+                                $imageData['sequence'],
+                                $imageData['enabled']
+                            ]
+                        );
                     }
 
-                    $insertImageSQL->execute(
-                        [
-                            $productId,
-                            $imageData['url'],
-                            $imageData['tag'],
-                            $imageData['sequence'],
-                            $imageData['enabled']
-                        ]
-                    );
-                }
+		}
 
                 $baseSequence = $maxSequence;
 
@@ -1682,7 +1686,7 @@ class Sync
             if (isset($this->optionCache[$storeId.'-'.$attributeId])) {
                 $source = $this->optionCache[$storeId.'-'.$attributeId];
             } else {
-                try {
+             try {
                     $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
 
                     $source = $objectManager->create($sourceModel); // @codingStandardsIgnoreLine
@@ -1710,11 +1714,25 @@ class Sync
 
         // @codingStandardsIgnoreStart
         foreach ($attributeTypes as $table => $_attributes) {
-            $attrTypeSelect = $adapter->select()
+
+            $columns = $this->resourceConnection->getConnection()->describeTable($table);
+            $useEntityId = in_array('entity_id', $columns);
+
+            if ($useEntityId) {
+                $attrTypeSelect = $adapter->select()
                         ->from(['default_value' => $table], ['attribute_id'])
                         ->where('default_value.attribute_id IN (?)', array_keys($_attributes))
-                        ->where('default_value.entity_id = :entity_id')
+                        ->where('default_value.row_id = :entity_id')
                         ->where('default_value.store_id = 0');
+                $entitySql = 'AND store_value.entity_id = default_value.entity_id ';
+            } else {
+                $attrTypeSelect = $adapter->select()
+                        ->from(['default_value' => $table], ['attribute_id'])
+                        ->where('default_value.attribute_id IN (?)', array_keys($_attributes))
+                        ->where('default_value.row_id = (SELECT row_id FROM catalog_product_entity WHERE entity_id = :entity_id)')
+                        ->where('default_value.store_id = 0');
+                $entitySql = 'AND store_value.row_id = default_value.row_id ';
+            }
 
             if ($storeId == \Magento\Store\Model\Store::DEFAULT_STORE_ID) {
                 $attrTypeSelect->columns(['attr_value' => new \Zend_Db_Expr('CAST(value AS CHAR)')], 'default_value');
@@ -1728,7 +1746,7 @@ class Sync
                     'AND store_value.attribute_id IN '.
                         '(SELECT attribute_id FROM `'.
                             $this->resourceConnection->getTableName('catalog_eav_attribute').'` WHERE is_global != 0) '.
-                    'AND store_value.entity_id = default_value.entity_id '.
+                    $entitySql .
                     'AND store_value.store_id = :store_id ',
                     ['attr_value' =>
                         new \Zend_Db_Expr('CAST(COALESCE(store_value.value, default_value.value) AS CHAR)')]
@@ -1755,13 +1773,18 @@ class Sync
                 'store_id' => $storeId
             ];
 
-            foreach ($adapter->fetchAll($attrSelect, $attrArgs, \Zend_Db::FETCH_NUM) as $attributeRow) {
-                $attributeId = $attributeRow[0];
-
-                $attributeCode = $attributeCodeIDMap[$attributeId];
-                $attributeValues[$attributeCode] = $attributeRow;
+            try {
+                foreach ($adapter->fetchAll($attrSelect, $attrArgs, \Zend_Db::FETCH_NUM) as $attributeRow) {
+                    $attributeId = $attributeRow[0];
+                    $attributeCode = $attributeCodeIDMap[$attributeId];
+                    $attributeValues[$attributeCode] = $attributeRow;
+                }
+            } catch (\Exception $e) {
+                $e;
+                //skip attribute data if the execution fails
             }
             // @codingStandardsIgnoreEnd
+
         }
 
         return $attributeValues;
