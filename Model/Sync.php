@@ -1558,7 +1558,7 @@ class Sync
 
                     $insertProductAnswerSQL->execute(
                         [
-                            $optionId,
+                            $optionData['id'],
                             $valueData['name'],
                             $valueData['pricemod'],
                             $valueData['skumod'],
