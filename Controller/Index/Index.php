@@ -683,7 +683,7 @@ class Index extends \Magento\Framework\App\Action\Action
         $ebaysalesrecordnumber = (string)$ordercontent->ebaysalesrecordnumber ?
             (string)$ordercontent->ebaysalesrecordnumber : '';
 
-        $amazonorderid = (string)$ordercontent->$amazonorderid ?
+        $amazonorderid = (string)$ordercontent->amazonorderid ?
             (string)$ordercontent->$amazonorderid : '';
 
         $ebaytransactionid = (string)$ordercontent->ebaytransactionid;
