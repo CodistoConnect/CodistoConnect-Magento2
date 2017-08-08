@@ -377,6 +377,7 @@ class Index extends \Magento\Framework\App\Action\Action
             $incrementId = preg_replace('/\{ordernumber\}/', (string)$order->getIncrementId(), $ordernumberformat);
             $incrementId = preg_replace('/\{ebaysalesrecordnumber\}/', $ebaysalesrecordnumber, $incrementId);
             $incrementId = preg_replace('/\{ebaytransactionid\}/', $ebaytransactionid, $incrementId);
+            $incrementId = preg_replace('/\{amazonorderid\}/', $amazonorderid, $incrementId);
         } else {
             $incrementId = $ordernumberformat.''.(string)$order->getIncrementId();
         }
@@ -682,6 +683,9 @@ class Index extends \Magento\Framework\App\Action\Action
         $ebaysalesrecordnumber = (string)$ordercontent->ebaysalesrecordnumber ?
             (string)$ordercontent->ebaysalesrecordnumber : '';
 
+        $amazonorderid = (string)$ordercontent->$amazonorderid ?
+            (string)$ordercontent->$amazonorderid : '';
+
         $ebaytransactionid = (string)$ordercontent->ebaytransactionid;
 
         $ebayusername = (string)$ordercontent->ebayusername ?
@@ -704,7 +708,7 @@ class Index extends \Magento\Framework\App\Action\Action
         $order->setCodistoOrderid((string)$ordercontent->orderid);
         $order->setCodistoMerchantid((string)$ordercontent->merchantid);
         $order->setIncrementId(
-            $this->_incrementId($ordernumberformat, $order, $ebaysalesrecordnumber, $ebaytransactionid)
+            $this->_incrementId($ordernumberformat, $order, $ebaysalesrecordnumber, $ebaytransactionid, $amazonorderid)
         );
 
         $weight_total = 0;
