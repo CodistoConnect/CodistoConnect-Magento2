@@ -371,7 +371,7 @@ class Index extends \Magento\Framework\App\Action\Action
         return $result;
     }
 
-    private function _incrementId($ordernumberformat, $order, $ebaysalesrecordnumber, $ebaytransactionid)
+    private function _incrementId($ordernumberformat, $order, $ebaysalesrecordnumber, $ebaytransactionid, $amazonorderid)
     {
         if (preg_match('/\{ordernumber\}|\{ebaysalesrecordnumber\}|\{ebaytransactionid\}|\{amazonorderid\}/', $ordernumberformat)) {
             $incrementId = preg_replace('/\{ordernumber\}/', (string)$order->getIncrementId(), $ordernumberformat);
