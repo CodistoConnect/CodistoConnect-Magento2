@@ -1712,11 +1712,11 @@ class Sync
     {
         $attrTypeSelects = [];
 
+        $columns = $this->resourceConnection->getConnection()->describeTable($table);
+        $useEntityId = in_array('entity_id', $columns);
+
         // @codingStandardsIgnoreStart
         foreach ($attributeTypes as $table => $_attributes) {
-
-            $columns = $this->resourceConnection->getConnection()->describeTable($table);
-            $useEntityId = in_array('entity_id', $columns);
 
             if ($useEntityId) {
                 $attrTypeSelect = $adapter->select()
