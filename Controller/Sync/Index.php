@@ -689,6 +689,13 @@ class Index extends \Magento\Framework\App\Action\Action
             $productId = (int)$request->getPost('ProductID');
             $productIds = [$productId];
 
+            if (!$productId && $request->getQuery('productid')) {
+                $productIds = $this->json->jsonDecode($request->getQuery('productid'));
+                if (!is_array($productIds)) {
+                    $productIds = [$productIds];
+                }
+            }
+
             $this->sync->updateProducts($syncDb, $productIds, $storeId);
 
             $tmpDb = $this->codistoHelper->getSyncPathTemp('sync');
