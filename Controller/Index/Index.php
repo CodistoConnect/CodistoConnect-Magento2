@@ -1540,7 +1540,8 @@ class Index extends \Magento\Framework\App\Action\Action
         $email,
         $addressBilling,
         $addressShipping,
-        $order_source
+        $order_source,
+        $store
     ) {
         $customer->loadByEmail($email);
 
@@ -1627,7 +1628,8 @@ class Index extends \Magento\Framework\App\Action\Action
                     $email,
                     $addressBilling,
                     $addressShipping,
-                    $order_source
+                    $order_source,
+                    $store
                 );
 
                 $connection->commit();
