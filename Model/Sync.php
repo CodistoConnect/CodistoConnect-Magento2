@@ -1713,21 +1713,21 @@ class Sync
         $attrTypeSelects = [];
 
         $useEntityId = true;
-        $columns = [];
+        $columns = null;
 
         // @codingStandardsIgnoreStart
         foreach ($attributeTypes as $table => $_attributes) {
 
             if(!$columns) {
                 $columns = $this->resourceConnection->getConnection()->describeTable($table);
-                $useEntityId = in_array('entity_id', $columns);
+                $useEntityId = array_key_exists('entity_id', $columns);
             }
 
             if ($useEntityId) {
                 $attrTypeSelect = $adapter->select()
                         ->from(['default_value' => $table], ['attribute_id'])
                         ->where('default_value.attribute_id IN (?)', array_keys($_attributes))
-                        ->where('default_value.row_id = :entity_id')
+                        ->where('default_value.entity_id = :entity_id')
                         ->where('default_value.store_id = 0');
                 $entitySql = 'AND store_value.entity_id = default_value.entity_id ';
             } else {
