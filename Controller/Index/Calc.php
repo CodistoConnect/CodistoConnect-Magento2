@@ -350,6 +350,15 @@ class Calc extends \Magento\Framework\App\Action\Action
         $rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
         $rawResult->setHeader('Pragma', 'no-cache', true);
         $rawResult->setContents($output);
-        return $rawResult;
+
+        $rawResult->renderResult($response);
+        $response->sendResponse();
+
+        return $this->exit();
+    }
+
+    private function exit()
+    {
+        exit(0); // @codingStandardsIgnoreLine MEQP1.Security.LanguageConstruct.ExitUsage
     }
 }
