@@ -755,7 +755,7 @@ class Index extends \Magento\Framework\App\Action\Action
 
             $weight_total += $weight;
 
-            $orderItem = $this->orderItemConverter->convert($quoteItems[$quoteIdx]);
+            $orderItem = $this->orderItemConverter->convert($quoteItems[$quoteIdx], []);
 
             $quoteIdx++;
 
@@ -1082,7 +1082,7 @@ class Index extends \Magento\Framework\App\Action\Action
         }
 
         if (!$itemFound) {
-            $item = $this->orderItemConverter->convert($quoteitem);
+            $item = $this->orderItemConverter->convert($quoteitem, []);
         }
 
         return [
