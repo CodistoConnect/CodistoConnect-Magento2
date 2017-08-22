@@ -50,7 +50,8 @@ class Index extends \Magento\Framework\App\Action\Action
     private $orderItemConverter;
     private $orderPaymentConverter;
     private $priceCurrency;
-    private $stockItemFactory;
+    private $stockRegistryProvider;
+    private $stockConfiguration;
     private $catalogInventoryConfig;
     private $orderService;
     private $stockManagement;
@@ -81,7 +82,8 @@ class Index extends \Magento\Framework\App\Action\Action
         \Magento\Quote\Model\Quote\Item\ToOrderItem $orderItemConverter,
         \Magento\Quote\Model\Quote\Payment\ToOrderPayment $orderPaymentConverter,
         \Magento\Framework\Pricing\PriceCurrencyInterface $priceCurrency,
-        \Magento\CatalogInventory\Model\Stock\ItemFactory $stockItemFactory,
+        \Magento\CatalogInventory\Model\Spi\StockRegistryProviderInterface $stockRegistryProvider,
+        \Magento\CatalogInventory\Api\StockConfigurationInterface $stockConfiguration,
         \Magento\CatalogInventory\Model\Configuration $catalogInventoryConfig,
         \Magento\Sales\Api\InvoiceManagementInterface $orderService,
         \Magento\CatalogInventory\Api\StockManagementInterface $stockManagement,
@@ -115,7 +117,8 @@ class Index extends \Magento\Framework\App\Action\Action
         $this->orderItemConverter = $orderItemConverter;
         $this->orderPaymentConverter = $orderPaymentConverter;
         $this->priceCurrency = $priceCurrency;
-        $this->stockItemFactory = $stockItemFactory;
+        $this->stockRegistryProvider = $stockRegistryProvider;
+        $this->stockConfiguration = $stockConfiguration;
         $this->catalogInventoryConfig = $catalogInventoryConfig;
         $this->orderService = $orderService;
         $this->stockManagement = $stockManagement;
@@ -368,12 +371,28 @@ class Index extends \Magento\Framework\App\Action\Action
             }
         }
 
-        return $result;
+        $result->renderResult($response);
+        $response->sendResponse();
+
+        return $this->exit();
     }
 
-    private function _incrementId($ordernumberformat, $order, $ebaysalesrecordnumber, $ebaytransactionid, $amazonorderid)
+    private function exit()
     {
-        if (preg_match('/\{ordernumber\}|\{ebaysalesrecordnumber\}|\{ebaytransactionid\}|\{amazonorderid\}/', $ordernumberformat)) {
+        exit(0); // @codingStandardsIgnoreLine MEQP1.Security.LanguageConstruct.ExitUsage
+    }
+
+    private function _incrementId(
+        $ordernumberformat,
+        $order,
+        $ebaysalesrecordnumber,
+        $ebaytransactionid,
+        $amazonorderid
+    ) {
+        if (preg_match(
+            '/\{ordernumber\}|\{ebaysalesrecordnumber\}|\{ebaytransactionid\}|\{amazonorderid\}/',
+            $ordernumberformat
+        )) {
             $incrementId = preg_replace('/\{ordernumber\}/', (string)$order->getIncrementId(), $ordernumberformat);
             $incrementId = preg_replace('/\{ebaysalesrecordnumber\}/', $ebaysalesrecordnumber, $incrementId);
             $incrementId = preg_replace('/\{ebaytransactionid\}/', $ebaytransactionid, $incrementId);
@@ -419,7 +438,7 @@ class Index extends \Magento\Framework\App\Action\Action
         $customerInstruction = @count($ordercontent->instructions) ? (string)($ordercontent->instructions) : ''; // @codingStandardsIgnoreLine Generic.PHP.NoSilencedErrors.Discouraged
 
         $customerNote = '';
-        if($customerInstruction) {
+        if ($customerInstruction) {
             $customerNote = " <br><b>Checkout message from buyer:</b><br> " . $customerInstruction;
         }
 
@@ -475,9 +494,7 @@ class Index extends \Magento\Framework\App\Action\Action
             if ($adjustStock) {
                 $stockItem = $product->getStockItem();
                 if (!$stockItem) {
-                    $stockItem = $this->stockItemFactory->create()
-                                    ->loadByProduct($product)
-                                    ->setStoreId($store->getId());
+                    $stockItem = $this->stockRegistryProvider->getStockItem($product->getId(), $store->getWebsiteId());
                 }
 
                 $typeId = $product->getTypeId();
@@ -486,10 +503,10 @@ class Index extends \Magento\Framework\App\Action\Action
                 }
 
                 if ($this->catalogInventoryConfig->isQty($typeId)) {
-                    if ($stockItem->canSubtractQty()) {
+                    if ($this->canSubtractQty($stockItem)) {
                         $productsToReindex[$product->getId()] = 0;
 
-                        $stockItem->subtractQty($orderItem->getQtyOrdered());
+                        $stockItem->setQty($stockItem->getQty() - $orderItem->getQtyOrdered());
                         $stockItem->save();
                     }
                 }
@@ -738,7 +755,7 @@ class Index extends \Magento\Framework\App\Action\Action
 
             $weight_total += $weight;
 
-            $orderItem = $this->orderItemConverter->convert($quoteItems[$quoteIdx]);
+            $orderItem = $this->orderItemConverter->convert($quoteItems[$quoteIdx], []);
 
             $quoteIdx++;
 
@@ -1065,7 +1082,7 @@ class Index extends \Magento\Framework\App\Action\Action
         }
 
         if (!$itemFound) {
-            $item = $this->orderItemConverter->convert($quoteitem);
+            $item = $this->orderItemConverter->convert($quoteitem, []);
         }
 
         return [
@@ -1126,9 +1143,7 @@ class Index extends \Magento\Framework\App\Action\Action
             if ($adjustStock) {
                 $stockItem = $product->getStockItem();
                 if (!$stockItem) {
-                    $stockItem = $this->stockItemFactory->create()
-                                    ->loadByProduct($product)
-                                    ->setStoreId($store->getId());
+                    $stockItem = $this->stockRegistryProvider->getStockItem($product->getId(), $store->getWebsiteId());
                 }
 
                 $typeId = $product->getTypeId();
@@ -1137,7 +1152,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 }
 
                 if ($this->catalogInventoryConfig->isQty($typeId)) {
-                    if ($stockItem->canSubtractQty()) {
+                    if ($this->canSubtractQty($stockItem)) {
                         $stockReserved = isset($orderlineStockReserved[$productId])
                             ? $orderlineStockReserved[$productId] : 0;
 
@@ -1146,14 +1161,14 @@ class Index extends \Magento\Framework\App\Action\Action
                         if ($stockMovement > 0) {
                             $productsToReindex[$productId] = 0;
 
-                            $stockItem->subtractQty($stockMovement);
+                            $stockItem->setQty($stockItem->getQty() - $stockMovement);
                             $stockItem->save();
                         } elseif ($stockMovement < 0) {
                             $productsToReindex[$productId] = 0;
 
                             $stockMovement = abs($stockMovement);
 
-                            $stockItem->addQty($stockMovement);
+                            $stockItem->setQty($stockItem->getQty() + $stockMovement);
                             $stockItem->save();
                         }
                     }
@@ -1177,13 +1192,10 @@ class Index extends \Magento\Framework\App\Action\Action
         }
 
         $qty = $orderline->quantity[0];
-        $totalquantity += $qty;
 
         $stockItem = $product->getStockItem();
         if (!$stockItem) {
-            $stockItem = $this->stockItemFactory->create()
-                            ->loadByProduct($product)
-                            ->setStoreId($store->getId());
+            $stockItem = $this->stockRegistryProvider->getStockItem($product->getId(), $store->getWebsiteId());
         }
 
         $typeId = $product->getTypeId();
@@ -1192,13 +1204,13 @@ class Index extends \Magento\Framework\App\Action\Action
         }
 
         if ($this->catalogInventoryConfig->isQty($typeId) &&
-            $stockItem->canSubtractQty()) {
+            $this->canSubtractQty($stockItem)) {
             $productsToReindex[$product->getId()] = 0;
 
             if ($cancelled) {
-                $stockItem->addQty((int)($qty));
+                $stockItem->setQty($stockItem->getQty() + (int)($qty));
             } else {
-                $stockItem->subtractQty((int)($qty));
+                $stockItem->setQty($stockItem->getQty() - (int)$qty);
             }
 
             $stockItem->save();
@@ -1652,8 +1664,14 @@ class Index extends \Magento\Framework\App\Action\Action
         return $customer;
     }
 
-    private function _processQuoteAddress($address)
+    private function _processQuoteAddress($address, $address_lines)
     {
+        if (is_numeric($address_lines)) {
+            $address_lines = min(max((int)$address_lines, 1), 3);
+        } else {
+            $address_lines = 3;
+        }
+
         $first_name = $last_name = '';
 
         if (strpos($address->name, ' ') !== false) {
@@ -1683,6 +1701,10 @@ class Index extends \Magento\Framework\App\Action\Action
             }
         }
 
+        $addressLine = $address_lines == 1 ?
+                            ((string)$address->address1.($address->address2 ? ' '.(string)$address->address2 : '')) :
+                            ((string)$address->address1.($address->address2 ? "\n".(string)$address->address2 : ''));
+
         return [
             'email' => $email,
             'prefix' => '',
@@ -1691,8 +1713,7 @@ class Index extends \Magento\Framework\App\Action\Action
             'firstname' => (string)$first_name,
             'middlename' => '',
             'lastname' => (string)$last_name,
-            'street' => (string)$address->address1.
-                ($address->address2 ? "\n".$address->address2 : ''),
+            'street' => $addressLine,
             'city' => (string)$address->place,
             'postcode' => (string)$address->postalcode,
             'telephone' => (string)$phone,
@@ -1807,8 +1828,10 @@ class Index extends \Magento\Framework\App\Action\Action
 
         $websiteId = $store->getWebsiteId();
 
-        $addressBilling = $this->_processQuoteAddress($ordercontent->orderaddresses->orderaddress[0]);
-        $addressShipping = $this->_processQuoteAddress($ordercontent->orderaddresses->orderaddress[1]);
+        $address_lines = $store->getConfig('customer/address/street_lines');
+
+        $addressBilling = $this->_processQuoteAddress($ordercontent->orderaddresses->orderaddress[0], $address_lines);
+        $addressShipping = $this->_processQuoteAddress($ordercontent->orderaddresses->orderaddress[1], $address_lines);
 
         $email = $addressBilling['email'];
 
@@ -2017,5 +2040,10 @@ class Index extends \Magento\Framework\App\Action\Action
     private function getRegionCollection($countryCode)
     {
         return $this->country->loadByCode($countryCode)->getRegions();
+    }
+
+    private function canSubtractQty($stockItem)
+    {
+        return $stockItem->getManageStock() && $this->stockConfiguration->canSubtractQty();
     }
 }
