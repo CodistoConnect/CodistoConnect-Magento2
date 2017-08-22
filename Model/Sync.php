@@ -1346,7 +1346,6 @@ class Sync
 
             $hasImage = true;
         } else {
-
             $imagesVisited = [];
 
             foreach ($galleryImages as $image) {
@@ -1423,10 +1422,8 @@ class Sync
                 $maxSequence = 0;
                 $baseImageFound = false;
 
-                if($mediaGallery) {
-
+                if ($mediaGallery) {
                     foreach ($mediaGallery as $image) {
-
                         $imageData = $this->_syncProductImage($image);
                         if (!$baseImageFound &&
                             ($image['file'] == $baseImagePath)) {
@@ -1448,8 +1445,7 @@ class Sync
                             ]
                         );
                     }
-
-		}
+                }
 
                 $baseSequence = $maxSequence;
 
@@ -1686,7 +1682,7 @@ class Sync
             if (isset($this->optionCache[$storeId.'-'.$attributeId])) {
                 $source = $this->optionCache[$storeId.'-'.$attributeId];
             } else {
-             try {
+                try {
                     $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
 
                     $source = $objectManager->create($sourceModel); // @codingStandardsIgnoreLine
@@ -1789,7 +1785,6 @@ class Sync
                 //skip attribute data if the execution fails
             }
             // @codingStandardsIgnoreEnd
-
         }
 
         return $attributeValues;
