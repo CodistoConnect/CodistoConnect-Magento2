@@ -109,7 +109,7 @@ class Data
         \Magento\Bundle\Model\Product\TypeFactory $bundleTypeFactory,
         \Codisto\Connect\Model\SyncFactory $syncFactory,
         \Psr\Log\LoggerInterface $logger,
-        \Magento\Framework\App\Console\Proxy $console
+        \Magento\Framework\App\Console\Response\Proxy $console
     ) {
         $this->resourceConnectionFactory = $resourceConnectionFactory;
         $this->deploymentConfigFactory = $deploymentConfigFactory;
@@ -1071,6 +1071,6 @@ class Data
 
     public function callExit()
     {
-        $this->console->exit(0);
+        $this->console->sendResponse();
     }
 }
