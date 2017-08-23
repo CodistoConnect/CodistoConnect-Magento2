@@ -33,9 +33,10 @@ class Calc extends \Magento\Framework\App\Action\Action
     private $session;
     private $shipmentRequestFactory;
     private $shipping;
+    private $visitor;
     private $codistoHelper;
 
-    private $pickupRegex;
+    private $pickupRegex = '/(?:^|\W|_)pick\s*up(?:\W|_|$)/i';
 
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -64,10 +65,7 @@ class Calc extends \Magento\Framework\App\Action\Action
         $this->shipmentRequestFactory = $shipmentRequestFactory;
         $this->shipping = $shipping;
         $this->codistoHelper = $codistoHelper;
-
-        $this->pickupRegex = '/(?:^|\W|_)pick\s*up(?:\W|_|$)/i';
-
-        $visitor->setSkipRequestLogging(true);
+        $this->visitor = $visitor;
     }
 
     private function _storeId()
@@ -204,6 +202,8 @@ class Calc extends \Magento\Framework\App\Action\Action
 
     public function execute()
     {
+        $this->visitor->setSkipRequestLogging(true);
+
         // calls to freight services can take longer than standard php request time limit
         set_time_limit(0); // @codingStandardsIgnoreLine MEQP1.Security.DiscouragedFunction.Found
         ignore_user_abort(false);

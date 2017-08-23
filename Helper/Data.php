@@ -80,11 +80,11 @@ class Data
     private $syncFactory;
 
     private $configurableTypeFactory;
-    private $configurableType;
+    private $configurableType = null;
     private $groupedTypeFactory;
-    private $groupedType;
+    private $groupedType = null;
     private $bundleTypeFactory;
-    private $bundleType;
+    private $bundleType = null;
 
     private $filterProvider;
     private $cmsProcessorStoreId;
@@ -123,11 +123,8 @@ class Data
         $this->console = $console;
 
         $this->configurableTypeFactory = $configurableTypeFactory;
-        $this->configurableType = null;
         $this->groupedTypeFactory = $groupedTypeFactory;
-        $this->groupedType = null;
         $this->bundleTypeFactory = $bundleTypeFactory;
-        $this->bundleType = null;
     }
 
     public function checkRequestHash($key, $server)
