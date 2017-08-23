@@ -33,6 +33,7 @@ class Calc extends \Magento\Framework\App\Action\Action
     private $session;
     private $shipmentRequestFactory;
     private $shipping;
+    private $codistoHelper;
 
     private $pickupRegex;
 
@@ -47,7 +48,8 @@ class Calc extends \Magento\Framework\App\Action\Action
         \Magento\Checkout\Model\Session\Proxy $session,
         \Magento\Shipping\Model\Shipment\RequestFactory $shipmentRequestFactory,
         \Magento\Customer\Model\Visitor $visitor,
-        \Magento\Shipping\Model\Shipping $shipping
+        \Magento\Shipping\Model\Shipping $shipping,
+        \Codisto\Connect\Helper\Data $codistoHelper
     ) {
         parent::__construct($context);
 
@@ -61,6 +63,7 @@ class Calc extends \Magento\Framework\App\Action\Action
         $this->session = $session;
         $this->shipmentRequestFactory = $shipmentRequestFactory;
         $this->shipping = $shipping;
+        $this->codistoHelper = $codistoHelper;
 
         $this->pickupRegex = '/(?:^|\W|_)pick\s*up(?:\W|_|$)/i';
 
@@ -354,14 +357,6 @@ class Calc extends \Magento\Framework\App\Action\Action
         $rawResult->renderResult($response);
         $response->sendResponse();
 
-        return $this->callExit();
-    }
-
-    /**
-     * @SuppressWarnings(PHPMD.ExitExpression)
-     */
-    private function callExit()
-    {
-        exit(0); // @codingStandardsIgnoreLine MEQP1.Security.LanguageConstruct.ExitUsage
+        return $this->codistoHelper->callExit();
     }
 }

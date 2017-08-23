@@ -374,15 +374,7 @@ class Index extends \Magento\Framework\App\Action\Action
         $result->renderResult($response);
         $response->sendResponse();
 
-        return $this->callExit();
-    }
-
-    /**
-     * @SuppressWarnings(PHPMD.ExitExpression)
-     */
-    private function callExit()
-    {
-        exit(0); // @codingStandardsIgnoreLine MEQP1.Security.LanguageConstruct.ExitUsage
+        return $this->codistoHelper->callExit();
     }
 
     private function _incrementId(

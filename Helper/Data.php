@@ -94,6 +94,8 @@ class Data
     private $phpInterpreter;
     private $logger;
 
+    private $console;
+
     public function __construct(
         \Magento\Framework\App\ResourceConnectionFactory $resourceConnectionFactory,
         \Magento\Framework\App\DeploymentConfigFactory $deploymentConfigFactory,
@@ -106,7 +108,8 @@ class Data
         \Magento\GroupedProduct\Model\Product\Type\GroupedFactory $groupedTypeFactory,
         \Magento\Bundle\Model\Product\TypeFactory $bundleTypeFactory,
         \Codisto\Connect\Model\SyncFactory $syncFactory,
-        \Psr\Log\LoggerInterface $logger
+        \Psr\Log\LoggerInterface $logger,
+        \Magento\Framework\App\Console\Proxy $console
     ) {
         $this->resourceConnectionFactory = $resourceConnectionFactory;
         $this->deploymentConfigFactory = $deploymentConfigFactory;
@@ -117,6 +120,7 @@ class Data
         $this->json = $json;
         $this->syncFactory = $syncFactory;
         $this->logger = $logger;
+        $this->console = $console;
 
         $this->configurableTypeFactory = $configurableTypeFactory;
         $this->configurableType = null;
@@ -1066,5 +1070,10 @@ class Data
                     ($changeToken == $syncToken) &&
                     $changeTablesExist &&
                     $syncDbExists;
+    }
+
+    public function callExit()
+    {
+        $this->console->exit(0);
     }
 }
