@@ -378,9 +378,8 @@ class Index extends \Magento\Framework\App\Action\Action
     }
 
     /**
-    *
-    * @SuppressWarnings(PHPMD.ExitExpression)
-    */
+     * @SuppressWarnings(PHPMD.ExitExpression)
+     */
     private function callExit()
     {
         exit(0); // @codingStandardsIgnoreLine MEQP1.Security.LanguageConstruct.ExitUsage
