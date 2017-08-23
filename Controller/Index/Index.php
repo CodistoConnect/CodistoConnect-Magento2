@@ -57,6 +57,7 @@ class Index extends \Magento\Framework\App\Action\Action
     private $stockManagement;
     private $itemsForReindex;
     private $codistoHelper;
+    private $visitor;
 
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -124,8 +125,7 @@ class Index extends \Magento\Framework\App\Action\Action
         $this->stockManagement = $stockManagement;
         $this->itemsForReindex = $itemsForReindex;
         $this->codistoHelper = $codistoHelper;
-
-        $visitor->setSkipRequestLogging(true);
+        $this->visitor = $visitor;
     }
 
     private function _storeId($storeId)
@@ -218,6 +218,8 @@ class Index extends \Magento\Framework\App\Action\Action
         // these settings ensure order submission is not interrupted and if
         // errors occur during transmission we can report the underlying issue
         // via the order screen
+
+        $this->visitor->setSkipRequestLogging(true);
 
         set_time_limit(0); // @codingStandardsIgnoreLine MEQP1.Security.DiscouragedFunction.Found
         ignore_user_abort(false);
@@ -374,12 +376,7 @@ class Index extends \Magento\Framework\App\Action\Action
         $result->renderResult($response);
         $response->sendResponse();
 
-        return $this->exit();
-    }
-
-    private function exit()
-    {
-        exit(0); // @codingStandardsIgnoreLine MEQP1.Security.LanguageConstruct.ExitUsage
+        return $this->codistoHelper->callExit();
     }
 
     private function _incrementId(

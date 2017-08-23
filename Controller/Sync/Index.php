@@ -34,6 +34,7 @@ class Index extends \Magento\Framework\App\Action\Action
     private $fileFactory;
     private $codistoHelper;
     private $sync;
+    private $visitor;
 
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -56,8 +57,7 @@ class Index extends \Magento\Framework\App\Action\Action
         $this->fileFactory = $fileFactory;
         $this->codistoHelper = $codistoHelper;
         $this->sync = $sync;
-
-        $visitor->setSkipRequestLogging(true);
+        $this->visitor = $visitor;
     }
 
     private function _storeId($request)
@@ -1025,6 +1025,8 @@ class Index extends \Magento\Framework\App\Action\Action
     // so overriding code sniffer warnings
     public function execute() // @codingStandardsIgnoreLine Generic.Metrics.CyclomaticComplexity.TooHigh
     {
+        $this->visitor->setSkipRequestLogging(true);
+        
         // @codingStandardsIgnoreStart
         set_time_limit(0);
 

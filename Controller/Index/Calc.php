@@ -33,8 +33,10 @@ class Calc extends \Magento\Framework\App\Action\Action
     private $session;
     private $shipmentRequestFactory;
     private $shipping;
+    private $visitor;
+    private $codistoHelper;
 
-    private $pickupRegex;
+    private $pickupRegex = '/(?:^|\W|_)pick\s*up(?:\W|_|$)/i';
 
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -47,7 +49,8 @@ class Calc extends \Magento\Framework\App\Action\Action
         \Magento\Checkout\Model\Session\Proxy $session,
         \Magento\Shipping\Model\Shipment\RequestFactory $shipmentRequestFactory,
         \Magento\Customer\Model\Visitor $visitor,
-        \Magento\Shipping\Model\Shipping $shipping
+        \Magento\Shipping\Model\Shipping $shipping,
+        \Codisto\Connect\Helper\Data $codistoHelper
     ) {
         parent::__construct($context);
 
@@ -61,10 +64,8 @@ class Calc extends \Magento\Framework\App\Action\Action
         $this->session = $session;
         $this->shipmentRequestFactory = $shipmentRequestFactory;
         $this->shipping = $shipping;
-
-        $this->pickupRegex = '/(?:^|\W|_)pick\s*up(?:\W|_|$)/i';
-
-        $visitor->setSkipRequestLogging(true);
+        $this->codistoHelper = $codistoHelper;
+        $this->visitor = $visitor;
     }
 
     private function _storeId()
@@ -201,6 +202,8 @@ class Calc extends \Magento\Framework\App\Action\Action
 
     public function execute()
     {
+        $this->visitor->setSkipRequestLogging(true);
+
         // calls to freight services can take longer than standard php request time limit
         set_time_limit(0); // @codingStandardsIgnoreLine MEQP1.Security.DiscouragedFunction.Found
         ignore_user_abort(false);
@@ -354,11 +357,6 @@ class Calc extends \Magento\Framework\App\Action\Action
         $rawResult->renderResult($response);
         $response->sendResponse();
 
-        return $this->exit();
-    }
-
-    private function exit()
-    {
-        exit(0); // @codingStandardsIgnoreLine MEQP1.Security.LanguageConstruct.ExitUsage
+        return $this->codistoHelper->callExit();
     }
 }

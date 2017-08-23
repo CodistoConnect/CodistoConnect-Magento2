@@ -80,11 +80,11 @@ class Data
     private $syncFactory;
 
     private $configurableTypeFactory;
-    private $configurableType;
+    private $configurableType = null;
     private $groupedTypeFactory;
-    private $groupedType;
+    private $groupedType = null;
     private $bundleTypeFactory;
-    private $bundleType;
+    private $bundleType = null;
 
     private $filterProvider;
     private $cmsProcessorStoreId;
@@ -93,6 +93,8 @@ class Data
     private $client;
     private $phpInterpreter;
     private $logger;
+
+    private $console;
 
     public function __construct(
         \Magento\Framework\App\ResourceConnectionFactory $resourceConnectionFactory,
@@ -106,7 +108,8 @@ class Data
         \Magento\GroupedProduct\Model\Product\Type\GroupedFactory $groupedTypeFactory,
         \Magento\Bundle\Model\Product\TypeFactory $bundleTypeFactory,
         \Codisto\Connect\Model\SyncFactory $syncFactory,
-        \Psr\Log\LoggerInterface $logger
+        \Psr\Log\LoggerInterface $logger,
+        \Magento\Framework\App\Console\Response\Proxy $console
     ) {
         $this->resourceConnectionFactory = $resourceConnectionFactory;
         $this->deploymentConfigFactory = $deploymentConfigFactory;
@@ -117,13 +120,11 @@ class Data
         $this->json = $json;
         $this->syncFactory = $syncFactory;
         $this->logger = $logger;
+        $this->console = $console;
 
         $this->configurableTypeFactory = $configurableTypeFactory;
-        $this->configurableType = null;
         $this->groupedTypeFactory = $groupedTypeFactory;
-        $this->groupedType = null;
         $this->bundleTypeFactory = $bundleTypeFactory;
-        $this->bundleType = null;
     }
 
     public function checkRequestHash($key, $server)
@@ -1066,5 +1067,10 @@ class Data
                     ($changeToken == $syncToken) &&
                     $changeTablesExist &&
                     $syncDbExists;
+    }
+
+    public function callExit()
+    {
+        $this->console->sendResponse();
     }
 }
