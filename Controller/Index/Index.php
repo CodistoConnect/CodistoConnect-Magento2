@@ -56,6 +56,7 @@ class Index extends \Magento\Framework\App\Action\Action
     private $orderService;
     private $stockManagement;
     private $itemsForReindex;
+    private $scopeConfig;
     private $codistoHelper;
     private $visitor;
 
@@ -90,6 +91,7 @@ class Index extends \Magento\Framework\App\Action\Action
         \Magento\CatalogInventory\Api\StockManagementInterface $stockManagement,
         \Magento\CatalogInventory\Observer\ItemsForReindex $itemsForReindex,
         \Magento\Customer\Model\Visitor $visitor,
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Codisto\Connect\Helper\Data $codistoHelper
     ) {
         parent::__construct($context);
@@ -124,6 +126,7 @@ class Index extends \Magento\Framework\App\Action\Action
         $this->orderService = $orderService;
         $this->stockManagement = $stockManagement;
         $this->itemsForReindex = $itemsForReindex;
+        $this->scopeConfig = $scopeConfig;
         $this->codistoHelper = $codistoHelper;
         $this->visitor = $visitor;
     }
@@ -822,6 +825,18 @@ class Index extends \Magento\Framework\App\Action\Action
         $taxpercent =  0.0;
         $taxrate =  1.0;
 
+        $shippingIncludesTax = $this->scopeConfig->getValue(
+            'tax/calculation/shipping_includes_tax',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            \Magento\Store\Model\Store::DEFAULT_STORE_ID
+        );
+
+        $priceIncludesTax = $this->scopeConfig->getValue(
+            'tax/calculation/price_includes_tax',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            \Magento\Store\Model\Store::DEFAULT_STORE_ID
+        );
+
         foreach ($ordercontent->orderlines->orderline as $orderline) {
             if ($orderline->productcode[0] == 'FREIGHT') {
                 $freighttotal += floatval($orderline->linetotalinctax[0]);
@@ -859,10 +874,21 @@ class Index extends \Magento\Framework\App\Action\Action
         $order->setShippingDiscountAmount(0.0);
         $order->setBaseShippingDiscountAmount(0.0);
 
-        $order->setBaseHiddenTaxAmount(0.0);
-        $order->setHiddenTaxAmount(0.0);
-        $order->setBaseHiddenShippingTaxAmnt(0.0);
-        $order->setHiddenShippingTaxAmount(0.0);
+        if($priceIncludesTax != 0) {
+            $order->setBaseDiscountTaxCompensationAmount($ordertaxtotal);
+            $order->setDiscountTaxCompensationAmount($ordertaxtotal);
+        } else {
+            $order->setBaseDiscountTaxCompensationAmount(0.0);
+            $order->setDiscountTaxCompensationAmount(0.0);
+        }
+
+        if($shippingIncludesTax != 0) {
+            $order->setBaseShippingDiscountTaxCompensationAmnt($freighttax);
+            $order->setShippingDiscountTaxCompensationAmount($freighttax);
+        } else {
+            $order->setBaseHiddenShippingTaxAmnt(0.0);
+            $order->setHiddenShippingTaxAmount(0.0);
+        }
 
         $order->setBaseGrandTotal($ordertotal);
         $order->setGrandTotal($ordertotal);

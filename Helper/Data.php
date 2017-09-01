@@ -181,6 +181,12 @@ class Data
         return $this->checkHash($key, $nonce, $hash);
     }
 
+    public function logger($message = '')
+    {
+        $this->logger->info($message);
+        return false;
+    }
+
     public function checkHash($Key, $Nonce, $Hash)
     {
         $Sig = base64_encode(hash('sha256', $Key . $Nonce, true));
