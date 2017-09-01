@@ -872,7 +872,7 @@ class Index extends \Magento\Framework\App\Action\Action
         try {
             $syncDb = $this->codistoHelper->getSyncPath('sync-'.$storeId.'.db');
 
-            $this->syncStaticBlocks($syncDb, $storeId);
+            $this->sync->syncStaticBlocks($syncDb, $storeId);
         } catch (\Exception $e) {
             $e;
         }
@@ -1025,7 +1025,7 @@ class Index extends \Magento\Framework\App\Action\Action
     public function execute() // @codingStandardsIgnoreLine Generic.Metrics.CyclomaticComplexity.TooHigh
     {
         $this->visitor->setSkipRequestLogging(true);
-        
+
         // @codingStandardsIgnoreStart
         set_time_limit(0);
 
