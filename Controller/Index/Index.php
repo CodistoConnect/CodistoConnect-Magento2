@@ -1677,6 +1677,7 @@ class Index extends \Magento\Framework\App\Action\Action
             $last_name = $name[1];
         } else {
             $first_name = (string)$address->name;
+            $last_name = '-';
         }
 
         $phone = (string)$address->phone;
