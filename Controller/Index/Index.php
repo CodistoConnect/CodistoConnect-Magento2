@@ -584,7 +584,7 @@ class Index extends \Magento\Framework\App\Action\Action
         if ($ebaytransactionid) {
             $payment->setAdditionalInformation('ebaytransactionid', $ebaytransactionid);
         }
-        if ($ebayuser) {
+        if ($ebayusername) {
             $payment->setAdditionalInformation('ebayuser', $ebayusername);
         }
         if ($amazonorderid) {
