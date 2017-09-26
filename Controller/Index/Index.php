@@ -29,6 +29,7 @@ class Index extends \Magento\Framework\App\Action\Action
     private $context;
     private $eventManager;
     private $resourceConnection;
+    private $deploymentConfigFactory;
     private $pageFactory;
     private $storeManager;
     private $quote;
@@ -62,6 +63,7 @@ class Index extends \Magento\Framework\App\Action\Action
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
         \Magento\Framework\App\ResourceConnection $resourceConnection,
+        \Magento\Framework\App\DeploymentConfigFactory $deploymentConfigFactory,
         \Magento\Framework\View\Result\PageFactory $pageFactory,
         \Magento\Store\Model\StoreManager $storeManager,
         \Magento\Quote\Model\Quote $quote,
@@ -97,6 +99,7 @@ class Index extends \Magento\Framework\App\Action\Action
         $this->context = $context;
         $this->eventManager = $context->getEventManager();
         $this->resourceConnection = $resourceConnection;
+        $this->deploymentConfigFactory = $deploymentConfigFactory;
         $this->pageFactory = $pageFactory;
         $this->storeManager = $storeManager;
         $this->quote = $quote;
@@ -176,6 +179,29 @@ class Index extends \Magento\Framework\App\Action\Action
         } catch (\Exception $e) {
             $e;
             // ignore if column is already present
+        }
+
+        try {
+            $deploymentConfig = $this->deploymentConfigFactory->create();
+
+            $tablePrefix = (string)$deploymentConfig->get(
+                \Magento\Framework\Config\ConfigOptionsListConstants::CONFIG_PATH_DB_PREFIX
+            );
+
+            $deploymentConfig = null;
+
+            // @codingStandardsIgnoreStart
+            $connection->query('CREATE TABLE IF NOT EXISTS `'.$tablePrefix.'codisto_order_detail` '.
+                '(order_id int(10) unsigned NOT NULL PRIMARY KEY,'.
+                ' ebaysalesrecordnumber varchar(255) NOT NULL,'.
+                ' ebaytransactionid varchar(255) NOT NULL,'.
+                ' ebayuser varchar(255) NOT NULL,'.
+                ' amazonorderid varchar(255) NOT NULL,'.
+                ' amazonfulfillmentchannel varchar(255) NOT NULL)');
+            // @codingStandardsIgnoreEnd
+        } catch (\Exception $e) {
+            $e;
+            // ignore failures to add codisto_order_detail table
         }
     }
 
@@ -428,8 +454,13 @@ class Index extends \Magento\Framework\App\Action\Action
         return $weight;
     }
 
-    private function _processOrderCreateState($order, $ordercontent, $adjustStock, $ebaysalesrecordnumber)
-    {
+    private function _processOrderCreateState(
+        $order,
+        $ordercontent,
+        $adjustStock,
+        $ebaysalesrecordnumber,
+        $amazonorderid
+    ) {
 
         // ignore count failure on simple_xml - treat count failure as no customer instruction
         $customerInstruction = @count($ordercontent->instructions) ? (string)($ordercontent->instructions) : ''; // @codingStandardsIgnoreLine Generic.PHP.NoSilencedErrors.Discouraged
@@ -445,28 +476,36 @@ class Index extends \Magento\Framework\App\Action\Action
             $order->setData('status', \Magento\Sales\Model\Order::STATE_CANCELED);
             $order->addStatusToHistory(
                 \Magento\Sales\Model\Order::STATE_CANCELED,
-                "eBay Order $ebaysalesrecordnumber has been cancelled" . $customerNote
+                $amazonorderid ?
+                    "Amazon Order $amazonorderid has been cancelled" . $customerNote
+                    : "eBay Order $ebaysalesrecordnumber has been cancelled" . $customerNote
             );
         } elseif ($ordercontent->orderstate == 'inprogress' || $ordercontent->orderstate == 'processing') {
             $order->setData('state', \Magento\Sales\Model\Order::STATE_PROCESSING);
             $order->setData('status', \Magento\Sales\Model\Order::STATE_PROCESSING);
             $order->addStatusToHistory(
                 \Magento\Sales\Model\Order::STATE_PROCESSING,
-                "eBay Order $ebaysalesrecordnumber is in progress" . $customerNote
+                $amazonorderid ?
+                "Amazon Order $amazonorderid is in progress" . $customerNote
+                : "eBay Order $ebaysalesrecordnumber is in progress" . $customerNote
             );
         } elseif ($ordercontent->orderstate == 'complete') {
             $order->setData('state', \Magento\Sales\Model\Order::STATE_COMPLETE);
             $order->setData('status', \Magento\Sales\Model\Order::STATE_COMPLETE);
             $order->addStatusToHistory(
                 \Magento\Sales\Model\Order::STATE_COMPLETE,
-                "eBay Order $ebaysalesrecordnumber is complete" . $customerNote
+                $amazonorderid ?
+                "Amazon Order $amazonorderid is complete" . $customerNote
+                : "eBay Order $ebaysalesrecordnumber is complete" . $customerNote
             );
         } else {
             $order->setData('state', \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT);
             $order->setData('status', \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT);
             $order->addStatusToHistory(
                 \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT,
-                "eBay Order $ebaysalesrecordnumber has been captured" . $customerNote
+                $amazonorderid ?
+                "Amazon Order $amazonorderid has been captured" . $customerNote
+                : "eBay Order $ebaysalesrecordnumber has been captured" . $customerNote
             );
         }
 
@@ -517,7 +556,10 @@ class Index extends \Magento\Framework\App\Action\Action
         $ordertotal,
         $paypaltransactionid,
         $ebaysalesrecordnumber,
-        $ebayusername
+        $ebaytransactionid,
+        $ebayusername,
+        $amazonorderid,
+        $amazonfulfillmentchannel
     ) {
         $payment = $order->getPayment();
 
@@ -536,8 +578,21 @@ class Index extends \Magento\Framework\App\Action\Action
             $payment->setLastTransId($paypaltransactionid);
         }
 
-        $payment->setAdditionalInformation('ebaysalesrecordnumber', $ebaysalesrecordnumber);
-        $payment->setAdditionalInformation('ebayuser', $ebayusername);
+        if ($ebaysalesrecordnumber) {
+            $payment->setAdditionalInformation('ebaysalesrecordnumber', $ebaysalesrecordnumber);
+        }
+        if ($ebaytransactionid) {
+            $payment->setAdditionalInformation('ebaytransactionid', $ebaytransactionid);
+        }
+        if ($ebayusername) {
+            $payment->setAdditionalInformation('ebayuser', $ebayusername);
+        }
+        if ($amazonorderid) {
+            $payment->setAdditionalInformation('amazonorderid', $amazonorderid);
+        }
+        if ($amazonfulfillmentchannel) {
+            $payment->setAdditionalInformation('amazonfulfillmentchannel', $amazonfulfillmentchannel);
+        }
 
         if ($ordercontent->paymentstatus == 'complete') {
             $payment->setBaseAmountPaid($ordertotal);
@@ -697,13 +752,17 @@ class Index extends \Magento\Framework\App\Action\Action
         $ebaysalesrecordnumber = (string)$ordercontent->ebaysalesrecordnumber ?
             (string)$ordercontent->ebaysalesrecordnumber : '';
 
-        $amazonorderid = (string)$ordercontent->amazonorderid ?
-            (string)$ordercontent->$amazonorderid : '';
-
-        $ebaytransactionid = (string)$ordercontent->ebaytransactionid;
+        $ebaytransactionid = (string)$ordercontent->ebaytransactionid ?
+            (string)$ordercontent->ebaytransactionid : '';
 
         $ebayusername = (string)$ordercontent->ebayusername ?
             (string)$ordercontent->ebayusername : '';
+
+        $amazonorderid = (string)$ordercontent->amazonorderid ?
+            (string)$ordercontent->$amazonorderid : '';
+
+        $amazonfulfillmentchannel = (string)$ordercontent->amazonfulfillmentchannel ?
+            (string)$ordercontent->amazonfulfillmentchannel : '';
 
         $quote->reserveOrderId();
         $order = $this->orderConverter->convert($quote->getShippingAddress());
@@ -894,7 +953,7 @@ class Index extends \Magento\Framework\App\Action\Action
             );
         }
 
-        $this->_processOrderCreateState($order, $ordercontent, $adjustStock, $ebaysalesrecordnumber);
+        $this->_processOrderCreateState($order, $ordercontent, $adjustStock, $ebaysalesrecordnumber, $amazonorderid);
 
         $order->setBaseTotalPaid(0);
         $order->setTotalPaid(0);
@@ -908,7 +967,10 @@ class Index extends \Magento\Framework\App\Action\Action
             $ordertotal,
             $paypaltransactionid,
             $ebaysalesrecordnumber,
-            $ebayusername
+            $ebaytransactionid,
+            $ebayusername,
+            $amazonorderid,
+            $amazonfulfillmentchannel
         );
 
         $quote->setIsActive(false)->save();
@@ -943,6 +1005,15 @@ class Index extends \Magento\Framework\App\Action\Action
             $ordertaxtotal,
             $ordertotal,
             $invoiceids
+        );
+
+        $this->_processOrderDetail(
+            $order,
+            $ebaysalesrecordnumber,
+            $ebaytransactionid,
+            $ebayusername,
+            $amazonorderid,
+            $amazonfulfillmentchannel
         );
 
         $response = $this->getResponse();
@@ -1220,6 +1291,7 @@ class Index extends \Magento\Framework\App\Action\Action
         $orderstatus,
         $ordercontent,
         $ebaysalesrecordnumber,
+        $amazonorderid,
         &$productsToReindex
     ) {
         /* States: cancelled, processing, captured, inprogress, complete */
@@ -1231,13 +1303,23 @@ class Index extends \Magento\Framework\App\Action\Action
                 $orderstatus!=\Magento\Sales\Model\Order::STATE_NEW)) {
             $order->setState(\Magento\Sales\Model\Order::STATE_PENDING_PAYMENT);
             $order->setStatus(\Magento\Sales\Model\Order::STATE_PENDING_PAYMENT);
-            $order->addStatusToHistory($order->getStatus(), "eBay Order $ebaysalesrecordnumber is pending payment");
+            $order->addStatusToHistory(
+                $order->getStatus(),
+                $amazonorderid ?
+                    "Amazon Order $amazonorderid is pending payment"
+                    : "eBay Order $ebaysalesrecordnumber is pending payment"
+            );
         }
 
         if ($ordercontent->orderstate == 'cancelled' && $orderstatus!=\Magento\Sales\Model\Order::STATE_CANCELED) {
             $order->setState(\Magento\Sales\Model\Order::STATE_CANCELED);
             $order->setStatus(\Magento\Sales\Model\Order::STATE_CANCELED);
-            $order->addStatusToHistory($order->getStatus(), "eBay Order $ebaysalesrecordnumber has been cancelled");
+            $order->addStatusToHistory(
+                $order->getStatus(),
+                $amazonorderid ?
+                    "Amazon Order $amazonorderid has been cancelled"
+                    : "eBay Order $ebaysalesrecordnumber has been cancelled"
+            );
         }
 
         if (($ordercontent->orderstate == 'inprogress' || $ordercontent->orderstate == 'processing') &&
@@ -1246,14 +1328,24 @@ class Index extends \Magento\Framework\App\Action\Action
             $orderstatus!=\Magento\Sales\Model\Order::STATE_COMPLETE) {
             $order->setState(\Magento\Sales\Model\Order::STATE_PROCESSING);
             $order->setStatus(\Magento\Sales\Model\Order::STATE_PROCESSING);
-            $order->addStatusToHistory($order->getStatus(), "eBay Order $ebaysalesrecordnumber is in progress");
+            $order->addStatusToHistory(
+                $order->getStatus(),
+                $amazonorderid ?
+                    "Amazon Order $amazonorderid is in progress"
+                    : "eBay Order $ebaysalesrecordnumber is in progress"
+            );
         }
 
         if ($ordercontent->orderstate == 'complete' &&
             $orderstatus!=\Magento\Sales\Model\Order::STATE_COMPLETE) {
             $order->setData('state', \Magento\Sales\Model\Order::STATE_COMPLETE);
             $order->setData('status', \Magento\Sales\Model\Order::STATE_COMPLETE);
-            $order->addStatusToHistory($order->getStatus(), "eBay Order $ebaysalesrecordnumber is complete");
+            $order->addStatusToHistory(
+                $order->getStatus(),
+                $amazonorderid ?
+                    "Amazon Order $amazonorderid is complete"
+                    : "eBay Order $ebaysalesrecordnumber is complete"
+            );
         }
 
         if (($ordercontent->orderstate == 'cancelled'
@@ -1332,6 +1424,18 @@ class Index extends \Magento\Framework\App\Action\Action
 
         $ebaysalesrecordnumber = (string)$ordercontent->ebaysalesrecordnumber ?
             (string)$ordercontent->ebaysalesrecordnumber : '';
+
+        $ebaytransactionid = (string)$ordercontent->ebaytransactionid ?
+            (string)$ordercontent->ebaytransactionid : '';
+
+        $ebayusername = (string)$ordercontent->ebayusername ?
+            (string)$ordercontent->ebayusername : '';
+
+        $amazonorderid = (string)$ordercontent->amazonorderid ?
+            (string)$ordercontent->$amazonorderid : '';
+
+        $amazonfulfillmentchannel = (string)$ordercontent->amazonfulfillmentchannel ?
+            (string)$ordercontent->amazonfulfillmentchannel : '';
 
         $currencyCode = (string)$ordercontent->transactcurrency[0];
         $ordertotal = (float)($ordercontent->ordertotal[0]);
@@ -1503,6 +1607,7 @@ class Index extends \Magento\Framework\App\Action\Action
             $orderstatus,
             $ordercontent,
             $ebaysalesrecordnumber,
+            $amazonorderid,
             $productsToReindex
         );
         $order->save();
@@ -1515,6 +1620,15 @@ class Index extends \Magento\Framework\App\Action\Action
             $ordertotal,
             $paypaltransactionid,
             $invoiceids
+        );
+
+        $this->_processOrderDetail(
+            $order,
+            $ebaysalesrecordnumber,
+            $ebaytransactionid,
+            $ebayusername,
+            $amazonorderid,
+            $amazonfulfillmentchannel
         );
 
         $response = $this->getResponse();
@@ -2033,6 +2147,47 @@ class Index extends \Magento\Framework\App\Action\Action
         $this->_processQuoteShipping($request, $store, $quote, $shippingAddress, $currencyCode, $freighttotal);
 
         $shippingAddress->save();
+    }
+
+    private function _processOrderDetail(
+        $order,
+        $ebaysalesrecordnumber,
+        $ebaytransactionid,
+        $ebayusername,
+        $amazonorderid,
+        $amazonfulfillmentchannel
+    ) {
+        try {
+            $deploymentConfig = $this->deploymentConfigFactory->create();
+
+            $tablePrefix = (string)$deploymentConfig->get(
+                \Magento\Framework\Config\ConfigOptionsListConstants::CONFIG_PATH_DB_PREFIX
+            );
+
+            $deploymentConfig = null;
+
+            $adapter = $this->resourceConnection->getConnection();
+
+            $orderDetail = [
+                'order_id' => $order->getId(),
+                'ebaysalesrecordnumber' => $ebaysalesrecordnumber,
+                'ebaytransactionid' => $ebaytransactionid,
+                'ebayuser' => $ebayusername,
+                'amazonorderid' => $amazonorderid,
+                'amazonfulfillmentchannel' => $amazonfulfillmentchannel
+            ];
+
+            // @codingStandardsIgnoreStart
+            $adapter->query(
+                'REPLACE INTO `'.$tablePrefix.'codisto_order_detail` '.
+                    '('.implode(',',array_keys($orderDetail)).') '.
+                    'VALUES ('.implode(',',array_fill(1, count($orderDetail), '?')).')',
+                array_values($orderDetail));
+            // @codingStandardsIgnoreEnd
+        } catch (\Exception $e) {
+            $e;
+            // ignore failure to update codisto_order_detail
+        }
     }
 
     private function getRegionCollection($countryCode)
