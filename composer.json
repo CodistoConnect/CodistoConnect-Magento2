@@ -8,7 +8,7 @@
     ],
     "require" : {
         "php": ">=5.5",
-        "magento/framework" : "~100",
+        "magento/framework" : "~100|~101",
         "ext-pdo_sqlite": "*"
     },
     "autoload" : {
