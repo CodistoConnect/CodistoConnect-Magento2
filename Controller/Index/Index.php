@@ -799,11 +799,11 @@ class Index extends \Magento\Framework\App\Action\Action
             $productData = $this->_processOrderLineProduct($request, $orderline, $adjustStock);
 
             $qty = (int)$orderline->quantity[0];
-            $subtotalinctax = (float)($orderline->linetotalinctax[0]);
-            $subtotal = (float)($orderline->linetotal[0]);
+            $subtotalinctax = (float)($orderline->defaultcurrencylinetotalinctax[0]);
+            $subtotal = (float)($orderline->defaultcurrencylinetotal[0]);
 
-            $price = (float)($orderline->price[0]);
-            $priceinctax = (float)($orderline->priceinctax[0]);
+            $price = (float)($orderline->defaultcurrencyprice[0]);
+            $priceinctax = (float)($orderline->defaultcurrencypriceinctax[0]);
             $taxamount = $priceinctax - $price;
             $taxpercent = $price == 0 ? 0 : round($priceinctax / $price - 1.0, 2) * 100;
 
@@ -883,8 +883,8 @@ class Index extends \Magento\Framework\App\Action\Action
 
         foreach ($ordercontent->orderlines->orderline as $orderline) {
             if ($orderline->productcode[0] == 'FREIGHT') {
-                $freighttotal += floatval($orderline->linetotalinctax[0]);
-                $freighttotalextax += floatval($orderline->linetotal[0]);
+                $freighttotal += floatval($orderline->defaultcurrencylinetotalinctax[0]);
+                $freighttotalextax += floatval($orderline->defaultcurrencylinetotal[0]);
                 $freighttax = $freighttotal - $freighttotalextax;
                 $freightservice = (string)$orderline->productname[0];
             }
@@ -894,7 +894,6 @@ class Index extends \Magento\Framework\App\Action\Action
 
         $ordersubtotal -= $freighttotalextax;
         $ordersubtotalincltax -= $freighttotal;
-        $ordertaxtotal -= $freighttax;
 
         $order->setBaseShippingAmount($freighttotal);
         $order->setShippingAmount($freighttotal);
@@ -1438,9 +1437,9 @@ class Index extends \Magento\Framework\App\Action\Action
             (string)$ordercontent->amazonfulfillmentchannel : '';
 
         $currencyCode = (string)$ordercontent->transactcurrency[0];
-        $ordertotal = (float)($ordercontent->ordertotal[0]);
-        $ordersubtotal = (float)($ordercontent->ordersubtotal[0]);
-        $ordertaxtotal = (float)($ordercontent->ordertaxtotal[0]);
+        $ordertotal = (float)($ordercontent->defaultcurrencytotal[0]);
+        $ordersubtotal = (float)($ordercontent->defaultcurrencysubtotal[0]);
+        $ordertaxtotal = (float)($ordercontent->defaultcurrencytaxtotal[0]);
 
         $ordersubtotal = $this->priceCurrency->round($ordersubtotal);
         $ordersubtotalincltax = $this->priceCurrency->round($ordersubtotal + $ordertaxtotal);
@@ -1456,8 +1455,8 @@ class Index extends \Magento\Framework\App\Action\Action
 
         foreach ($ordercontent->orderlines->orderline as $orderline) {
             if ($orderline->productcode[0] == 'FREIGHT') {
-                $freighttotal += (float)($orderline->linetotalinctax[0]);
-                $freighttotalextax += (float)($orderline->linetotal[0]);
+                $freighttotal += (float)($orderline->defaultcurrencylinetotalinctax[0]);
+                $freighttotalextax += (float)($orderline->defaultcurrencylinetotal[0]);
                 $freighttax = $freighttotal - $freighttotalextax;
                 $freightservice = (string)$orderline->productname[0];
             }
@@ -1467,7 +1466,6 @@ class Index extends \Magento\Framework\App\Action\Action
 
         $ordersubtotal -= $freighttotalextax;
         $ordersubtotalincltax -= $freighttotal;
-        $ordertaxtotal -= $freighttax;
 
         $order->setBaseShippingAmount($freighttotal);
         $order->setShippingAmount($freighttotal);
@@ -1517,13 +1515,13 @@ class Index extends \Magento\Framework\App\Action\Action
             $productData = $this->_processOrderLineProduct($request, $orderline, $adjustStock);
 
             $qty = (int)$orderline->quantity[0];
-            $subtotalinctax = (float)($orderline->linetotalinctax[0]);
-            $subtotal = (float)($orderline->linetotal[0]);
+            $subtotalinctax = (float)($orderline->defaultcurrencylinetotalinctax[0]);
+            $subtotal = (float)($orderline->defaultcurrencylinetotal[0]);
 
             $totalquantity += $qty;
 
-            $price = (float)($orderline->price[0]);
-            $priceinctax = (float)($orderline->priceinctax[0]);
+            $price = (float)($orderline->defaultcurrencyprice[0]);
+            $priceinctax = (float)($orderline->defaultcurrencypriceinctax[0]);
             $taxamount = $priceinctax - $price;
             $taxpercent = $price == 0 ? 0 : round($priceinctax / $price - 1.0, 2) * 100;
 
@@ -2020,14 +2018,14 @@ class Index extends \Magento\Framework\App\Action\Action
             $productData['product']->setIsSuperMode(true);
 
             $qty = (int)$orderline->quantity[0];
-            $subtotalinctax = (float)($orderline->linetotalinctax[0]);
-            $subtotal = (float)($orderline->linetotal[0]);
+            $subtotalinctax = (float)($orderline->defaultcurrencylinetotalinctax[0]);
+            $subtotal = (float)($orderline->defaultcurrencylinetotal[0]);
 
             $totalitemcount++;
             $totalitemqty += $qty;
 
-            $price = (float)($orderline->price[0]);
-            $priceinctax = (float)($orderline->priceinctax[0]);
+            $price = (float)($orderline->defaultcurrencyprice[0]);
+            $priceinctax = (float)($orderline->defaultcurrencypriceinctax[0]);
             $taxamount = $priceinctax - $price;
             $taxpercent = $price == 0 ? 0 : round($priceinctax / $price - 1.0, 2) * 100;
             $weight = (float)($orderline->weight[0]);
@@ -2083,8 +2081,8 @@ class Index extends \Magento\Framework\App\Action\Action
 
         foreach ($ordercontent->orderlines->orderline as $orderline) {
             if ($orderline->productcode[0] == 'FREIGHT') {
-                $freighttotal += (float)($orderline->linetotalinctax[0]);
-                $freighttotalextax += (float)($orderline->linetotal[0]);
+                $freighttotal += (float)($orderline->defaultcurrencylinetotalinctax[0]);
+                $freighttotalextax += (float)($orderline->defaultcurrencylinetotal[0]);
                 $freighttax = (float)$freighttotal - $freighttotalextax;
                 $freightservice = $orderline->productname[0];
             }
@@ -2092,7 +2090,6 @@ class Index extends \Magento\Framework\App\Action\Action
 
         $ordersubtotal -= $freighttotalextax;
         $ordersubtotalincltax -= $freighttotal;
-        $ordertaxtotal -= $freighttax;
 
         $quote->setBaseCurrencyCode($currencyCode);
         $quote->setStoreCurrencyCode($currencyCode);
