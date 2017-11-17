@@ -509,6 +509,17 @@ class Index extends \Magento\Framework\App\Action\Action
             );
         }
 
+        // ignore count failure on simple_xml - treat count failure as no merchant instruction
+        $merchantInstruction = @count($ordercontent->merchantinstructions) ? strval($ordercontent->merchantinstructions) : '';
+
+        if($merchantInstruction) {
+            $merchantInstruction = nl2br($merchantInstruction);
+            $order->addStatusToHistory(
+                $order->getStatus(),
+                $merchantInstruction
+            );
+        }
+
         if ($ordercontent->orderstate != 'cancelled' &&
             $adjustStock == false) {
             $order->addStatusToHistory(
@@ -794,7 +805,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 continue;
             }
 
-            $adjustStock = false;
+            $adjustStock = @count($ordercontent->adjuststock) ? (($ordercontent->adjuststock == "false") ? false : true) : true;
 
             $productData = $this->_processOrderLineProduct($request, $orderline, $adjustStock);
 
@@ -2011,7 +2022,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 continue;
             }
 
-            $adjustStock = true;
+            $adjustStock = @count($ordercontent->adjuststock) ? (($ordercontent->adjuststock == "false") ? false : true) : true;
 
             $productData = $this->_processOrderLineProduct($request, $orderline, $adjustStock);
 
