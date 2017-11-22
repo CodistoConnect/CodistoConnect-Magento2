@@ -3745,8 +3745,8 @@ class Sync
             $TaxRegionID = $taxRate->getTaxRegionId();
             $TaxRegionName = $taxRate->getTaxRegionName();
             $TaxRegionCode = $taxRate->getTaxRegionCode();
-            $TaxPostCode = $taxRate->getTaxPostcode();
-            $TaxCode = $taxRate->getCode();
+            $TaxPostCode = $taxRate->getTaxPostcode() == null ? '*' : $taxRate->getTaxPostcode();
+            $TaxCode = $taxRate->getCode() ? $taxRate->getCode() : '';
             $TaxRate = $taxRate->getRate();
             $TaxZipIsRange = $taxRate->getZipIsRange();
             $TaxZipFrom = $taxRate->getZipFrom();
