@@ -2256,6 +2256,7 @@ class Sync
 
         $config['currency'] = $store->getBaseCurrencyCode();
         $config['defaultcountry'] = $store->getConfig('tax/defaults/country');
+        $config['shippingtaxclass'] = $store->getConfig('tax/classes/shipping_tax_class');
 
         $insertConfiguration = $db
             ->prepare('INSERT INTO Configuration(configuration_key, configuration_value) VALUES(?,?)');
