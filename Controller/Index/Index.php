@@ -826,7 +826,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 $weight = $this->_translateWeight($orderline->weight[0], $weightunit);
             }
 
-            $weight_total += $weight;
+            $weight_total += ($weight * $qty);
 
             $orderItem = $this->orderItemConverter->convert($quoteItems[$quoteIdx], []);
 
@@ -869,6 +869,7 @@ class Index extends \Magento\Framework\App\Action\Action
             $orderItem->setBaseRowTotalInclTax($subtotalinctax);
             $orderItem->setRowTotal($subtotal);
             $orderItem->setRowTotalInclTax($subtotalinctax);
+            $orderItem->setRowWeight($weight * $qty);
             $orderItem->setWeeeTaxApplied(\Zend_Json::encode([]));
 
             $order->addItem($orderItem);
