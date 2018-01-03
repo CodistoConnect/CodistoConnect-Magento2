@@ -968,6 +968,10 @@ class Sync
             $description = $productData['description'];
         }
 
+        if(is_array($description)) {
+            $description = implode('', $description);
+        }
+
         $description = $this->codistoHelper->processCmsContent($description, $storeId);
         if (($type == 'simple' || $type == 'virtual')
             && $description == '') {
@@ -994,8 +998,14 @@ class Sync
         $shortDescription = '';
 
         if (isset($productData['short_description']) && $productData['short_description'] != '') {
+
+            $shortDescription = $productData['short_description'];
+            if(is_array($shortDescription)) {
+                $shortDescription = implode('', $shortDescription);
+            }
+
             $shortDescription =
-                $this->codistoHelper->processCmsContent($productData['short_description'], $storeId);
+                $this->codistoHelper->processCmsContent($shortDescription, $storeId);
         }
 
         return $shortDescription;
@@ -1905,11 +1915,24 @@ class Sync
             $attributeValue = isset($attributeValue) && $attributeValue ? -1 : 0;
         } elseif ($attributeData['html']) {
             if ($defaultValue == $attributeValue) {
+
+                if(is_array($attributeValue)) {
+                    $attributeValue = implode('', $attributeValue);
+                }
+
                 $defaultValue =
                     $attributeValue =
                         $this->codistoHelper->processCmsContent($attributeValue, $storeId);
             } else {
+
+                if(is_array($defaultValue)) {
+                    $defaultValue = implode('', $defaultValue);
+                }
                 $defaultValue = $this->codistoHelper->processCmsContent($defaultValue, $storeId);
+
+                if(is_array($attributeValue)) {
+                    $attributeValue = implode('', $attributeValue);
+                }
                 $attributeValue = $this->codistoHelper->processCmsContent($attributeValue, $storeId);
             }
         } elseif (in_array($attributeData['frontend_type'], ['select', 'multiselect'])) {
@@ -3791,7 +3814,12 @@ class Sync
             $BlockID = $block->getId();
             $Title = $block->getTitle();
             $Identifier = $block->getIdentifier();
-            $Content = $this->codistoHelper->processCmsContent($block->getContent(), $storeId);
+
+            $Content = $block->getContent();
+            if(is_array($Content)) {
+                $Content = implode('', $Content);
+            }
+            $Content = $this->codistoHelper->processCmsContent($Content, $storeId);
 
             $insertStaticBlock->bindParam(1, $BlockID);
             $insertStaticBlock->bindParam(2, $Title);
