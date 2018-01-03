@@ -770,7 +770,7 @@ class Index extends \Magento\Framework\App\Action\Action
             (string)$ordercontent->ebayusername : '';
 
         $amazonorderid = (string)$ordercontent->amazonorderid ?
-            (string)$ordercontent->$amazonorderid : '';
+            (string)$ordercontent->amazonorderid : '';
 
         $amazonfulfillmentchannel = (string)$ordercontent->amazonfulfillmentchannel ?
             (string)$ordercontent->amazonfulfillmentchannel : '';
@@ -1449,7 +1449,7 @@ class Index extends \Magento\Framework\App\Action\Action
             (string)$ordercontent->ebayusername : '';
 
         $amazonorderid = (string)$ordercontent->amazonorderid ?
-            (string)$ordercontent->$amazonorderid : '';
+            (string)$ordercontent->amazonorderid : '';
 
         $amazonfulfillmentchannel = (string)$ordercontent->amazonfulfillmentchannel ?
             (string)$ordercontent->amazonfulfillmentchannel : '';
