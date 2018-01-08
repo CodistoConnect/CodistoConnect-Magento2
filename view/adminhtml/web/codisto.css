@@ -14,7 +14,7 @@ BODY.codisto #anchor-content
     top: 92px;
 }
 
-BODY.codisto #anchor-content #page\:main-container
+BODY.codisto #anchor-content .page-columns
 {
     position: absolute;
     top: 0px;
@@ -24,20 +24,20 @@ BODY.codisto #anchor-content #page\:main-container
     border-top: 2px solid #ccc;
 }
 
-BODY.codisto #anchor-content #page\:main-container .admin__old
+BODY.codisto #anchor-content .page-columns .admin__old
 {
     width: 100%;
     height: 100%;
 }
 
-BODY.codisto #anchor-content #page\:main-container .admin__old #container.main-col
+BODY.codisto #anchor-content .page-columns .admin__old #container.main-col
 {
     width: 100%;
     height: 100%;
     border-top: 2px solid black;
 }
 
-BODY.codisto #anchor-content #page\:main-container .admin__old #container.main-col IFRAME
+BODY.codisto #anchor-content .page-columns .admin__old #container.main-col IFRAME
 {
     border: none;
     width: 100%;
