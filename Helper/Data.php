@@ -150,9 +150,14 @@ class Data
             $nonceDb->exec('PRAGMA page_size=65536');
             $nonceDb->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
             $nonceDb->exec('CREATE TABLE IF NOT EXISTS nonce (value text NOT NULL PRIMARY KEY)');
-            $qry = $nonceDb->prepare('INSERT OR IGNORE INTO nonce (value) VALUES(?)');
+            $qry = $nonceDb->prepare('INSERT OR IGNORE INTO nonce (value) VALUES(?); SELECT changes()');
             $qry->execute([$nonce]);
-            if ($qry->rowCount() !== 1) {
+
+            $countQuery = $db->query('SELECT changes()');
+            $nonceInsertCount = (int)$countQuery->fetchColumn();
+            $countQuery->closeCursor();
+
+            if ($nonceInsertCount !== 1) {
                 return false;
             }
         } catch (\Exception $e) {
