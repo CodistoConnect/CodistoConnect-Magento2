@@ -150,7 +150,7 @@ class Data
             $nonceDb->exec('PRAGMA page_size=65536');
             $nonceDb->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
             $nonceDb->exec('CREATE TABLE IF NOT EXISTS nonce (value text NOT NULL PRIMARY KEY)');
-            $qry = $nonceDb->prepare('INSERT OR IGNORE INTO nonce (value) VALUES(?); SELECT changes()');
+            $qry = $nonceDb->prepare('INSERT OR IGNORE INTO nonce (value) VALUES(?)');
             $qry->execute([$nonce]);
 
             $countQuery = $db->query('SELECT changes()');
