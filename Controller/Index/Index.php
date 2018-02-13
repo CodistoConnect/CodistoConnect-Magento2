@@ -913,8 +913,8 @@ class Index extends \Magento\Framework\App\Action\Action
         $ordersubtotal -= $freighttotalextax;
         $ordersubtotalincltax -= $freighttotal;
 
-        $order->setBaseShippingAmount($freighttotal);
-        $order->setShippingAmount($freighttotal);
+        $order->setBaseShippingAmount($freighttotalextax);
+        $order->setShippingAmount($freighttotalextax);
 
         $order->setBaseShippingInclTax($freighttotal);
         $order->setShippingInclTax($freighttotal);
