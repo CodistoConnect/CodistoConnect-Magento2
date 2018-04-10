@@ -22,6 +22,6 @@
 
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Module/etc/module.xsd">
-	<module name="Codisto_Connect" schema_version="0" active="true" setup_version="1.91.21">
+	<module name="Codisto_Connect" schema_version="0" active="true" setup_version="1.91.22">
 	</module>
 </config>
