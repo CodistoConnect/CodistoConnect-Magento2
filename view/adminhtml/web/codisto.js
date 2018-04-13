@@ -9,4 +9,22 @@ require([
 
     });
 
+    $("#create-account-modal .selection").css({
+        opacity : 0.1
+    });
+
+    $.ajax({
+        type: "GET",
+        url: "https://ui.codisto.com/getcountrylist",
+        dataType : "jsonp",
+        success: function(o){
+            $(".select-html-wrapper").html(o);
+        },
+        complete: function(){
+            $("#create-account-modal .selection").css({
+                opacity : 1
+            });
+        }
+    });
+
 });
