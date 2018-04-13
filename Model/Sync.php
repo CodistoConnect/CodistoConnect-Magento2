@@ -3876,7 +3876,7 @@ class Sync
 
             $StoreCode = $store->getCode();
             $StoreName = $store->getName();
-            $StoreCurrency = $store->getCurrentCurrencyCode();
+            $StoreCurrency = $this->storeManager->getStore($StoreID)->getCurrentCurrencyCode();
 
             $insertStore->execute([$StoreID, $StoreCode, $StoreName, $StoreCurrency]);
 

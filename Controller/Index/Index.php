@@ -878,7 +878,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 $store,
                 $productData['product'],
                 $adjustStock,
-                $ordercontent->orderstate != 'cancelled',
+                ($ordercontent->orderstate != 'cancelled') ? false : true,
                 $orderItem,
                 $productsToReindex
             );
@@ -1607,7 +1607,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 $productData['id'],
                 $orderlineStockReserved,
                 $adjustStock,
-                $ordercontent->orderstate != 'cancelled',
+                ($ordercontent->orderstate != 'cancelled') ? false : true,
                 $productsToReindex
             );
         }
