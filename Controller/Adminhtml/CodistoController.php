@@ -127,6 +127,7 @@ class CodistoController extends \Magento\Backend\App\Action
                             'version' => $this->productMetaData->getVersion(),
                             'url' => $store->getBaseUrl(),
                             'email' => $request->getPost('email'),
+                            'country' => $request->getPost('countrycode'),
                             'storename' => $storeName,
                             'resellerkey' => $resellerkey,
                             'codistoversion' => $codistoVersion
