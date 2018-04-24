@@ -621,9 +621,9 @@ class Index extends \Magento\Framework\App\Action\Action
 
             if (is_string($request->getQuery('incremental'))) {
                 $result = $this->sync->syncIncremental($countLimits['simplecount'], $countLimits['configurablecount']);
-                if ($result == 'nochange') {
-                    $result = 'complete';
-                }
+
+                $result = 'incremental-'.$result;
+                
             } else {
                 $result = $this->sync->syncChunk(
                     $syncDb,
