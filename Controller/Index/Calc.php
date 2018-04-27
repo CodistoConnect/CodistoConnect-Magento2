@@ -36,7 +36,7 @@ class Calc extends \Magento\Framework\App\Action\Action
     private $visitor;
     private $codistoHelper;
 
-    private $pickupRegex = '/(?:^|\W|_)pick\s*up(?:\W|_|$)/i';
+    private $pickupRegex = '/(?:^|\W|_)pick\s*up(?:\W|_|$)|(?:^|\W|_)click\s+.*\s+collect(?:\W|_|$)/i';
 
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
