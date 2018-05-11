@@ -574,7 +574,11 @@ class Index extends \Magento\Framework\App\Action\Action
     ) {
         $payment = $order->getPayment();
 
-        $payment->setMethod('ebay');
+        if($amazonorderid != '') {
+            $payment->setMethod('amazon');
+        } else {
+            $payment->setMethod('ebay');
+        }
         $payment->resetTransactionAdditionalInfo();
         $payment->setTransactionId(0);
 
@@ -1092,6 +1096,7 @@ class Index extends \Magento\Framework\App\Action\Action
         $ordertaxtotal,
         $ordertotal,
         $paypaltransactionid,
+        $amazonorderid,
         &$invoiceids
     ) {
         if (!$order->hasInvoices()) {
@@ -1112,7 +1117,11 @@ class Index extends \Magento\Framework\App\Action\Action
                     }
                 }
 
-                $payment->setMethod('ebay');
+                if($amazonorderid != '') {
+                    $payment->setMethod('amazon');
+                } else {
+                    $payment->setMethod('ebay');
+                }
                 $payment->setParentTransactionId(null)
                     ->setIsTransactionClosed(1);
 
@@ -1635,6 +1644,7 @@ class Index extends \Magento\Framework\App\Action\Action
             $ordertaxtotal,
             $ordertotal,
             $paypaltransactionid,
+            $amazonorderid,
             $invoiceids
         );
 
@@ -1992,6 +2002,9 @@ class Index extends \Magento\Framework\App\Action\Action
         $ordersubtotalincltax = $this->priceCurrency->round($ordersubtotal + $ordertaxtotal);
         $ordertotal = $this->priceCurrency->round($ordertotal);
 
+        $amazonorderid = (string)$ordercontent->amazonorderid ?
+            (string)$ordercontent->amazonorderid : '';
+
         $quote->setCurrency();
         $quote->setIsSuperMode(true);
         $quote->setStore($store);
@@ -2128,7 +2141,11 @@ class Index extends \Magento\Framework\App\Action\Action
         $quote->save();
 
         $quotePayment = $quote->getPayment();
-        $quotePayment->setMethod('ebay');
+        if($amazonorderid != '') {
+            $quotePayment->setMethod('amazon');
+        } else {
+            $quotePayment->setMethod('ebay');
+        }
         $quotePayment->save();
 
         // ignore count failure on simple_xml - treat count failure as no customer instruction
