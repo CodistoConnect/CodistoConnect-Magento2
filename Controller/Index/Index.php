@@ -1301,9 +1301,7 @@ class Index extends \Magento\Framework\App\Action\Action
             $this->canSubtractQty($stockItem)) {
             $productsToReindex[$product->getId()] = 0;
 
-            if ($cancelled) {
-                $stockItem->setQty($stockItem->getQty() + (int)($qty));
-            } else {
+            if (!$cancelled) {
                 $stockItem->setQty($stockItem->getQty() - (int)$qty);
             }
 
