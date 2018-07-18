@@ -1904,7 +1904,7 @@ class Index extends \Magento\Framework\App\Action\Action
 
                 $shippingRates = $shippingResult->getAllRates();
 
-                $pickupRegex = '/(?:^|\W|_)pick\s*up(?:\W|_|$)/i';
+                $pickupRegex = '/(?:^|\W|_)pick\s*up(?:\W|_|$)|(?:^|\W|_)click\s+.*\s+collect(?:\W|_|$)/i';
 
                 foreach ($shippingRates as $shippingRate) {
                     if ($shippingRate instanceof \Magento\Quote\Model\Quote\Address\RateResult\Method &&

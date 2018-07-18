@@ -296,7 +296,7 @@ class Index extends \Magento\Framework\App\Action\Action
         $db->exec('PRAGMA soft_heap_limit=67108864');
         $db->exec('PRAGMA journal_mode=MEMORY');
 
-        $db->exec('ATTACH DATABASE \''.$syncDb.'\' AS SyncDB');
+        $db->exec('ATTACH DATABASE \''.$syncDb.'\' AS SyncDb');
 
         $db->exec('BEGIN EXCLUSIVE TRANSACTION');
 
@@ -311,11 +311,12 @@ class Index extends \Magento\Framework\App\Action\Action
             }
 
             $productIds = array_map('intval', $productIds);
+            $productStr = '("' . implode('","', $productIds) . '")';
 
             $db->exec(
                 'CREATE TABLE Product AS '.
                 'SELECT * FROM SyncDb.Product WHERE ExternalReference IN '.
-                    '('.implode(',', $productIds).')'
+                    $productStr
             );
             $db->exec(
                 'CREATE TABLE ProductImage AS '.
