@@ -1133,6 +1133,9 @@ class Index extends \Magento\Framework\App\Action\Action
                     $payment->setBaseAmountPaid(0.0);
                     $payment->setAmountPaid(0.0);
 
+                    $order->setBaseTotalPaid($ordertotal);
+                    $order->setTotalPaid($ordertotal);
+
                     $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_OFFLINE);
                     $invoice->register();
                 }
@@ -2149,11 +2152,13 @@ class Index extends \Magento\Framework\App\Action\Action
         // ignore count failure on simple_xml - treat count failure as no customer instruction
         $customerInstruction = @count($ordercontent->instructions) ? (string)($ordercontent->instructions) : ''; // @codingStandardsIgnoreLine Generic.PHP.NoSilencedErrors.Discouraged
 
-        $checkoutSession = $this->session;
-        $checkoutSession->setCustomer($customer);
-        $checkoutSession->replaceQuote($quote);
-        $checkoutSession->setData('customer_comment', $customerInstruction);
-        $checkoutSession->setData('destination_type', 'residence');
+        if($customer){
+            $checkoutSession = $this->session;
+            $checkoutSession->setCustomer($customer);
+            $checkoutSession->replaceQuote($quote);
+            $checkoutSession->setData('customer_comment', $customerInstruction);
+            $checkoutSession->setData('destination_type', 'residence');
+        }
 
         $shippingAddress = $quote->getShippingAddress();
         $shippingAddress->setSubtotal($ordersubtotal);
