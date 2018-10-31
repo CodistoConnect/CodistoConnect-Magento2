@@ -873,7 +873,7 @@ class Sync
 
         $rate = 0;
         $taxIncluded = 0;
-        $taxAttribute = $parentProduct->getCustomAttribute('tax_class_id')
+        $taxAttribute = $parentProduct->getCustomAttribute('tax_class_id');
 
         if ($taxAttribute) {
             $productRateId = $taxAttribute->getValue();
@@ -899,7 +899,7 @@ class Sync
 
         $rate = 0;
         $taxIncluded = 0;
-        $taxAttribute = $product->getCustomAttribute('tax_class_id')
+        $taxAttribute = $product->getCustomAttribute('tax_class_id');
 
         if ($taxAttribute) {
             $productRateId = $taxAttribute->getValue();
