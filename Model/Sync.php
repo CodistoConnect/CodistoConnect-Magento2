@@ -117,6 +117,8 @@ class Sync
         \Magento\Framework\Json\Helper\Data $json,
         \Magento\Framework\Stdlib\DateTime\DateTime $dateTime,
         \Magento\Catalog\Helper\Data $taxHelper,
+        \Magento\Tax\Api\TaxCalculationInterface $taxCalc,
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Catalog\Model\Product\Media\ConfigFactory $mediaConfigFactory,
         \Magento\Framework\Model\ResourceModel\IteratorFactory $iteratorFactory,
         \Magento\Catalog\Model\Indexer\Product\Flat\StateFactory $productFlatState,
@@ -150,12 +152,14 @@ class Sync
         $this->json = $json;
         $this->dateTime = $dateTime;
         $this->taxHelper = $taxHelper;
+        $this->taxCalc = $taxCalc;
         $this->mediaConfigFactory = $mediaConfigFactory;
         $this->iteratorFactory = $iteratorFactory;
         $this->productFlatState = $productFlatState;
         $this->categoryFlatState = $categoryFlatState;
         $this->urlBuilder = $context->getUrl();
         $this->codistoHelper = $codistoHelper;
+        $this->scopeConfig = $scopeConfig;
 
         $this->attributecache = [];
         $this->attributeLabelCache = [];
@@ -170,6 +174,12 @@ class Sync
         if (!$this->ebayGroupId) {
             $this->ebayGroupId = \Magento\Customer\Model\GroupManagement::NOT_LOGGED_IN_ID;
         }
+
+        $this->taxIncluded = $this->scopeConfig->getValue(
+            'tax/calculation/price_includes_tax',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            \Magento\Store\Model\Store::DEFAULT_STORE_ID
+        );
 
         $productSelectArray = [
             'entity_id',
@@ -867,34 +877,42 @@ class Sync
             $finalPrice = 0.0;
         }
 
-        $price = $this->taxHelper->getTaxPrice(
-            $parentProduct,
-            $finalPrice,
-            false,
-            null,
-            null,
-            null,
-            $store,
-            null,
-            false
-        );
+        $rate = 0;
+
+        if ((int)$this->taxIncluded === 1) {
+            $taxAttribute = $parentProduct->getCustomAttribute('tax_class_id');
+
+            if ($taxAttribute) {
+                $productRateId = $taxAttribute->getValue();
+                $rate = $this->taxCalc->getCalculatedRate($productRateId);
+            }
+
+            $price = $finalPrice / (1 + ($rate / 100));
+        } else {
+            $price = $finalPrice;
+        }
 
         return $price;
     }
 
     private function _syncProductListPrice($store, $product, $price)
     {
-        $listPrice = $this->taxHelper->getTaxPrice(
-            $product,
-            $product->getPrice(),
-            false,
-            null,
-            null,
-            null,
-            $store,
-            null,
-            false
-        );
+
+        $rate = 0;
+
+        if ((int)$this->taxIncluded === 1) {
+            $taxAttribute = $product->getCustomAttribute('tax_class_id');
+
+            if ($taxAttribute) {
+                $productRateId = $taxAttribute->getValue();
+                $rate = $this->taxCalc->getCalculatedRate($productRateId);
+            }
+
+            $listPrice = $product->getPrice() / (1 + ($rate / 100));
+        } else {
+            $listPrice = $product->getPrice();
+        }
+
         if (!is_numeric($listPrice)) {
             $listPrice = $price;
         }
