@@ -878,14 +878,15 @@ class Sync
         }
 
         $rate = 0;
-        $taxAttribute = $parentProduct->getCustomAttribute('tax_class_id');
-
-        if ($taxAttribute) {
-            $productRateId = $taxAttribute->getValue();
-            $rate = $this->taxCalc->getCalculatedRate($productRateId);
-        }
 
         if ((int)$this->taxIncluded === 1) {
+            $taxAttribute = $parentProduct->getCustomAttribute('tax_class_id');
+
+            if ($taxAttribute) {
+                $productRateId = $taxAttribute->getValue();
+                $rate = $this->taxCalc->getCalculatedRate($productRateId);
+            }
+
             $price = $finalPrice / (1 + ($rate / 100));
         } else {
             $price = $finalPrice;
@@ -898,14 +899,15 @@ class Sync
     {
 
         $rate = 0;
-        $taxAttribute = $product->getCustomAttribute('tax_class_id');
-
-        if ($taxAttribute) {
-            $productRateId = $taxAttribute->getValue();
-            $rate = $this->taxCalc->getCalculatedRate($productRateId);
-        }
 
         if ((int)$this->taxIncluded === 1) {
+            $taxAttribute = $product->getCustomAttribute('tax_class_id');
+
+            if ($taxAttribute) {
+                $productRateId = $taxAttribute->getValue();
+                $rate = $this->taxCalc->getCalculatedRate($productRateId);
+            }
+
             $listPrice = $product->getPrice() / (1 + ($rate / 100));
         } else {
             $listPrice = $product->getPrice();
