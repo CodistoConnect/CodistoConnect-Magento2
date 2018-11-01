@@ -2,7 +2,7 @@
     "name" : "codisto/codisto-connect",
     "description" : "Codisto LINQ Magento 2 Extension",
     "type" : "magento2-module",
-    "version" : "1.91.26",
+    "version" : "1.91.27",
     "license" : [
         "OSL-3.0"
     ],
