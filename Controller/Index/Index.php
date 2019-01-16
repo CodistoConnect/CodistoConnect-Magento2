@@ -2154,7 +2154,7 @@ class Index extends \Magento\Framework\App\Action\Action
 
         if($customer){
             $checkoutSession = $this->session;
-            $checkoutSession->setCustomer($customer);
+            $checkoutSession->setCustomerData($customer);
             $checkoutSession->replaceQuote($quote);
             $checkoutSession->setData('customer_comment', $customerInstruction);
             $checkoutSession->setData('destination_type', 'residence');
