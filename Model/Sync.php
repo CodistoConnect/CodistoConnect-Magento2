@@ -3495,6 +3495,10 @@ class Sync
 
             $db = $storeData['db'];
 
+            if (is_null($db)) {
+                continue;
+            }
+
             $db->exec('BEGIN EXCLUSIVE TRANSACTION');
 
             $this->_syncIncrementalProducts($store, $storeId, $productUpdateIds, $iterator, $db);
