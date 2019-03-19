@@ -33,7 +33,7 @@ $om = $bootstrap->getObjectManager();
 
 $om
     ->get('Magento\Framework\App\State') // @codingStandardsIgnoreLine MEQP2.Classes.ObjectManager.ObjectManagerFound
-    ->setAreaCode('backend');
+    ->setAreaCode('adminhtml');
 
 $helper = $om->create('Codisto\Connect\Helper\Data'); // @codingStandardsIgnoreLine MEQP2.Classes.ObjectManager.ObjectManagerFound
 
