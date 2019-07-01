@@ -28,7 +28,7 @@
 		<add id="Codisto_Connect::orders" title="Marketplace Orders" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::marketplaces" action="codisto/orders" resource="Codisto_Connect::orders"/>
 		<add id="Codisto_Connect::attributes" title="Attribute Mapping" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::marketplaces" action="codisto/attributes" resource="Codisto_Connect::attributes"/>
 		<add id="Codisto_Connect::categories" title="eBay Store Categories" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::marketplaces" action="codisto/categories" resource="Codisto_Connect::categories"/>
-		<add id="Codisto_Connect::import" title="Link eBay Listings" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::marketplaces" action="codisto/import" resource="Codisto_Connect::import"/>
+		<add id="Codisto_Connect::import" title="Link Listings" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::marketplaces" action="codisto/import" resource="Codisto_Connect::import"/>
 		<add id="Codisto_Connect::settings" title="Settings" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::marketplaces" action="codisto/settings/index" resource="Codisto_Connect::settings"/>
 		<add id="Codisto_Connect::account" title="Account" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::marketplaces" action="codisto/account" resource="Codisto_Connect::account"/>
 	</menu>
