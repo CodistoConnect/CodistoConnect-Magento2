@@ -275,7 +275,7 @@ class CodistoController extends \Magento\Backend\App\Action
         $asset = $this->assetRepository->createAsset('Codisto_Connect::codisto.js');
         $this->assetCollection->add('codisto-js', $asset);
 
-        if (true || !$this->scopeConfig->getValue('codisto/merchantid')) {
+        if (!$this->scopeConfig->getValue('codisto/merchantid')) {
             $adminUser = $this->session->getUser();
 
             $block = $page->getLayout()->createBlock(\Magento\Framework\View\Element\Template::class);
