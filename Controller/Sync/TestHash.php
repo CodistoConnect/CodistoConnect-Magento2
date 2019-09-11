@@ -51,7 +51,7 @@ class TestHash extends \Magento\Framework\App\Action\Action
             \Magento\Framework\Controller\ResultFactory::TYPE_RAW
         );
         $rawResult->setHttpResponseCode($statusCode);
-        //$rawResult->setHeader('Cache-Control', 'no-cache', true);
+        $rawResult->setHeader('Cache-Control', 'no-cache', true);
         $rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
         $rawResult->setHeader('Pragma', 'no-cache', true);
         $rawResult->setHeader('Content-Type', 'text/plain');

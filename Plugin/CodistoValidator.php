@@ -15,7 +15,8 @@ class CodistoValidator
         $request,
         $action
     ) {
-        if ($request->getModuleName() == 'codisto-sync') {
+        if ($request->getModuleName() == 'codisto-sync'
+			|| $request->getModuleName() == 'codisto') {
             return; // Skip CSRF check
         }
         $proceed($request, $action); // Proceed Magento 2 core functionalities

@@ -21,7 +21,7 @@
 
 namespace Codisto\Connect\Controller;
 
-class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction implements \Magento\Framework\App\CsrfAwareActionInterface
+class CodistoActionInstance extends \Magento\Backend\App\AbstractAction
 {
     private $context;
     private $scopeConfig;
@@ -36,7 +36,7 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
     private $rawResponseFactory;
 
     public function __construct(
-        \Magento\Framework\App\Action\Context $context,
+        \Magento\Backend\App\Action\Context $context,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Config\Model\ResourceModel\ConfigFactory $configFactory,
         \Magento\Framework\App\Cache\TypeListInterface $cacheTypeList,
@@ -61,13 +61,7 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
         $this->rawResponseFactory = $rawResponseFactory;
     }
 
-    public function createCsrfValidationException(\Magento\Framework\App\RequestInterface $request): ?\Magento\Framework\App\Request\InvalidRequestException
-    {
-        return null;
-    }
-
-    public function validateForCsrf(\Magento\Framework\App\RequestInterface $request): ?bool
-    {
+    public function _processUrlKeys() {
         return true;
     }
 
@@ -176,8 +170,6 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
             $remoteUrl .= $merchantID . '/';
         }
 
-        //$path = preg_replace('/\/codisto\/settingz\//', '/codisto/settings/', $path);
-
         $remotePath = preg_replace('/^\/'.preg_quote($adminPath, '/').'\/codisto\/\/?|index\/key\/[a-zA-z0-9]*\/|key\/[a-zA-z0-9]*\//', '', $path);
 
         $remoteUrl .= $remotePath;
@@ -211,9 +203,7 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
         // file_get_contents is the best way to pipe input to proxy
         $client->setRawData(file_get_contents('php://input')); // @codingStandardsIgnoreLine MEQP1.Security.DiscouragedFunction.Found
 
-        $x = $client->request($request->getMethod());
-
-        return $x;
+        return $client->request($request->getMethod());
     }
 
     private function _proxySetResponseHeader($response, $header, $value)

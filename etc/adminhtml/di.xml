@@ -33,4 +33,7 @@
             </argument>
         </arguments>
     </type>
+    <type name="Magento\Framework\App\Request\CsrfValidator">
+        <plugin name="codisto_validator" type="Codisto\Connect\Plugin\CodistoValidator" />
+    </type>
 </config>
