@@ -150,7 +150,7 @@ class Index extends \Magento\Framework\App\Action\Action
             \Magento\Framework\Controller\ResultFactory::TYPE_RAW
         );
         $rawResult->setHttpResponseCode($statusCode);
-        $rawResult->setHeader('Cache-Control', 'no-cache', true);
+        //$rawResult->setHeader('Cache-Control', 'no-cache', true);
         $rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
         $rawResult->setHeader('Pragma', 'no-cache', true);
         $rawResult->setContents($statusText);
@@ -306,7 +306,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 );
                 $jsonResult->setHttpResponseCode(200);
                 $jsonResult->setHeader('Content-Type', 'application/json');
-                $jsonResult->setHeader('Cache-Control', 'no-cache, must-revalidate', true);
+                //$jsonResult->setHeader('Cache-Control', 'no-cache, must-revalidate', true);
                 $jsonResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
                 $jsonResult->setHeader('Pragma', 'no-cache', true);
                 $jsonResult->setData(
@@ -383,7 +383,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 );
                 $jsonResult->setHttpResponseCode(200);
                 $jsonResult->setHeader('Content-Type', 'application/json');
-                $jsonResult->setHeader('Cache-Control', 'no-cache', true);
+                //$jsonResult->setHeader('Cache-Control', 'no-cache', true);
                 $jsonResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
                 $jsonResult->setHeader('Pragma', 'no-cache', true);
                 $jsonResult->setData(
@@ -1045,7 +1045,7 @@ class Index extends \Magento\Framework\App\Action\Action
         );
         $jsonResult->setHttpResponseCode(200);
         $jsonResult->setHeader('Content-Type', 'application/json');
-        $jsonResult->setHeader('Cache-Control', 'no-cache, must-revalidate', true);
+        //$jsonResult->setHeader('Cache-Control', 'no-cache, must-revalidate', true);
         $jsonResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
         $jsonResult->setHeader('Pragma', 'no-cache', true);
         $jsonResult->setData(
@@ -1667,7 +1667,7 @@ class Index extends \Magento\Framework\App\Action\Action
         );
         $jsonResult->setHttpResponseCode(200);
         $jsonResult->setHeader('Content-Type', 'application/json');
-        $jsonResult->setHeader('Cache-Control', 'no-cache, must-revalidate', true);
+        //$jsonResult->setHeader('Cache-Control', 'no-cache, must-revalidate', true);
         $jsonResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
         $jsonResult->setHeader('Pragma', 'no-cache', true);
         $jsonResult->setData(

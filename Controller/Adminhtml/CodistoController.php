@@ -36,6 +36,8 @@ class CodistoController extends \Magento\Backend\App\Action
     private $json;
     private $session;
 
+    protected $_publicActions = ['index', 'account', 'attributes', 'categories', 'importlistings', 'settings', 'profiles', 'orders'];
+
     // protected class members used here so that the only
     // thing needed in each of the descendant controllers
     // is overriding of the member variables

@@ -603,12 +603,12 @@ class Index extends \Magento\Framework\App\Action\Action
         }
 
         $syncDb = $this->codistoHelper->getSyncPath('sync-'.$storeId.'.db');
-
+$x = array();
         try {
             $result = 'error';
-
+$x[1] = 1;
             $countLimits = $this->_syncActionExecuteChunkCounts($request);
-
+$x[2] = 2;
             $result = $this->_syncActionExecuteChunkInit(
                 $request,
                 $storeId,
@@ -619,12 +619,12 @@ class Index extends \Magento\Framework\App\Action\Action
             if ($result) {
                 return $result;
             }
-
+$x[3] = 3;
             if (is_string($request->getQuery('incremental'))) {
                 $result = $this->sync->syncIncremental($countLimits['simplecount'], $countLimits['configurablecount']);
 
                 $result = 'incremental-'.$result;
-                
+
             } else {
                 $result = $this->sync->syncChunk(
                     $syncDb,
@@ -634,7 +634,7 @@ class Index extends \Magento\Framework\App\Action\Action
                     false
                 );
             }
-
+$x[4] = 4;
             if ($result == 'complete') {
                 $result = 'catalog-complete';
 
@@ -644,6 +644,7 @@ class Index extends \Magento\Framework\App\Action\Action
 
             return $this->_sendPlainResponse(200, 'OK', $result);
         } catch (\Exception $e) {
+
             $result = $this->_syncActionExecuteChunkException($e, $syncDb);
             if ($result) {
                 return $result;
@@ -1134,16 +1135,17 @@ class Index extends \Magento\Framework\App\Action\Action
     private function _sendPlainResponse($status, $statustext, $body, $extraHeaders = null)
     {
         $response = $this->getResponse();
-        $response->clearHeaders();
+        $response->setNoCacheHeaders();
+        //$response->clearHeaders();
         $response->setStatusHeader($status, '1.0', $statustext);
 
         $rawResult = $this->context->getResultFactory()->create(
             \Magento\Framework\Controller\ResultFactory::TYPE_RAW
         );
         $rawResult->setHttpResponseCode($status);
-        $rawResult->setHeader('Cache-Control', 'no-cache', true);
-        $rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-        $rawResult->setHeader('Pragma', 'no-cache', true);
+        //$rawResult->setHeader('Cache-Control', 'no-cache', true);
+        //$rawResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
+        //$rawResult->setHeader('Pragma', 'no-cache', true);
         $rawResult->setHeader('Content-Type', 'text/plain');
 
         if (is_array($extraHeaders)) {
@@ -1161,30 +1163,32 @@ class Index extends \Magento\Framework\App\Action\Action
         $extraHeaders;
 
         $response = $this->getResponse();
-        $response->clearHeaders();
+        //$response->clearHeaders();
+        $response->setNoCacheHeaders();
         $response->setStatusHeader($status, '1.0', $statustext);
 
         $jsonResult = $this->context->getResultFactory()->create(
             \Magento\Framework\Controller\ResultFactory::TYPE_JSON
         );
         $jsonResult->setHttpResponseCode($status);
-        $jsonResult->setHeader('Cache-Control', 'no-cache', true);
-        $jsonResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-        $jsonResult->setHeader('Pragma', 'no-cache', true);
-        $jsonResult->setHeader('Content-Type', 'application/json');
-        $jsonResult->setData($body);
+        //$jsonResult->setHeader('Cache-Control', 'no-cache', true);
+        //$jsonResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
+        //$jsonResult->setHeader('Pragma', 'no-cache', true);
+        //$jsonResult->setHeader('Content-Type', 'application/json');
+        //$jsonResult->setData($body);
         return $jsonResult;
     }
 
     private function _sendFile($syncDb, $sendOptions = [])
     {
         $response = $this->getResponse();
-        $response->clearHeaders();
-        $response->setStatusHeader(200, '1.0', 'OK');
-        $response->setHeader('Content-Type', 'application/octet-stream');
-        $response->setHeader('Pragma', 'no-cache');
-        $response->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT');
-        $response->setHeader('Cache-Control', 'no-cache', true);
+        $response->setNoCacheHeaders();
+        //$response->clearHeaders();
+        //$response->setStatusHeader(200, '1.0', 'OK');
+        //$response->setHeader('Content-Type', 'application/octet-stream');
+        //$response->setHeader('Pragma', 'no-cache');
+        //$response->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT');
+        //$response->setHeader('Cache-Control', 'no-cache', true);
 
         if (isset($sendOptions['syncresponse'])) {
             $response->setHeader('X-Codisto-SyncResponse', $sendOptions['syncresponse']);

@@ -21,7 +21,7 @@
 
 namespace Codisto\Connect\Controller;
 
-class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
+class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction implements \Magento\Framework\App\CsrfAwareActionInterface
 {
     private $context;
     private $scopeConfig;
@@ -59,6 +59,16 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
         $this->storeManager = $storeManager;
         $this->auth = $auth;
         $this->rawResponseFactory = $rawResponseFactory;
+    }
+
+    public function createCsrfValidationException(\Magento\Framework\App\RequestInterface $request): ?\Magento\Framework\App\Request\InvalidRequestException
+    {
+        return null;
+    }
+
+    public function validateForCsrf(\Magento\Framework\App\RequestInterface $request): ?bool
+    {
+        return true;
     }
 
     public function execute() // @codingStandardsIgnoreLine MEQP1.CodeAnalysis.EmptyBlock.DetectedFUNCTION
@@ -166,7 +176,9 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
             $remoteUrl .= $merchantID . '/';
         }
 
-        $remotePath = preg_replace('/^\/'.preg_quote($adminPath, '/').'\/codisto\/\/?|key\/[a-zA-z0-9]*\//', '', $path);
+        //$path = preg_replace('/\/codisto\/settingz\//', '/codisto/settings/', $path);
+
+        $remotePath = preg_replace('/^\/'.preg_quote($adminPath, '/').'\/codisto\/\/?|index\/key\/[a-zA-z0-9]*\/|key\/[a-zA-z0-9]*\//', '', $path);
 
         $remoteUrl .= $remotePath;
 
@@ -199,7 +211,9 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
         // file_get_contents is the best way to pipe input to proxy
         $client->setRawData(file_get_contents('php://input')); // @codingStandardsIgnoreLine MEQP1.Security.DiscouragedFunction.Found
 
-        return $client->request($request->getMethod());
+        $x = $client->request($request->getMethod());
+
+        return $x;
     }
 
     private function _proxySetResponseHeader($response, $header, $value)
@@ -367,9 +381,14 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
             $curlOptions[CURLOPT_ENCODING] = '';
         }
 
-        $adminBasePort = $request->getServer('SERVER_PORT');
+        if($request->getServer('HTTP_X_VARNISH')) {
+            $adminBasePort = '';
+        } else {
+            $adminBasePort = $request->getServer('SERVER_PORT');
+        }
         $adminBasePort = $adminBasePort = '' || $adminBasePort == '80' || $adminBasePort == '443'
             ? '' : ':'.$adminBasePort;
+        $adminBasePort = '';
         $adminBasePath = $request->getServer('REQUEST_URI');
         $adminBasePath = substr($adminBasePath, 0, strpos($adminBasePath, '/codisto/'));
         $adminBaseURL = $request->getScheme() . '://' .
