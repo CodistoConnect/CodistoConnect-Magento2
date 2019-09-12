@@ -345,8 +345,6 @@ class Calc extends \Magento\Framework\App\Action\Action
             // so a valid response is always emitted
         }
 
-        $response->clearHeaders();
-
         $rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
         $rawResult->setHttpResponseCode(200);
         $rawResult->setHeader('Cache-Control', 'no-cache', true);

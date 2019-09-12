@@ -144,7 +144,6 @@ class Index extends \Magento\Framework\App\Action\Action
 
     private function _errorResponse($response, $statusCode, $statusText)
     {
-        $response->clearHeaders();
         $response->setStatusHeader($statusCode, '1.0', $statusText);
         $rawResult = $this->context->getResultFactory()->create(
             \Magento\Framework\Controller\ResultFactory::TYPE_RAW
@@ -300,7 +299,7 @@ class Index extends \Magento\Framework\App\Action\Action
 
                 $this->_processQuote($quote, $xml, $store, $request);
             } catch (\Exception $e) {
-                $response->clearHeaders();
+
                 $jsonResult = $this->context->getResultFactory()->create(
                     \Magento\Framework\Controller\ResultFactory::TYPE_JSON
                 );
@@ -377,7 +376,6 @@ class Index extends \Magento\Framework\App\Action\Action
                 $connection->rollback();
                 $connection->exec('SET TRANSACTION ISOLATION LEVEL '.$txIsoLevel);
 
-                $response->clearHeaders();
                 $jsonResult = $this->context->getResultFactory()->create(
                     \Magento\Framework\Controller\ResultFactory::TYPE_JSON
                 );
@@ -634,12 +632,12 @@ class Index extends \Magento\Framework\App\Action\Action
         if (strtolower($freightservice) != 'freight') {
             $matchFound = false;
 
-            $shippingDescription = $quote->getShippingAddress()->getShippingDescription();
+            $shippingDescription = (string)$quote->getShippingAddress()->getShippingDescription();
             if ($shippingDescription) {
                 $shippingRates = $quote->getShippingAddress()->getAllShippingRates();
 
                 foreach ($shippingRates as $rate) {
-                    $shippingMethodTitle = $rate->getMethodTitle();
+                    $shippingMethodTitle = (string)$rate->getMethodTitle();
 
                     if (strpos($shippingDescription, $shippingMethodTitle) !== false) {
                         $shippingDescription = str_replace($shippingMethodTitle, $freightservice, $shippingDescription);
@@ -1039,7 +1037,6 @@ class Index extends \Magento\Framework\App\Action\Action
 
         $response = $this->getResponse();
 
-        $response->clearHeaders();
         $jsonResult = $this->context->getResultFactory()->create(
             \Magento\Framework\Controller\ResultFactory::TYPE_JSON
         );
@@ -1659,8 +1656,6 @@ class Index extends \Magento\Framework\App\Action\Action
         );
 
         $response = $this->getResponse();
-
-        $response->clearHeaders();
 
         $jsonResult = $this->context->getResultFactory()->create(
             \Magento\Framework\Controller\ResultFactory::TYPE_JSON

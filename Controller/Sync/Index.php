@@ -624,7 +624,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 $result = $this->sync->syncIncremental($countLimits['simplecount'], $countLimits['configurablecount']);
 
                 $result = 'incremental-'.$result;
-                
+
             } else {
                 $result = $this->sync->syncChunk(
                     $syncDb,
@@ -644,6 +644,7 @@ class Index extends \Magento\Framework\App\Action\Action
 
             return $this->_sendPlainResponse(200, 'OK', $result);
         } catch (\Exception $e) {
+
             $result = $this->_syncActionExecuteChunkException($e, $syncDb);
             if ($result) {
                 return $result;
@@ -1134,7 +1135,7 @@ class Index extends \Magento\Framework\App\Action\Action
     private function _sendPlainResponse($status, $statustext, $body, $extraHeaders = null)
     {
         $response = $this->getResponse();
-        $response->clearHeaders();
+        $response->setNoCacheHeaders();
         $response->setStatusHeader($status, '1.0', $statustext);
 
         $rawResult = $this->context->getResultFactory()->create(
@@ -1153,6 +1154,7 @@ class Index extends \Magento\Framework\App\Action\Action
         }
 
         $rawResult->setContents($body);
+        $rawResult->renderResult($response);
         return $rawResult;
     }
 
@@ -1161,16 +1163,13 @@ class Index extends \Magento\Framework\App\Action\Action
         $extraHeaders;
 
         $response = $this->getResponse();
-        $response->clearHeaders();
+        $response->setNoCacheHeaders();
         $response->setStatusHeader($status, '1.0', $statustext);
 
         $jsonResult = $this->context->getResultFactory()->create(
             \Magento\Framework\Controller\ResultFactory::TYPE_JSON
         );
         $jsonResult->setHttpResponseCode($status);
-        $jsonResult->setHeader('Cache-Control', 'no-cache', true);
-        $jsonResult->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT', true);
-        $jsonResult->setHeader('Pragma', 'no-cache', true);
         $jsonResult->setHeader('Content-Type', 'application/json');
         $jsonResult->setData($body);
         return $jsonResult;
@@ -1179,12 +1178,9 @@ class Index extends \Magento\Framework\App\Action\Action
     private function _sendFile($syncDb, $sendOptions = [])
     {
         $response = $this->getResponse();
-        $response->clearHeaders();
+        $response->setNoCacheHeaders();
         $response->setStatusHeader(200, '1.0', 'OK');
         $response->setHeader('Content-Type', 'application/octet-stream');
-        $response->setHeader('Pragma', 'no-cache');
-        $response->setHeader('Expires', 'Thu, 01 Jan 1970 00:00:00 GMT');
-        $response->setHeader('Cache-Control', 'no-cache', true);
 
         if (isset($sendOptions['syncresponse'])) {
             $response->setHeader('X-Codisto-SyncResponse', $sendOptions['syncresponse']);

@@ -21,7 +21,7 @@
 
 namespace Codisto\Connect\Controller;
 
-class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
+class CodistoActionInstance extends \Magento\Backend\App\AbstractAction
 {
     private $context;
     private $scopeConfig;
@@ -36,7 +36,7 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
     private $rawResponseFactory;
 
     public function __construct(
-        \Magento\Framework\App\Action\Context $context,
+        \Magento\Backend\App\Action\Context $context,
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Config\Model\ResourceModel\ConfigFactory $configFactory,
         \Magento\Framework\App\Cache\TypeListInterface $cacheTypeList,
@@ -59,6 +59,10 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
         $this->storeManager = $storeManager;
         $this->auth = $auth;
         $this->rawResponseFactory = $rawResponseFactory;
+    }
+
+    public function _processUrlKeys() {
+        return true;
     }
 
     public function execute() // @codingStandardsIgnoreLine MEQP1.CodeAnalysis.EmptyBlock.DetectedFUNCTION
@@ -166,7 +170,7 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
             $remoteUrl .= $merchantID . '/';
         }
 
-        $remotePath = preg_replace('/^\/'.preg_quote($adminPath, '/').'\/codisto\/\/?|key\/[a-zA-z0-9]*\//', '', $path);
+        $remotePath = preg_replace('/^\/'.preg_quote($adminPath, '/').'\/codisto\/\/?|index\/key\/[a-zA-z0-9]*\/|key\/[a-zA-z0-9]*\//', '', $path);
 
         $remoteUrl .= $remotePath;
 
@@ -367,9 +371,14 @@ class CodistoActionInstance extends \Magento\Framework\App\Action\AbstractAction
             $curlOptions[CURLOPT_ENCODING] = '';
         }
 
-        $adminBasePort = $request->getServer('SERVER_PORT');
+        if($request->getServer('HTTP_X_VARNISH')) {
+            $adminBasePort = '';
+        } else {
+            $adminBasePort = $request->getServer('SERVER_PORT');
+        }
         $adminBasePort = $adminBasePort = '' || $adminBasePort == '80' || $adminBasePort == '443'
             ? '' : ':'.$adminBasePort;
+        $adminBasePort = '';
         $adminBasePath = $request->getServer('REQUEST_URI');
         $adminBasePath = substr($adminBasePath, 0, strpos($adminBasePath, '/codisto/'));
         $adminBaseURL = $request->getScheme() . '://' .

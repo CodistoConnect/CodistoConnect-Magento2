@@ -62,7 +62,7 @@ class TestHash extends \Magento\Framework\App\Action\Action
     public function execute()
     {
         $this->visitor->setSkipRequestLogging(true);
-        
+
         $request = $this->getRequest();
         $request->setDispatched(true);
         $server = $request->getServer();
