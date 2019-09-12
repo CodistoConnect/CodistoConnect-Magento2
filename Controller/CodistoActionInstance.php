@@ -41,23 +41,21 @@ class CodistoActionInstance extends \Magento\Backend\App\AbstractAction
         \Magento\Config\Model\ResourceModel\ConfigFactory $configFactory,
         \Magento\Framework\App\Cache\TypeListInterface $cacheTypeList,
         \Magento\Framework\Json\Helper\Data $json,
-        \Magento\Backend\Helper\Data $backendHelper,
         \Magento\Framework\Module\ModuleListInterface $moduleList,
         \Magento\Store\Model\StoreManager $storeManager,
-        \Magento\Backend\Model\Auth $auth,
         \Magento\Framework\Controller\Result\RawFactory $rawResponseFactory
     ) {
         parent::__construct($context);
 
         $this->context = $context;
+        $this->backendHelper = $context->getHelper();
+        $this->auth = $context->getAuth();
         $this->scopeConfig = $scopeConfig;
         $this->configFactory = $configFactory;
         $this->cacheTypeList = $cacheTypeList;
         $this->json = $json;
-        $this->backendHelper = $backendHelper;
         $this->moduleList = $moduleList;
         $this->storeManager = $storeManager;
-        $this->auth = $auth;
         $this->rawResponseFactory = $rawResponseFactory;
     }
 

@@ -109,11 +109,12 @@ class Data
         \Magento\Bundle\Model\Product\TypeFactory $bundleTypeFactory,
         \Codisto\Connect\Model\SyncFactory $syncFactory,
         \Psr\Log\LoggerInterface $logger,
-        \Magento\Framework\App\Console\Response\Proxy $console
+        \Magento\Framework\App\Console\Response\Proxy $console // @codingStandardsIgnoreLine Magento2.Classes.DiscouragedDependencies.ConstructorProxyInterceptor
     ) {
         $this->resourceConnectionFactory = $resourceConnectionFactory;
         $this->deploymentConfigFactory = $deploymentConfigFactory;
         $this->storeManager = $storeManager;
+
         $this->dirList = $dirList;
         $this->filterProvider = $filterProvider;
         $this->file = $file;
@@ -255,7 +256,7 @@ class Data
                     $this->file->dirname(__FILE__)
                 ).'/Signal.php',
                 [
-                    serialize($merchants), $msg, $eventtype, serialize($productids)
+                    serialize($merchants), $msg, $eventtype, serialize($productids) // @codingStandardsIgnoreLine MEQP1.Security.DiscouragedFunction.Found
                 ],
                 [
                     'pdo',

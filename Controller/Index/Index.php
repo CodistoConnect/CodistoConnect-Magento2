@@ -76,7 +76,7 @@ class Index extends \Magento\Framework\App\Action\Action
         \Magento\Directory\Model\Country $country,
         \Magento\Catalog\Model\ProductFactory $productFactory,
         \Magento\Quote\Model\Quote\ItemFactory $quoteItemFactory,
-        \Magento\Checkout\Model\Session\Proxy $session,
+        \Magento\Checkout\Model\Session\Proxy $session, // @codingStandardsIgnoreLine Magento2.Classes.DiscouragedDependencies.ConstructorProxyInterceptor
         \Magento\Quote\Model\Quote\Address\RateRequestFactory $rateRequestFactory,
         \Magento\Shipping\Model\Shipping $shipping,
         \Magento\Quote\Model\Quote\Address\RateFactory $quoteAddressRateFactory,
@@ -508,7 +508,7 @@ class Index extends \Magento\Framework\App\Action\Action
         }
 
         // ignore count failure on simple_xml - treat count failure as no merchant instruction
-        $merchantInstruction = @count($ordercontent->merchantinstructions) ? strval($ordercontent->merchantinstructions) : '';
+        $merchantInstruction = @count($ordercontent->merchantinstructions) ? strval($ordercontent->merchantinstructions) : ''; // @codingStandardsIgnoreLine Generic.PHP.NoSilencedErrors.Discouraged
 
         if($merchantInstruction) {
             $merchantInstruction = nl2br($merchantInstruction);
@@ -807,7 +807,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 continue;
             }
 
-            $adjustStock = @count($ordercontent->adjuststock) ? (($ordercontent->adjuststock == "false") ? false : true) : true;
+            $adjustStock = @count($ordercontent->adjuststock) ? (($ordercontent->adjuststock == "false") ? false : true) : true; // @codingStandardsIgnoreLine Generic.PHP.NoSilencedErrors.Discouraged
 
             $productData = $this->_processOrderLineProduct($request, $orderline, $adjustStock);
 
@@ -2038,7 +2038,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 continue;
             }
 
-            $adjustStock = @count($ordercontent->adjuststock) ? (($ordercontent->adjuststock == "false") ? false : true) : true;
+            $adjustStock = @count($ordercontent->adjuststock) ? (($ordercontent->adjuststock == "false") ? false : true) : true; // @codingStandardsIgnoreLine Generic.PHP.NoSilencedErrors.Discouraged
 
             $productData = $this->_processOrderLineProduct($request, $orderline, $adjustStock);
 
