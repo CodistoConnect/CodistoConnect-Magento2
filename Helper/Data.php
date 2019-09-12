@@ -100,7 +100,6 @@ class Data
         \Magento\Framework\App\ResourceConnectionFactory $resourceConnectionFactory,
         \Magento\Framework\App\DeploymentConfigFactory $deploymentConfigFactory,
         \Magento\Store\Model\StoreManager $storeManager,
-        \Magento\Framework\Serialize\SerializerInterface $serializer,
         \Magento\Framework\Filesystem\DirectoryList $dirList,
         \Magento\Cms\Model\Template\FilterProvider $filterProvider,
         \Magento\Framework\Filesystem\Io\File $file,
@@ -115,7 +114,7 @@ class Data
         $this->resourceConnectionFactory = $resourceConnectionFactory;
         $this->deploymentConfigFactory = $deploymentConfigFactory;
         $this->storeManager = $storeManager;
-        $this->serializer = $serializer;
+
         $this->dirList = $dirList;
         $this->filterProvider = $filterProvider;
         $this->file = $file;
@@ -257,7 +256,7 @@ class Data
                     $this->file->dirname(__FILE__)
                 ).'/Signal.php',
                 [
-                    $serializer->serialize($merchants), $msg, $eventtype, $serializer->serialize($productids)
+                    serialize($merchants), $msg, $eventtype, serialize($productids) // @codingStandardsIgnoreLine MEQP1.Security.DiscouragedFunction.Found
                 ],
                 [
                     'pdo',
@@ -577,7 +576,7 @@ class Data
         $extensions = $this->_phpTest($interpreter, $args, $extensionScript);
         // ignore deserialization errors here as a value that cannot be deserialized
         // implies a broken sub process that cannot be used
-        $extensions = @$serializer->unserialize($extensions); // @codingStandardsIgnoreLine Generic.PHP.NoSilencedErrors.Discouraged
+        $extensions = @unserialize($extensions); // @codingStandardsIgnoreLine Generic.PHP.NoSilencedErrors.Discouraged
         if (!is_array($extensions)) {
             $extensions = [];
         }
