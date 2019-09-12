@@ -46,7 +46,7 @@ class Calc extends \Magento\Framework\App\Action\Action
         \Magento\Quote\Model\Quote $quote,
         \Magento\Quote\Model\Quote\ItemFactory $quoteItemFactory,
         \Magento\Catalog\Model\Product $product,
-        \Magento\Checkout\Model\Session\Proxy $session,
+        \Magento\Checkout\Model\Session\Proxy $session, // @codingStandardsIgnoreLine Magento2.Classes.DiscouragedDependencies.ConstructorProxyInterceptor
         \Magento\Shipping\Model\Shipment\RequestFactory $shipmentRequestFactory,
         \Magento\Customer\Model\Visitor $visitor,
         \Magento\Shipping\Model\Shipping $shipping,

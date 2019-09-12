@@ -100,6 +100,7 @@ class Data
         \Magento\Framework\App\ResourceConnectionFactory $resourceConnectionFactory,
         \Magento\Framework\App\DeploymentConfigFactory $deploymentConfigFactory,
         \Magento\Store\Model\StoreManager $storeManager,
+        \Magento\Framework\Serialize\SerializerInterface $serializer,
         \Magento\Framework\Filesystem\DirectoryList $dirList,
         \Magento\Cms\Model\Template\FilterProvider $filterProvider,
         \Magento\Framework\Filesystem\Io\File $file,
@@ -109,11 +110,12 @@ class Data
         \Magento\Bundle\Model\Product\TypeFactory $bundleTypeFactory,
         \Codisto\Connect\Model\SyncFactory $syncFactory,
         \Psr\Log\LoggerInterface $logger,
-        \Magento\Framework\App\Console\Response\Proxy $console
+        \Magento\Framework\App\Console\Response\Proxy $console // @codingStandardsIgnoreLine Magento2.Classes.DiscouragedDependencies.ConstructorProxyInterceptor
     ) {
         $this->resourceConnectionFactory = $resourceConnectionFactory;
         $this->deploymentConfigFactory = $deploymentConfigFactory;
         $this->storeManager = $storeManager;
+        $this->serializer = $serializer;
         $this->dirList = $dirList;
         $this->filterProvider = $filterProvider;
         $this->file = $file;
@@ -255,7 +257,7 @@ class Data
                     $this->file->dirname(__FILE__)
                 ).'/Signal.php',
                 [
-                    serialize($merchants), $msg, $eventtype, serialize($productids)
+                    $serializer->serialize($merchants), $msg, $eventtype, $serializer->serialize($productids)
                 ],
                 [
                     'pdo',
@@ -575,7 +577,7 @@ class Data
         $extensions = $this->_phpTest($interpreter, $args, $extensionScript);
         // ignore deserialization errors here as a value that cannot be deserialized
         // implies a broken sub process that cannot be used
-        $extensions = @unserialize($extensions); // @codingStandardsIgnoreLine Generic.PHP.NoSilencedErrors.Discouraged
+        $extensions = @$serializer->unserialize($extensions); // @codingStandardsIgnoreLine Generic.PHP.NoSilencedErrors.Discouraged
         if (!is_array($extensions)) {
             $extensions = [];
         }

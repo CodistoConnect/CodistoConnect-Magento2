@@ -56,7 +56,7 @@ class CodistoController extends \Magento\Backend\App\Action
         \Magento\Store\Model\StoreManager $storeManager,
         \Magento\Framework\Json\Helper\Data $json,
         \Magento\Config\Model\ResourceModel\ConfigFactory $configFactory,
-        \Magento\Backend\Model\Auth\Session\Proxy $session,
+        \Magento\Backend\Model\Auth\Session\Proxy $session, // @codingStandardsIgnoreLine Magento2.Classes.DiscouragedDependencies.ConstructorProxyInterceptor
         \Magento\Framework\Module\ModuleListInterface $moduleList
     ) {
         parent::__construct($context);
