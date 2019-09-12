@@ -634,7 +634,7 @@ class Index extends \Magento\Framework\App\Action\Action
                     false
                 );
             }
-            
+
             if ($result == 'complete') {
                 $result = 'catalog-complete';
 
@@ -1154,6 +1154,7 @@ class Index extends \Magento\Framework\App\Action\Action
         }
 
         $rawResult->setContents($body);
+        $rawResult->renderResult($response);
         return $rawResult;
     }
 

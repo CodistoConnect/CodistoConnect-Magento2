@@ -632,12 +632,12 @@ class Index extends \Magento\Framework\App\Action\Action
         if (strtolower($freightservice) != 'freight') {
             $matchFound = false;
 
-            $shippingDescription = $quote->getShippingAddress()->getShippingDescription();
+            $shippingDescription = (string)$quote->getShippingAddress()->getShippingDescription();
             if ($shippingDescription) {
                 $shippingRates = $quote->getShippingAddress()->getAllShippingRates();
 
                 foreach ($shippingRates as $rate) {
-                    $shippingMethodTitle = $rate->getMethodTitle();
+                    $shippingMethodTitle = (string)$rate->getMethodTitle();
 
                     if (strpos($shippingDescription, $shippingMethodTitle) !== false) {
                         $shippingDescription = str_replace($shippingMethodTitle, $freightservice, $shippingDescription);
