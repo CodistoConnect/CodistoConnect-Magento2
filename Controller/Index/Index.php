@@ -164,7 +164,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 'type' => Table::TYPE_TEXT,
                 'length' => '10',
                 'comment' => 'Codisto Order Id'
-            );
+            ]);
         } catch (\Exception $e) {
             $e;
             // ignore if column is already present
@@ -175,7 +175,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 'type' => Table::TYPE_TEXT,
                 'length' => '10',
                 'comment' => 'Codisto Merchant Id'
-            );
+            ]);
         } catch (\Exception $e) {
             $e;
             // ignore if column is already present
