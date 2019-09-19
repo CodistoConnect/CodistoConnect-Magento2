@@ -24,6 +24,7 @@ namespace Codisto\Connect\Setup;
 use Magento\Framework\Setup\InstallSchemaInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
+use Magento\Framework\DB\Ddl\Table;
 
 class InstallSchema implements InstallSchemaInterface
 {
@@ -36,22 +37,22 @@ class InstallSchema implements InstallSchemaInterface
         $connection = $setup->getConnection();
 
         try {
-            $connection->addColumn(
-                $setup->getTable('sales_order'), // @codingStandardsIgnoreLine MEQP2.SQL.CoreTablesModification.CoreTablesModification
-                'codisto_orderid',
-                'varchar(10)'
-            );
+            $connection->addColumn('sales_order', 'codisto_orderid', [
+                'type' => Table::TYPE_TEXT,
+                'length' => '10',
+                'comment' => 'Codisto Order Id',
+            ]);
         } catch (\Exception $e) {
             $e;
             // ignore if column is already present
         }
 
         try {
-            $connection->addColumn(
-                $setup->getTable('sales_order'), // @codingStandardsIgnoreLine MEQP2.SQL.CoreTablesModification.CoreTablesModification
-                'codisto_merchantid',
-                'varchar(10)'
-            );
+            $connection->addColumn('sales_order', 'codisto_merchantid', [
+                'type' => Table::TYPE_TEXT,
+                'length' => '10',
+                'comment' => 'Codisto Merchant Id',
+            ]);
         } catch (\Exception $e) {
             $e;
             // ignore if column is already present
