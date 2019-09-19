@@ -2590,7 +2590,7 @@ class Sync
                 $connection->addColumn('sales_order', 'codisto_orderid', [
                     'type' => Table::TYPE_TEXT,
                     'length' => '10',
-                    'comment' => 'Codisto Order Id',
+                    'comment' => 'Codisto Order Id'
                 );
             } catch (\Exception $e) {
                 $e;
@@ -2601,7 +2601,7 @@ class Sync
                 $connection->addColumn('sales_order', 'codisto_merchantid', [
                     'type' => Table::TYPE_TEXT,
                     'length' => '10',
-                    'comment' => 'Codisto Merchant Id',
+                    'comment' => 'Codisto Merchant Id'
                 );
             } catch (\Exception $e) {
                 $e;
