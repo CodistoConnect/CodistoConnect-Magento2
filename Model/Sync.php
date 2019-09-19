@@ -22,6 +22,7 @@
 namespace Codisto\Connect\Model;
 
 use Magento\Framework\UrlInterface;
+use Magento\Framework\DB\Ddl\Table;
 
 class Sync
 {
@@ -2586,22 +2587,22 @@ class Sync
         if ($this->currentEntityId == 0) {
             $connection = $coreResource->getConnection();
             try {
-                $connection->addColumn(
-                    $coreResource->getTableName('sales_order'),
-                    'codisto_orderid',
-                    'varchar(10)'
-                );
+                $connection->addColumn('sales_order', 'codisto_orderid', [
+                    'type' => Table::TYPE_TEXT,
+                    'length' => '10',
+                    'comment' => 'Codisto Order Id'
+                ]);
             } catch (\Exception $e) {
                 $e;
                 // ignore if column already exists
             }
 
             try {
-                $connection->addColumn(
-                    $coreResource->getTableName('sales_order'),
-                    'codisto_merchantid',
-                    'varchar(10)'
-                );
+                $connection->addColumn('sales_order', 'codisto_merchantid', [
+                    'type' => Table::TYPE_TEXT,
+                    'length' => '10',
+                    'comment' => 'Codisto Merchant Id'
+                ]);
             } catch (\Exception $e) {
                 $e;
                 // ignore if column already exists
