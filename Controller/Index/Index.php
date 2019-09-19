@@ -23,6 +23,7 @@ namespace Codisto\Connect\Controller\Index;
 
 use Magento\Framework\Exception\NotFoundException;
 use Magento\Framework\Event\ManagerInterface as EventManager;
+use Magento\Framework\DB\Ddl\Table;
 
 class Index extends \Magento\Framework\App\Action\Action
 {
@@ -159,10 +160,10 @@ class Index extends \Magento\Framework\App\Action\Action
     private function _orderFields($connection)
     {
         try {
-            $connection->addColumn(
-                $this->resourceConnection->getTableName('sales_order'),
-                'codisto_orderid',
-                'varchar(10)'
+            $connection->addColumn('sales_order', 'codisto_orderid', [
+                'type' => Table::TYPE_TEXT,
+                'length' => '10',
+                'comment' => 'Codisto Order Id'
             );
         } catch (\Exception $e) {
             $e;
@@ -170,10 +171,10 @@ class Index extends \Magento\Framework\App\Action\Action
         }
 
         try {
-            $connection->addColumn(
-                $this->resourceConnection->getTableName('sales_order'),
-                'codisto_merchantid',
-                'varchar(10)'
+            $connection->addColumn('sales_order', 'codisto_merchantid', [
+                'type' => Table::TYPE_TEXT,
+                'length' => '10',
+                'comment' => 'Codisto Merchant Id'
             );
         } catch (\Exception $e) {
             $e;
