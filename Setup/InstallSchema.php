@@ -37,7 +37,7 @@ class InstallSchema implements InstallSchemaInterface
         $connection = $setup->getConnection();
 
         try {
-            $connection->addColumn('sales_order', 'codisto_orderid', [
+            $connection->addColumn('sales_order', 'codisto_orderid', [ // @codingStandardsIgnoreLine MEQP2.SQL.CoreTablesModification.CoreTablesModification
                 'type' => Table::TYPE_TEXT,
                 'length' => '10',
                 'comment' => 'Codisto Order Id'
@@ -48,7 +48,7 @@ class InstallSchema implements InstallSchemaInterface
         }
 
         try {
-            $connection->addColumn('sales_order', 'codisto_merchantid', [
+            $connection->addColumn('sales_order', 'codisto_merchantid', [ // @codingStandardsIgnoreLine MEQP2.SQL.CoreTablesModification.CoreTablesModification
                 'type' => Table::TYPE_TEXT,
                 'length' => '10',
                 'comment' => 'Codisto Merchant Id'
