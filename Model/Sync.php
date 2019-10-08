@@ -1057,7 +1057,10 @@ class Sync
 
             $options = [];
             foreach ($productAttributes as $attribute) {
-                $options[$attribute->getId()] = $attributeValues[$attribute->getAttributeCode()];
+                try {
+                    $options[$attribute->getId()] = $attributeValues[$attribute->getAttributeCode()];
+                } catch (\Exception $e) {
+                }
             }
         }
 
