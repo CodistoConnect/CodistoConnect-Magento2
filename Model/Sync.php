@@ -1061,6 +1061,7 @@ class Sync
                     $options[$attribute->getId()] = $attributeValues[$attribute->getAttributeCode()];
                 } catch (\Exception $e) {
                 }
+            }
         }
 
         return [
