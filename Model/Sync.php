@@ -1177,10 +1177,13 @@ class Sync
                 'left'
             );
 
+        $childProductsSelect = $childProducts->getSelect();
+        $childProductsSelect->where('link_table.parent_id=?', $productData['entity_id']);
+
         $iterator = $this->iteratorFactory->create();
 
         $iterator->walk(
-            $childProducts->getSelect(),
+            $childProductsSelect,
             [[$this, 'syncSKUData']],
             [
                 'parent_id' => $productData['entity_id'],
