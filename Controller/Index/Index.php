@@ -218,7 +218,7 @@ class Index extends \Magento\Framework\App\Action\Action
         }
 
         if ($contenttype != 'text/xml') {
-            return $this->_errorResponse(400, 'Invalid Content Type');
+            return $this->_errorResponse($this->getResponse(), 400, 'Invalid Content Type');
         }
 
         return null;
@@ -229,11 +229,11 @@ class Index extends \Magento\Framework\App\Action\Action
         $store = $this->storeManager->getStore($storeId);
 
         if (!$this->codistoHelper->getConfig($storeId)) {
-            return $this->_errorResponse(500, 'Config Error');
+            return $this->_errorResponse($this->getResponse(), 500, 'Config Error');
         }
 
         if (!$this->codistoHelper->checkRequestHash($store->getConfig('codisto/hostkey'), $server)) {
-            return $this->_errorResponse(400, 'Security Error');
+            return $this->_errorResponse($this->getResponse(), 400, 'Security Error');
         }
 
         return null;
