@@ -153,7 +153,7 @@ class Data
             $qry = $nonceDb->prepare('INSERT OR IGNORE INTO nonce (value) VALUES(?)');
             $qry->execute([$nonce]);
 
-            $countQuery = $db->query('SELECT changes()');
+            $countQuery = $nonceDb->query('SELECT changes()');
             $nonceInsertCount = (int)$countQuery->fetchColumn();
             $countQuery->closeCursor();
 

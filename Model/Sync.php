@@ -253,7 +253,7 @@ class Sync
                     $update->bindParam(3, $lastModified);
                     $update->execute();
 
-                    $countQuery = $db->query('SELECT changes()');
+                    $countQuery = $noneDb->query('SELECT changes()');
                     $updateCount = (int)$countQuery->fetchColumn();
                     $countQuery->closeCursor();
 
