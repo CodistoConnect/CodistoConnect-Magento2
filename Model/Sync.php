@@ -22,6 +22,7 @@
 namespace Codisto\Connect\Model;
 
 use Magento\Framework\UrlInterface;
+use Magento\Framework\DB\Ddl\Table;
 
 class Sync
 {
@@ -117,6 +118,8 @@ class Sync
         \Magento\Framework\Json\Helper\Data $json,
         \Magento\Framework\Stdlib\DateTime\DateTime $dateTime,
         \Magento\Catalog\Helper\Data $taxHelper,
+        \Magento\Tax\Api\TaxCalculationInterface $taxCalc,
+        \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Catalog\Model\Product\Media\ConfigFactory $mediaConfigFactory,
         \Magento\Framework\Model\ResourceModel\IteratorFactory $iteratorFactory,
         \Magento\Catalog\Model\Indexer\Product\Flat\StateFactory $productFlatState,
@@ -150,12 +153,14 @@ class Sync
         $this->json = $json;
         $this->dateTime = $dateTime;
         $this->taxHelper = $taxHelper;
+        $this->taxCalc = $taxCalc;
         $this->mediaConfigFactory = $mediaConfigFactory;
         $this->iteratorFactory = $iteratorFactory;
         $this->productFlatState = $productFlatState;
         $this->categoryFlatState = $categoryFlatState;
         $this->urlBuilder = $context->getUrl();
         $this->codistoHelper = $codistoHelper;
+        $this->scopeConfig = $scopeConfig;
 
         $this->attributecache = [];
         $this->attributeLabelCache = [];
@@ -170,6 +175,12 @@ class Sync
         if (!$this->ebayGroupId) {
             $this->ebayGroupId = \Magento\Customer\Model\GroupManagement::NOT_LOGGED_IN_ID;
         }
+
+        $this->taxIncluded = $this->scopeConfig->getValue(
+            'tax/calculation/price_includes_tax',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE,
+            \Magento\Store\Model\Store::DEFAULT_STORE_ID
+        );
 
         $productSelectArray = [
             'entity_id',
@@ -871,34 +882,42 @@ class Sync
             $finalPrice = 0.0;
         }
 
-        $price = $this->taxHelper->getTaxPrice(
-            $parentProduct,
-            $finalPrice,
-            false,
-            null,
-            null,
-            null,
-            $store,
-            null,
-            false
-        );
+        $rate = 0;
+
+        if ((int)$this->taxIncluded === 1) {
+            $taxAttribute = $parentProduct->getCustomAttribute('tax_class_id');
+
+            if ($taxAttribute) {
+                $productRateId = $taxAttribute->getValue();
+                $rate = $this->taxCalc->getCalculatedRate($productRateId);
+            }
+
+            $price = $finalPrice / (1 + ($rate / 100));
+        } else {
+            $price = $finalPrice;
+        }
 
         return $price;
     }
 
     private function _syncProductListPrice($store, $product, $price)
     {
-        $listPrice = $this->taxHelper->getTaxPrice(
-            $product,
-            $product->getPrice(),
-            false,
-            null,
-            null,
-            null,
-            $store,
-            null,
-            false
-        );
+
+        $rate = 0;
+
+        if ((int)$this->taxIncluded === 1) {
+            $taxAttribute = $product->getCustomAttribute('tax_class_id');
+
+            if ($taxAttribute) {
+                $productRateId = $taxAttribute->getValue();
+                $rate = $this->taxCalc->getCalculatedRate($productRateId);
+            }
+
+            $listPrice = $product->getPrice() / (1 + ($rate / 100));
+        } else {
+            $listPrice = $product->getPrice();
+        }
+
         if (!is_numeric($listPrice)) {
             $listPrice = $price;
         }
@@ -972,6 +991,10 @@ class Sync
             $description = $productData['description'];
         }
 
+        if(is_array($description)) {
+            $description = implode('', $description);
+        }
+
         $description = $this->codistoHelper->processCmsContent($description, $storeId);
         if (($type == 'simple' || $type == 'virtual')
             && $description == '') {
@@ -998,8 +1021,14 @@ class Sync
         $shortDescription = '';
 
         if (isset($productData['short_description']) && $productData['short_description'] != '') {
+
+            $shortDescription = $productData['short_description'];
+            if(is_array($shortDescription)) {
+                $shortDescription = implode('', $shortDescription);
+            }
+
             $shortDescription =
-                $this->codistoHelper->processCmsContent($productData['short_description'], $storeId);
+                $this->codistoHelper->processCmsContent($shortDescription, $storeId);
         }
 
         return $shortDescription;
@@ -1032,7 +1061,10 @@ class Sync
 
             $options = [];
             foreach ($productAttributes as $attribute) {
-                $options[$attribute->getId()] = $attributeValues[$attribute->getAttributeCode()];
+                try {
+                    $options[$attribute->getId()] = $attributeValues[$attribute->getAttributeCode()];
+                } catch (\Exception $e) {
+                }
             }
         }
 
@@ -1149,10 +1181,13 @@ class Sync
                 'left'
             );
 
+        $childProductsSelect = $childProducts->getSelect();
+        $childProductsSelect->where('link_table.parent_id=?', $productData['entity_id']);
+
         $iterator = $this->iteratorFactory->create();
 
         $iterator->walk(
-            $childProducts->getSelect(),
+            $childProductsSelect,
             [[$this, 'syncSKUData']],
             [
                 'parent_id' => $productData['entity_id'],
@@ -1909,11 +1944,24 @@ class Sync
             $attributeValue = isset($attributeValue) && $attributeValue ? -1 : 0;
         } elseif ($attributeData['html']) {
             if ($defaultValue == $attributeValue) {
+
+                if(is_array($attributeValue)) {
+                    $attributeValue = implode('', $attributeValue);
+                }
+
                 $defaultValue =
                     $attributeValue =
                         $this->codistoHelper->processCmsContent($attributeValue, $storeId);
             } else {
+
+                if(is_array($defaultValue)) {
+                    $defaultValue = implode('', $defaultValue);
+                }
                 $defaultValue = $this->codistoHelper->processCmsContent($defaultValue, $storeId);
+
+                if(is_array($attributeValue)) {
+                    $attributeValue = implode('', $attributeValue);
+                }
                 $attributeValue = $this->codistoHelper->processCmsContent($attributeValue, $storeId);
             }
         } elseif (in_array($attributeData['frontend_type'], ['select', 'multiselect'])) {
@@ -2549,22 +2597,22 @@ class Sync
         if ($this->currentEntityId == 0) {
             $connection = $coreResource->getConnection();
             try {
-                $connection->addColumn(
-                    $coreResource->getTableName('sales_order'),
-                    'codisto_orderid',
-                    'varchar(10)'
-                );
+                $connection->addColumn('sales_order', 'codisto_orderid', [
+                    'type' => Table::TYPE_TEXT,
+                    'length' => '10',
+                    'comment' => 'Codisto Order Id'
+                ]);
             } catch (\Exception $e) {
                 $e;
                 // ignore if column already exists
             }
 
             try {
-                $connection->addColumn(
-                    $coreResource->getTableName('sales_order'),
-                    'codisto_merchantid',
-                    'varchar(10)'
-                );
+                $connection->addColumn('sales_order', 'codisto_merchantid', [
+                    'type' => Table::TYPE_TEXT,
+                    'length' => '10',
+                    'comment' => 'Codisto Merchant Id'
+                ]);
             } catch (\Exception $e) {
                 $e;
                 // ignore if column already exists
@@ -3458,6 +3506,10 @@ class Sync
 
             $db = $storeData['db'];
 
+            if (is_null($db)) {
+                continue;
+            }
+
             $db->exec('BEGIN EXCLUSIVE TRANSACTION');
 
             $this->_syncIncrementalProducts($store, $storeId, $productUpdateIds, $iterator, $db);
@@ -3795,7 +3847,12 @@ class Sync
             $BlockID = $block->getId();
             $Title = $block->getTitle();
             $Identifier = $block->getIdentifier();
-            $Content = $this->codistoHelper->processCmsContent($block->getContent(), $storeId);
+
+            $Content = $block->getContent();
+            if(is_array($Content)) {
+                $Content = implode('', $Content);
+            }
+            $Content = $this->codistoHelper->processCmsContent($Content, $storeId);
 
             $insertStaticBlock->bindParam(1, $BlockID);
             $insertStaticBlock->bindParam(2, $Title);
@@ -3852,7 +3909,7 @@ class Sync
 
             $StoreCode = $store->getCode();
             $StoreName = $store->getName();
-            $StoreCurrency = $store->getCurrentCurrencyCode();
+            $StoreCurrency = $this->storeManager->getStore($StoreID)->getCurrentCurrencyCode();
 
             $insertStore->execute([$StoreID, $StoreCode, $StoreName, $StoreCurrency]);
 

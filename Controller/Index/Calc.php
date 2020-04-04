@@ -36,7 +36,7 @@ class Calc extends \Magento\Framework\App\Action\Action
     private $visitor;
     private $codistoHelper;
 
-    private $pickupRegex = '/(?:^|\W|_)pick\s*up(?:\W|_|$)/i';
+    private $pickupRegex = '/(?:^|\W|_)pick\s*up(?:\W|_|$)|(?:^|\W|_)click\s+.*\s+collect(?:\W|_|$)/i';
 
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -46,7 +46,7 @@ class Calc extends \Magento\Framework\App\Action\Action
         \Magento\Quote\Model\Quote $quote,
         \Magento\Quote\Model\Quote\ItemFactory $quoteItemFactory,
         \Magento\Catalog\Model\Product $product,
-        \Magento\Checkout\Model\Session\Proxy $session,
+        \Magento\Checkout\Model\Session\Proxy $session, // @codingStandardsIgnoreLine Magento2.Classes.DiscouragedDependencies.ConstructorProxyInterceptor
         \Magento\Shipping\Model\Shipment\RequestFactory $shipmentRequestFactory,
         \Magento\Customer\Model\Visitor $visitor,
         \Magento\Shipping\Model\Shipping $shipping,
@@ -344,8 +344,6 @@ class Calc extends \Magento\Framework\App\Action\Action
             // ignore any exceptions generating quote results
             // so a valid response is always emitted
         }
-
-        $response->clearHeaders();
 
         $rawResult = $this->context->getResultFactory()->create(\Magento\Framework\Controller\ResultFactory::TYPE_RAW);
         $rawResult->setHttpResponseCode(200);

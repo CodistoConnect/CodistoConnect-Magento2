@@ -23,6 +23,7 @@ namespace Codisto\Connect\Controller\Index;
 
 use Magento\Framework\Exception\NotFoundException;
 use Magento\Framework\Event\ManagerInterface as EventManager;
+use Magento\Framework\DB\Ddl\Table;
 
 class Index extends \Magento\Framework\App\Action\Action
 {
@@ -76,7 +77,7 @@ class Index extends \Magento\Framework\App\Action\Action
         \Magento\Directory\Model\Country $country,
         \Magento\Catalog\Model\ProductFactory $productFactory,
         \Magento\Quote\Model\Quote\ItemFactory $quoteItemFactory,
-        \Magento\Checkout\Model\Session\Proxy $session,
+        \Magento\Checkout\Model\Session\Proxy $session, // @codingStandardsIgnoreLine Magento2.Classes.DiscouragedDependencies.ConstructorProxyInterceptor
         \Magento\Quote\Model\Quote\Address\RateRequestFactory $rateRequestFactory,
         \Magento\Shipping\Model\Shipping $shipping,
         \Magento\Quote\Model\Quote\Address\RateFactory $quoteAddressRateFactory,
@@ -144,7 +145,6 @@ class Index extends \Magento\Framework\App\Action\Action
 
     private function _errorResponse($response, $statusCode, $statusText)
     {
-        $response->clearHeaders();
         $response->setStatusHeader($statusCode, '1.0', $statusText);
         $rawResult = $this->context->getResultFactory()->create(
             \Magento\Framework\Controller\ResultFactory::TYPE_RAW
@@ -160,22 +160,22 @@ class Index extends \Magento\Framework\App\Action\Action
     private function _orderFields($connection)
     {
         try {
-            $connection->addColumn(
-                $this->resourceConnection->getTableName('sales_order'),
-                'codisto_orderid',
-                'varchar(10)'
-            );
+            $connection->addColumn('sales_order', 'codisto_orderid', [
+                'type' => Table::TYPE_TEXT,
+                'length' => '10',
+                'comment' => 'Codisto Order Id'
+            ]);
         } catch (\Exception $e) {
             $e;
             // ignore if column is already present
         }
 
         try {
-            $connection->addColumn(
-                $this->resourceConnection->getTableName('sales_order'),
-                'codisto_merchantid',
-                'varchar(10)'
-            );
+            $connection->addColumn('sales_order', 'codisto_merchantid', [
+                'type' => Table::TYPE_TEXT,
+                'length' => '10',
+                'comment' => 'Codisto Merchant Id'
+            ]);
         } catch (\Exception $e) {
             $e;
             // ignore if column is already present
@@ -300,7 +300,7 @@ class Index extends \Magento\Framework\App\Action\Action
 
                 $this->_processQuote($quote, $xml, $store, $request);
             } catch (\Exception $e) {
-                $response->clearHeaders();
+
                 $jsonResult = $this->context->getResultFactory()->create(
                     \Magento\Framework\Controller\ResultFactory::TYPE_JSON
                 );
@@ -377,7 +377,6 @@ class Index extends \Magento\Framework\App\Action\Action
                 $connection->rollback();
                 $connection->exec('SET TRANSACTION ISOLATION LEVEL '.$txIsoLevel);
 
-                $response->clearHeaders();
                 $jsonResult = $this->context->getResultFactory()->create(
                     \Magento\Framework\Controller\ResultFactory::TYPE_JSON
                 );
@@ -510,7 +509,7 @@ class Index extends \Magento\Framework\App\Action\Action
         }
 
         // ignore count failure on simple_xml - treat count failure as no merchant instruction
-        $merchantInstruction = @count($ordercontent->merchantinstructions) ? strval($ordercontent->merchantinstructions) : '';
+        $merchantInstruction = @count($ordercontent->merchantinstructions) ? strval($ordercontent->merchantinstructions) : ''; // @codingStandardsIgnoreLine Generic.PHP.NoSilencedErrors.Discouraged
 
         if($merchantInstruction) {
             $merchantInstruction = nl2br($merchantInstruction);
@@ -574,7 +573,11 @@ class Index extends \Magento\Framework\App\Action\Action
     ) {
         $payment = $order->getPayment();
 
-        $payment->setMethod('ebay');
+        if($amazonorderid != '') {
+            $payment->setMethod('amazon');
+        } else {
+            $payment->setMethod('ebay');
+        }
         $payment->resetTransactionAdditionalInfo();
         $payment->setTransactionId(0);
 
@@ -630,12 +633,12 @@ class Index extends \Magento\Framework\App\Action\Action
         if (strtolower($freightservice) != 'freight') {
             $matchFound = false;
 
-            $shippingDescription = $quote->getShippingAddress()->getShippingDescription();
+            $shippingDescription = (string)$quote->getShippingAddress()->getShippingDescription();
             if ($shippingDescription) {
                 $shippingRates = $quote->getShippingAddress()->getAllShippingRates();
 
                 foreach ($shippingRates as $rate) {
-                    $shippingMethodTitle = $rate->getMethodTitle();
+                    $shippingMethodTitle = (string)$rate->getMethodTitle();
 
                     if (strpos($shippingDescription, $shippingMethodTitle) !== false) {
                         $shippingDescription = str_replace($shippingMethodTitle, $freightservice, $shippingDescription);
@@ -805,7 +808,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 continue;
             }
 
-            $adjustStock = @count($ordercontent->adjuststock) ? (($ordercontent->adjuststock == "false") ? false : true) : true;
+            $adjustStock = @count($ordercontent->adjuststock) ? (($ordercontent->adjuststock == "false") ? false : true) : true; // @codingStandardsIgnoreLine Generic.PHP.NoSilencedErrors.Discouraged
 
             $productData = $this->_processOrderLineProduct($request, $orderline, $adjustStock);
 
@@ -878,7 +881,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 $store,
                 $productData['product'],
                 $adjustStock,
-                $ordercontent->orderstate != 'cancelled',
+                ($ordercontent->orderstate != 'cancelled') ? false : true,
                 $orderItem,
                 $productsToReindex
             );
@@ -913,8 +916,8 @@ class Index extends \Magento\Framework\App\Action\Action
         $ordersubtotal -= $freighttotalextax;
         $ordersubtotalincltax -= $freighttotal;
 
-        $order->setBaseShippingAmount($freighttotal);
-        $order->setShippingAmount($freighttotal);
+        $order->setBaseShippingAmount($freighttotalextax);
+        $order->setShippingAmount($freighttotalextax);
 
         $order->setBaseShippingInclTax($freighttotal);
         $order->setShippingInclTax($freighttotal);
@@ -1035,7 +1038,6 @@ class Index extends \Magento\Framework\App\Action\Action
 
         $response = $this->getResponse();
 
-        $response->clearHeaders();
         $jsonResult = $this->context->getResultFactory()->create(
             \Magento\Framework\Controller\ResultFactory::TYPE_JSON
         );
@@ -1092,6 +1094,7 @@ class Index extends \Magento\Framework\App\Action\Action
         $ordertaxtotal,
         $ordertotal,
         $paypaltransactionid,
+        $amazonorderid,
         &$invoiceids
     ) {
         if (!$order->hasInvoices()) {
@@ -1112,7 +1115,11 @@ class Index extends \Magento\Framework\App\Action\Action
                     }
                 }
 
-                $payment->setMethod('ebay');
+                if($amazonorderid != '') {
+                    $payment->setMethod('amazon');
+                } else {
+                    $payment->setMethod('ebay');
+                }
                 $payment->setParentTransactionId(null)
                     ->setIsTransactionClosed(1);
 
@@ -1123,6 +1130,9 @@ class Index extends \Magento\Framework\App\Action\Action
                 if ($invoice->getTotalQty()) {
                     $payment->setBaseAmountPaid(0.0);
                     $payment->setAmountPaid(0.0);
+
+                    $order->setBaseTotalPaid($ordertotal);
+                    $order->setTotalPaid($ordertotal);
 
                     $invoice->setRequestedCaptureCase(\Magento\Sales\Model\Order\Invoice::CAPTURE_OFFLINE);
                     $invoice->register();
@@ -1292,9 +1302,7 @@ class Index extends \Magento\Framework\App\Action\Action
             $this->canSubtractQty($stockItem)) {
             $productsToReindex[$product->getId()] = 0;
 
-            if ($cancelled) {
-                $stockItem->setQty($stockItem->getQty() + (int)($qty));
-            } else {
+            if (!$cancelled) {
                 $stockItem->setQty($stockItem->getQty() - (int)$qty);
             }
 
@@ -1607,7 +1615,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 $productData['id'],
                 $orderlineStockReserved,
                 $adjustStock,
-                $ordercontent->orderstate != 'cancelled',
+                ($ordercontent->orderstate != 'cancelled') ? false : true,
                 $productsToReindex
             );
         }
@@ -1635,6 +1643,7 @@ class Index extends \Magento\Framework\App\Action\Action
             $ordertaxtotal,
             $ordertotal,
             $paypaltransactionid,
+            $amazonorderid,
             $invoiceids
         );
 
@@ -1648,8 +1657,6 @@ class Index extends \Magento\Framework\App\Action\Action
         );
 
         $response = $this->getResponse();
-
-        $response->clearHeaders();
 
         $jsonResult = $this->context->getResultFactory()->create(
             \Magento\Framework\Controller\ResultFactory::TYPE_JSON
@@ -1896,7 +1903,7 @@ class Index extends \Magento\Framework\App\Action\Action
 
                 $shippingRates = $shippingResult->getAllRates();
 
-                $pickupRegex = '/(?:^|\W|_)pick\s*up(?:\W|_|$)/i';
+                $pickupRegex = '/(?:^|\W|_)pick\s*up(?:\W|_|$)|(?:^|\W|_)click\s+.*\s+collect(?:\W|_|$)/i';
 
                 foreach ($shippingRates as $shippingRate) {
                     if ($shippingRate instanceof \Magento\Quote\Model\Quote\Address\RateResult\Method &&
@@ -1992,6 +1999,9 @@ class Index extends \Magento\Framework\App\Action\Action
         $ordersubtotalincltax = $this->priceCurrency->round($ordersubtotal + $ordertaxtotal);
         $ordertotal = $this->priceCurrency->round($ordertotal);
 
+        $amazonorderid = (string)$ordercontent->amazonorderid ?
+            (string)$ordercontent->amazonorderid : '';
+
         $quote->setCurrency();
         $quote->setIsSuperMode(true);
         $quote->setStore($store);
@@ -2029,7 +2039,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 continue;
             }
 
-            $adjustStock = @count($ordercontent->adjuststock) ? (($ordercontent->adjuststock == "false") ? false : true) : true;
+            $adjustStock = @count($ordercontent->adjuststock) ? (($ordercontent->adjuststock == "false") ? false : true) : true; // @codingStandardsIgnoreLine Generic.PHP.NoSilencedErrors.Discouraged
 
             $productData = $this->_processOrderLineProduct($request, $orderline, $adjustStock);
 
@@ -2128,17 +2138,23 @@ class Index extends \Magento\Framework\App\Action\Action
         $quote->save();
 
         $quotePayment = $quote->getPayment();
-        $quotePayment->setMethod('ebay');
+        if($amazonorderid != '') {
+            $quotePayment->setMethod('amazon');
+        } else {
+            $quotePayment->setMethod('ebay');
+        }
         $quotePayment->save();
 
         // ignore count failure on simple_xml - treat count failure as no customer instruction
         $customerInstruction = @count($ordercontent->instructions) ? (string)($ordercontent->instructions) : ''; // @codingStandardsIgnoreLine Generic.PHP.NoSilencedErrors.Discouraged
 
-        $checkoutSession = $this->session;
-        $checkoutSession->setCustomer($customer);
-        $checkoutSession->replaceQuote($quote);
-        $checkoutSession->setData('customer_comment', $customerInstruction);
-        $checkoutSession->setData('destination_type', 'residence');
+        if($customer){
+            $checkoutSession = $this->session;
+            $checkoutSession->setCustomerData($customer);
+            $checkoutSession->replaceQuote($quote);
+            $checkoutSession->setData('customer_comment', $customerInstruction);
+            $checkoutSession->setData('destination_type', 'residence');
+        }
 
         $shippingAddress = $quote->getShippingAddress();
         $shippingAddress->setSubtotal($ordersubtotal);

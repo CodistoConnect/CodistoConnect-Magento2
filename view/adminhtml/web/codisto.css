@@ -14,7 +14,7 @@ BODY.codisto #anchor-content
     top: 92px;
 }
 
-BODY.codisto #anchor-content #page\:main-container
+BODY.codisto #anchor-content .page-columns
 {
     position: absolute;
     top: 0px;
@@ -24,20 +24,20 @@ BODY.codisto #anchor-content #page\:main-container
     border-top: 2px solid #ccc;
 }
 
-BODY.codisto #anchor-content #page\:main-container .admin__old
+BODY.codisto #anchor-content .page-columns .admin__old
 {
     width: 100%;
     height: 100%;
 }
 
-BODY.codisto #anchor-content #page\:main-container .admin__old #container.main-col
+BODY.codisto #anchor-content .page-columns .admin__old #container.main-col
 {
     width: 100%;
     height: 100%;
     border-top: 2px solid black;
 }
 
-BODY.codisto #anchor-content #page\:main-container .admin__old #container.main-col IFRAME
+BODY.codisto #anchor-content .page-columns .admin__old #container.main-col IFRAME
 {
     border: none;
     width: 100%;
@@ -84,6 +84,17 @@ BODY.codisto .page-footer
     font-family: Roboto;
 }
 
+#create-account-modal .selection
+{
+    border: 1px solid #ccc;
+    margin-top: 1px;
+    margin-bottom: 1px;
+    padding: 22px;
+    width: 80%;
+    margin-left: auto;
+    margin-right: auto;
+}
+
 #create-account-modal H1
 {
     margin: 0px;
@@ -96,7 +107,6 @@ BODY.codisto .page-footer
     font-weight: 500;
     border-bottom: 1px solid #e5e5e5;
 }
-
 
 #create-account-modal .option
 {
@@ -114,6 +124,20 @@ BODY.codisto .page-footer
 {
     vertical-align: top;
     margin-top: 3px;
+}
+
+#create-account-modal input[name=email]
+{
+    padding:5px;
+    border-radius:5px;
+}
+
+#create-account-modal .country-code-chooser
+{
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding:5px;
+    border-radius:5px;
 }
 
 #create-account-modal .option.active

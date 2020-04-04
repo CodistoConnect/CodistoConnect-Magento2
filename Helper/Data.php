@@ -109,11 +109,12 @@ class Data
         \Magento\Bundle\Model\Product\TypeFactory $bundleTypeFactory,
         \Codisto\Connect\Model\SyncFactory $syncFactory,
         \Psr\Log\LoggerInterface $logger,
-        \Magento\Framework\App\Console\Response\Proxy $console
+        \Magento\Framework\App\Console\Response\Proxy $console // @codingStandardsIgnoreLine Magento2.Classes.DiscouragedDependencies.ConstructorProxyInterceptor
     ) {
         $this->resourceConnectionFactory = $resourceConnectionFactory;
         $this->deploymentConfigFactory = $deploymentConfigFactory;
         $this->storeManager = $storeManager;
+
         $this->dirList = $dirList;
         $this->filterProvider = $filterProvider;
         $this->file = $file;
@@ -216,7 +217,7 @@ class Data
         );
     }
 
-    private function registerProductChanges($merchants, $eventtype, $productids)
+    public function registerProductChanges($merchants, $eventtype, $productids)
     {
         if (is_array($productids)) {
             $sync = $this->syncFactory->create();
@@ -254,14 +255,13 @@ class Data
     public function signalOnShutdown($merchants, $msg, $eventtype, $productids)
     {
         try {
-            $this->registerProductChanges($merchants, $eventtype, $productids);
 
             $backgroundSignal = $this->runProcessBackground(
                 realpath( // @codingStandardsIgnoreLine MEQP1.Security.DiscouragedFunction.Found
                     $this->file->dirname(__FILE__)
                 ).'/Signal.php',
                 [
-                    serialize($merchants), $msg
+                    serialize($merchants), $msg, $eventtype, serialize($productids) // @codingStandardsIgnoreLine MEQP1.Security.DiscouragedFunction.Found
                 ],
                 [
                     'pdo',
@@ -272,6 +272,8 @@ class Data
             if ($backgroundSignal) {
                 return;
             }
+
+            $this->registerProductChanges($merchants, $eventtype, $productids);
 
             if (!$this->client) {
                 $this->client = new \Zend_Http_Client(); // @codingStandardsIgnoreLine MEQP2.Classes.ObjectInstantiation.FoundDirectInstantiation

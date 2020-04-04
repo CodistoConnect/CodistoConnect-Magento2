@@ -33,16 +33,16 @@ $om = $bootstrap->getObjectManager();
 
 $om
     ->get('Magento\Framework\App\State') // @codingStandardsIgnoreLine MEQP2.Classes.ObjectManager.ObjectManagerFound
-    ->setAreaCode('backend');
+    ->setAreaCode('adminhtml');
 
 try {
+    $response = $om->create('Magento\Framework\App\Console\Response'); // @codingStandardsIgnoreLine MEQP2.Classes.ObjectManager.ObjectManagerFound
+    $response->terminateOnSend(true);
+
     $contents = file_get_contents('php://stdin'); // @codingStandardsIgnoreLine MEQP1.Security.DiscouragedFunction.Found
 
     $filterProvider = $om->create('Magento\Cms\Model\Template\FilterProvider'); // @codingStandardsIgnoreLine MEQP2.Classes.ObjectManager.ObjectManagerFound
     $blockFilter = $filterProvider->getBlockFilter();
-
-    $response = $om->create('Magento\Framework\App\Console\Response'); // @codingStandardsIgnoreLine MEQP2.Classes.ObjectManager.ObjectManagerFound
-    $response->terminateOnSend(true);
 
     $storeId = 0;
     foreach ($argv as $idx => $arg) {

@@ -29,10 +29,22 @@ $params[\Magento\Framework\App\Bootstrap::PARAM_REQUIRE_IS_INSTALLED] = false;
 
 $bootstrap = \Magento\Framework\App\Bootstrap::create(BP, $params);
 
+$om = $bootstrap->getObjectManager();
+
+$om
+    ->get('Magento\Framework\App\State') // @codingStandardsIgnoreLine MEQP2.Classes.ObjectManager.ObjectManagerFound
+    ->setAreaCode('adminhtml');
+
+$helper = $om->create('Codisto\Connect\Helper\Data'); // @codingStandardsIgnoreLine MEQP2.Classes.ObjectManager.ObjectManagerFound
+
 // using unserialize purely as IPC messaging format between parent
 // and child process
 $merchants = unserialize($argv[1]); // @codingStandardsIgnoreLine
 $msg = $argv[2];
+$eventtype = $argv[3];
+$productids = unserialize($argv[4]); // @codingStandardsIgnoreLine
+
+$helper->registerProductChanges($merchants, $eventtype, $productids);
 
 $curlOptions = [ CURLOPT_TIMEOUT => 20 ];
 

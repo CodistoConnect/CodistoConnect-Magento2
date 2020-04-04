@@ -36,6 +36,8 @@ class CodistoController extends \Magento\Backend\App\Action
     private $json;
     private $session;
 
+    protected $_publicActions = ['index', 'account', 'attributes', 'categories', 'importlistings', 'settings', 'profiles', 'orders'];
+
     // protected class members used here so that the only
     // thing needed in each of the descendant controllers
     // is overriding of the member variables
@@ -54,7 +56,7 @@ class CodistoController extends \Magento\Backend\App\Action
         \Magento\Store\Model\StoreManager $storeManager,
         \Magento\Framework\Json\Helper\Data $json,
         \Magento\Config\Model\ResourceModel\ConfigFactory $configFactory,
-        \Magento\Backend\Model\Auth\Session\Proxy $session,
+        \Magento\Backend\Model\Auth\Session\Proxy $session, // @codingStandardsIgnoreLine Magento2.Classes.DiscouragedDependencies.ConstructorProxyInterceptor
         \Magento\Framework\Module\ModuleListInterface $moduleList
     ) {
         parent::__construct($context);
@@ -127,6 +129,7 @@ class CodistoController extends \Magento\Backend\App\Action
                             'version' => $this->productMetaData->getVersion(),
                             'url' => $store->getBaseUrl(),
                             'email' => $request->getPost('email'),
+                            'country' => $request->getPost('countrycode'),
                             'storename' => $storeName,
                             'resellerkey' => $resellerkey,
                             'codistoversion' => $codistoVersion
