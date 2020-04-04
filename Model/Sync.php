@@ -1961,6 +1961,9 @@ class Sync
                 $attributeValue = $this->codistoHelper->processCmsContent($attributeValue, $storeId);
             }
         } elseif (in_array($attributeData['frontend_type'], ['select', 'multiselect'])) {
+            if($attributeData['frontend_type']=='multiselect') {
+                $attributeValue = explode(',',$attributeValue);
+            }
             $defaultValue = $this->_syncProductAttributeOptionText(
                 $attributeData['source'],
                 \Magento\Store\Model\Store::DEFAULT_STORE_ID,
