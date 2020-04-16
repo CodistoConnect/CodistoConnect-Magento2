@@ -50,6 +50,7 @@ class Router implements \Magento\Framework\App\RouterInterface
             'profiles(?:\/index(?:\/|\?))?|'.
             'import(?:\/index(?:\/|\?))?|'.
             'settings\/index(?:\/index(?:\/|\?))?|'.
+            'redir(?:\/index(?:\/|\?))?|'.
             'account(?:\/index(?:\/|\?))?)/',
             $path
         )) {
