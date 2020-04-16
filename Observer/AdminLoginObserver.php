@@ -58,15 +58,16 @@ class AdminLoginObserver implements ObserverInterface
         $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
         $action = $this->cookie->getCookie('codisto_action');
         if ($action && $this->session->isLoggedIn()) {
-            $this->cookieMeta->setDuration(time()-43300);
-            $this->cookieMeta->setPath('/');
-            $this->cookieMeta->setHttpOnly(true);
+          $cookieMeta = $this->cookieMeta->createPublicCookieMetadata();
+          $cookieMeta->setDuration(time()-43300);
+          $cookieMeta->setPath('/');
+          $cookieMeta->setHttpOnly(true);
 
-            $this->cookie->setPublicCookie(
-                'codisto_action',
-                false,
-                $this->cookieMeta
-            );
+          $this->cookie->setPublicCookie(
+              'codisto_action',
+              false,
+              $cookieMeta
+          );
             $myUrl = $this->url->getUrl('codisto/' .$action . '/index' );
             $this->responseFactory->create()->setRedirect($myUrl)->sendResponse();
             exit;

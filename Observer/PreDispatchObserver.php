@@ -27,6 +27,7 @@ use Magento\Framework\Event\Observer as EventObserver;
 class PreDispatchObserver implements ObserverInterface
 {
     private $requestInterface;
+    private $responseFactory;
     private $url;
     private $session;
     private $cookie;
@@ -53,16 +54,17 @@ class PreDispatchObserver implements ObserverInterface
         $controllerName = $this->requestInterface->getControllerName();
         $action = $this->cookie->getCookie('codisto_action');
         if ($controllerName == 'redir' && $action) {
-          $this->cookieMeta->setDuration(time()-43300);
-          $this->cookieMeta->setPath('/');
-          $this->cookieMeta->setHttpOnly(true);
+          $cookieMeta = $this->cookieMeta->createPublicCookieMetadata();
+          $cookieMeta->setDuration(time()-43300);
+          $cookieMeta->setPath('/');
+          $cookieMeta->setHttpOnly(true);
           $this->cookie->setPublicCookie(
               'codisto_action',
               false,
-              $this->cookieMeta
+              $cookieMeta
           );
           $myUrl = $this->url->getUrl('codisto/' .$action . '/index' );
-          $responseFactory->create()->setRedirect($myUrl)->sendResponse();
+          $this->responseFactory->create()->setRedirect($myUrl)->sendResponse();
           exit;
         }
     }
