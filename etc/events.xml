@@ -53,4 +53,10 @@
     <event name="model_save_after">
         <observer name="codisto_cms_static_block" instance="Codisto\Connect\Observer\CmsStaticBlockObserver"/>
     </event>
+    <event name="controller_action_predispatch">
+        <observer name="codisto_redir_observer" instance="Codisto\Connect\Observer\PreDispatchObserver" />
+    </event>
+    <event name="controller_action_postdispatch">
+        <observer name="codisto_admin_login_observer" instance="Codisto\Connect\Observer\AdminLoginObserver" />
+    </event>
 </config>
