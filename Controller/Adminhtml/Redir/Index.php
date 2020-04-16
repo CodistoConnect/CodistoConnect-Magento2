@@ -20,26 +20,10 @@
  */
 
 namespace Codisto\Connect\Controller\Adminhtml\Redir;
-use Magento\Framework\App\RequestInterface;
-use Magento\Framework\App\ResponseInterface;
-use Magento\Framework\Controller\ResultInterface;
-use Magento\Framework\Exception\NotFoundException;
 
 class Index extends \Codisto\Connect\Controller\Adminhtml\CodistoController
 {
-    // @codingStandardsIgnoreStart
-    protected $view = 'profiles';
-    protected $breadCrumb = 'Profiles';
-    protected $frameUrl = 'codisto/intro';
-    protected $_publicActions = ['index'];
-    // @codingStandardsIgnoreEnd
-
-    public function execute()
-    {
-        
-    }
-
-    protected function _rewrite() 
+    protected function _rewrite()
     {
         return true;
     }

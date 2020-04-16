@@ -26,27 +26,42 @@ use Magento\Framework\Event\Observer as EventObserver;
 
 class PreDispatchObserver implements ObserverInterface
 {
+    private $requestInterface;
+    private $url;
+    private $session;
+    private $cookie;
+    private $cookieMeta;
+
+    public function __construct(
+        \Magento\Framework\App\RequestInterface $requestInterface,
+        \Magento\Framework\App\ResponseFactory $responseFactory,
+        \Magento\Framework\UrlInterface $url,
+        \Magento\Backend\Model\Auth\Session $authSession,
+        \Magento\Framework\Stdlib\CookieManagerInterface $cookie,
+        \Magento\Framework\Stdlib\Cookie\CookieMetadataFactory $cookieMeta
+    ) {
+        $this->requestInterface = $requestInterface;
+        $this->responseFactory = $responseFactory;
+        $this->url = $url;
+        $this->session = $authSession;
+        $this->cookie = $cookie;
+        $this->cookieMeta = $cookieMeta;
+    }
+
     public function execute(EventObserver $observer)
     {
-        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
-        $requestInterface = $objectManager->get('Magento\Framework\App\RequestInterface');
-        $cookie = $objectManager->get('\Magento\Framework\Stdlib\CookieManagerInterface');
-        $responseFactory = $objectManager->get('\Magento\Framework\App\ResponseFactory');
-        $controllerName = $requestInterface->getControllerName();
-        $action = $cookie->getCookie('codisto_action');
-        if ($controllerName == 'redir') {
-          $cookieMeta =  $objectManager->create('\Magento\Framework\Stdlib\Cookie\CookieMetadataFactory')->createPublicCookieMetadata();
-          $cookie = $objectManager->create('\Magento\Framework\Stdlib\CookieManagerInterface');
-          $cookieMeta->setDuration(time()-43300);
-          $cookieMeta->setPath('/');
-          $cookieMeta->setHttpOnly(true);
-          $cookie->setPublicCookie(
+        $controllerName = $this->requestInterface->getControllerName();
+        $action = $this->cookie->getCookie('codisto_action');
+        if ($controllerName == 'redir' && $action) {
+          $this->cookieMeta->setDuration(time()-43300);
+          $this->cookieMeta->setPath('/');
+          $this->cookieMeta->setHttpOnly(true);
+          $this->cookie->setPublicCookie(
               'codisto_action',
               false,
-              $cookieMeta
+              $this->cookieMeta
           );
-          $url = $objectManager->create('\Magento\Framework\UrlInterface');
-          $myUrl = $url->getUrl('codisto/' .$action . '/index' );
+          $myUrl = $this->url->getUrl('codisto/' .$action . '/index' );
           $responseFactory->create()->setRedirect($myUrl)->sendResponse();
           exit;
         }
