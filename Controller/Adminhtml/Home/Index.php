@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!--
+<?php
 
 /**
  * Codisto LINQ Sync Extension
@@ -20,8 +19,13 @@
  * @link      https://codisto.com/connect/
  */
 
--->
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Module/etc/module.xsd">
-	<module name="Codisto_Connect" schema_version="0" active="true" setup_version="1.91.38">
-	</module>
-</config>
+namespace Codisto\Connect\Controller\Adminhtml\Home;
+
+class Index extends \Codisto\Connect\Controller\Adminhtml\CodistoController
+{
+    // @codingStandardsIgnoreStart
+    protected $view = 'home';
+    protected $breadCrumb = 'Home';
+    protected $frameUrl = 'codisto/ebaytab/';
+    // @codingStandardsIgnoreEnd
+}

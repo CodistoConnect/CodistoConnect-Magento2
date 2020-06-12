@@ -23,12 +23,10 @@
 -->
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
 	<menu>
-		<add id="Codisto_Connect::marketplaces" title="Marketplaces | Codisto" module="Codisto_Connect" sortOrder="100" parent="Magento_Backend::marketing" resource="Codisto_Connect::marketplaces" />
-		<add id="Codisto_Connect::listings" title="Marketplace Listings" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::marketplaces" action="codisto/listings" resource="Codisto_Connect::listings"/>
-		<add id="Codisto_Connect::orders" title="Marketplace Orders" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::marketplaces" action="codisto/orders" resource="Codisto_Connect::orders"/>
-		<add id="Codisto_Connect::attributes" title="Attribute Mapping" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::marketplaces" action="codisto/attributes" resource="Codisto_Connect::attributes"/>
-		<add id="Codisto_Connect::categories" title="eBay Store Categories" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::marketplaces" action="codisto/categories" resource="Codisto_Connect::categories"/>
-		<add id="Codisto_Connect::import" title="Link Listings" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::marketplaces" action="codisto/import" resource="Codisto_Connect::import"/>
+		<add id="Codisto_Connect::marketplaces" title="Codisto" module="Codisto_Connect" sortOrder="100" parent="Magento_Backend::marketing" resource="Codisto_Connect::marketplaces" />
+		<add id="Codisto_Connect::home" title="Home" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::marketplaces" action="codisto/home" resource="Codisto_Connect::home"/>
+		<add id="Codisto_Connect::listings" title="Listings" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::marketplaces" action="codisto/listings" resource="Codisto_Connect::listings"/>
+		<add id="Codisto_Connect::orders" title="Orders" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::marketplaces" action="codisto/orders" resource="Codisto_Connect::orders"/>
 		<add id="Codisto_Connect::settings" title="Settings" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::marketplaces" action="codisto/settings/index" resource="Codisto_Connect::settings"/>
 		<add id="Codisto_Connect::account" title="Account" module="Codisto_Connect" sortOrder="0" parent="Codisto_Connect::marketplaces" action="codisto/account" resource="Codisto_Connect::account"/>
 	</menu>

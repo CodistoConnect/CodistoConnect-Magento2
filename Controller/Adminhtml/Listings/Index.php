@@ -26,6 +26,6 @@ class Index extends \Codisto\Connect\Controller\Adminhtml\CodistoController
     // @codingStandardsIgnoreStart
     protected $view = 'listings';
     protected $breadCrumb = 'Listings';
-    protected $frameUrl = 'codisto/ebaytab/';
+    protected $frameUrl = 'codisto/ebaytab/listings';
     // @codingStandardsIgnoreEnd
 }
