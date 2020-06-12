@@ -45,6 +45,7 @@ class Router implements \Magento\Framework\App\RouterInterface
             '/^\/'.preg_quote($adminUrl, '/').'\/codisto\/'.
             '(?!listings(?:\/index(?:\/|\?))?|'.
             'orders(?:\/index(?:\/|\?))?|'.
+            'home(?:\/index(?:\/|\?))?|'.
             'categories(?:\/index(?:\/|\?))?|'.
             'attributes(?:\/index(?:\/|\?))?|'.
             'profiles(?:\/index(?:\/|\?))?|'.
