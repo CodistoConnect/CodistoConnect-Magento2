@@ -153,7 +153,12 @@ class Data
             $nonceDb->exec('CREATE TABLE IF NOT EXISTS nonce (value text NOT NULL PRIMARY KEY)');
             $qry = $nonceDb->prepare('INSERT OR IGNORE INTO nonce (value) VALUES(?)');
             $qry->execute([$nonce]);
-            if ($qry->rowCount() !== 1) {
+
+            $countQuery = $nonceDb->query('SELECT changes()');
+            $nonceInsertCount = (int)$countQuery->fetchColumn();
+            $countQuery->closeCursor();
+
+            if ($nonceInsertCount !== 1) {
                 return false;
             }
         } catch (\Exception $e) {
