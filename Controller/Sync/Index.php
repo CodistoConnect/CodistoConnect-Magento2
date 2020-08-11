@@ -94,6 +94,8 @@ class Index extends \Magento\Framework\App\Action\Action
 
             $orderIds = array_map('intval', $orderIds);
 
+            $syncDb = $this->_syncActionGetSyncDb($storeId, $request);
+
             $this->sync->syncOrders($syncDb, $orderIds, $storeId);
         }
     }
