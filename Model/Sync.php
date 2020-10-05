@@ -240,7 +240,7 @@ class Sync
 
             $filelist = $this->_filesInDir($ebayDesignDir);
 
-            $db->exec('BEGIN EXCLUSIVE TRANSACTION');
+            $db->exec('BEGIN IMMEDIATE TRANSACTION');
 
             foreach ($filelist as $key => $name) {
                 try {
@@ -344,7 +344,7 @@ class Sync
 
         $iterator = $this->iteratorFactory->create();
 
-        $db->exec('BEGIN EXCLUSIVE TRANSACTION');
+        $db->exec('BEGIN IMMEDIATE TRANSACTION');
 
         $iterator->walk(
             $categories->getSelect(),
@@ -361,7 +361,7 @@ class Sync
 
         $db = $this->_getSyncDb($syncDb, 60);
 
-        $db->exec('BEGIN EXCLUSIVE TRANSACTION');
+        $db->exec('BEGIN IMMEDIATE TRANSACTION');
 
         $db->exec(
             'CREATE TABLE IF NOT EXISTS CategoryDelete(ExternalReference text NOT NULL PRIMARY KEY);'.
@@ -472,7 +472,7 @@ class Sync
                 ]
             );
 
-        $db->exec('BEGIN EXCLUSIVE TRANSACTION');
+        $db->exec('BEGIN IMMEDIATE TRANSACTION');
 
         $db->exec('CREATE TEMPORARY TABLE TmpChanged (entity_id text NOT NULL PRIMARY KEY)');
         foreach ($ids as $id) {
@@ -523,10 +523,6 @@ class Sync
             '(SELECT entity_id FROM TmpChanged)'
         );
         $db->exec(
-            'DELETE FROM SKU WHERE ProductExternalReference IN '.
-            '(SELECT entity_id FROM TmpChanged)'
-        );
-        $db->exec(
             'DELETE FROM CategoryProduct WHERE ProductExternalReference IN '.
             '(SELECT entity_id FROM TmpChanged)'
         );
@@ -546,12 +542,6 @@ class Sync
         );
         $checkProduct = $db->prepare(
             'SELECT CASE WHEN EXISTS(SELECT 1 FROM Product WHERE ExternalReference = ?) THEN 1 ELSE 0 END'
-        );
-        $insertSKU = $db->prepare(
-            'INSERT OR IGNORE INTO SKU'.
-            '(ExternalReference, Code, ProductExternalReference, Name, '.
-            'StockControl, StockLevel, Price, Enabled, InStore) '.
-            'VALUES(?,?,?,?,?,?,?,?,?)'
         );
         $insertSKULink = $db->prepare(
             'INSERT OR REPLACE INTO SKULink'.
@@ -625,7 +615,6 @@ class Sync
                 'db' => $db,
                 'preparedStatement' => $insertProduct,
                 'preparedcheckproductStatement' => $checkProduct,
-                'preparedskuStatement' => $insertSKU,
                 'preparedskulinkStatement' => $insertSKULink,
                 'preparedskumatrixStatement' => $insertSKUMatrix,
                 'preparedcategoryproductStatement' => $insertCategoryProduct,
@@ -697,7 +686,6 @@ class Sync
                 'db' => $db,
                 'preparedStatement' => $insertProduct,
                 'preparedcheckproductStatement' => $checkProduct,
-                'preparedskuStatement' => $insertSKU,
                 'preparedskulinkStatement' => $insertSKULink,
                 'preparedskumatrixStatement' => $insertSKUMatrix,
                 'preparedcategoryproductStatement' => $insertCategoryProduct,
@@ -748,7 +736,7 @@ class Sync
 
         $db = $this->_getSyncDb($syncDb, 60);
 
-        $db->exec('BEGIN EXCLUSIVE TRANSACTION');
+        $db->exec('BEGIN IMMEDIATE TRANSACTION');
 
         $db->exec('CREATE TABLE IF NOT EXISTS ProductDelete(ExternalReference text NOT NULL PRIMARY KEY)');
 
@@ -771,7 +759,6 @@ class Sync
             'DELETE FROM ProductQuestion WHERE ProductExternalReference IN (SELECT entity_id FROM TmpProduct);'.
             'DELETE FROM SKULink WHERE ProductExternalReference IN (SELECT entity_id FROM TmpProduct);'.
             'DELETE FROM SKUMatrix WHERE ProductExternalReference IN (SELECT entity_id FROM TmpProduct);'.
-            'DELETE FROM SKU WHERE ProductExternalReference IN (SELECT entity_id FROM TmpProduct);'.
             'DELETE FROM CategoryProduct WHERE ProductExternalReference IN (SELECT entity_id FROM TmpProduct)'
         );
 
@@ -939,8 +926,11 @@ class Sync
         }
 
         $manageStock = $stockItem->getManageStock() ? -1 : 0;
+        $backorders = $stockItem->getBackorders() == \Magento\CatalogInventory\Model\Stock::BACKORDERS_YES_NONOTIFY
+                    || $stockItem->getBackorders() == \Magento\CatalogInventory\Model\Stock::BACKORDERS_YES_NOTIFY ? -1 : 0;
+        $instock = $stockItme->getIsInStock() ? -1 : 0;
 
-        return ['qty' => (int)$qty, 'managestock' => $manageStock];
+        return ['qty' => (int)$qty, 'managestock' => $manageStock, 'backorders' => $backorders, 'instock' => $instock ];
     }
 
     private function _syncProductName($productData)
@@ -1156,7 +1146,6 @@ class Sync
         $store = $args['store'];
         $db = $args['db'];
 
-        $insertSQL = $args['preparedskuStatement'];
         $insertSKULinkSQL = $args['preparedskulinkStatement'];
         $insertCategorySQL = $args['preparedcategoryproductStatement'];
         $insertSKUMatrixSQL = $args['preparedskumatrixStatement'];
@@ -1194,7 +1183,6 @@ class Sync
                 'parent_product' => $product,
                 'attributes' => $configurableAttributes,
                 'db' => $db,
-                'preparedStatement' => $insertSQL,
                 'preparedskulinkStatement' => $insertSKULinkSQL,
                 'preparedskumatrixStatement' => $insertSKUMatrixSQL,
                 'preparedcategoryproductStatement' => $insertCategorySQL,
@@ -1216,7 +1204,6 @@ class Sync
         $store = $args['store'];
         $db = $args['db'];
 
-        $insertSQL = $args['preparedskuStatement'];
         $insertSKULinkSQL = $args['preparedskulinkStatement'];
         $insertSKUMatrixSQL = $args['preparedskumatrixStatement'];
 
@@ -2204,6 +2191,8 @@ class Sync
         $data[] = $productData['status'] != 1 ? 0 : -1;
         $data[] = $stockData['managestock'];
         $data[] = $stockData['qty'];
+        $data[] = $stockData['backorders'];
+        $data[] = $stockData['instock'];
         $data[] = isset($productData['weight'])
             && is_numeric($productData['weight']) ?
                 (float)$productData['weight'] : $productData['weight'];
@@ -2500,7 +2489,6 @@ class Sync
                 'db' => $db,
                 'preparedStatement' => $preparedStatements['insertproduct'],
                 'preparedcheckproductStatement' => $preparedStatements['checkproduct'],
-                'preparedskuStatement' => $preparedStatements['insertsku'],
                 'preparedskulinkStatement' => $preparedStatements['insertskulink'],
                 'preparedskumatrixStatement' => $preparedStatements['insertskumatrix'],
                 'preparedcategoryproductStatement' => $preparedStatements['insertcategoryproduct'],
@@ -2566,7 +2554,6 @@ class Sync
                 'db' => $db,
                 'preparedStatement' => $preparedStatements['insertproduct'],
                 'preparedcheckproductStatement' => $preparedStatements['checkproduct'],
-                'preparedskuStatement' => $preparedStatements['insertsku'],
                 'preparedskulinkStatement' => $preparedStatements['insertskulink'],
                 'preparedskumatrixStatement' => $preparedStatements['insertskumatrix'],
                 'preparedcategoryproductStatement' => $preparedStatements['insertcategoryproduct'],
@@ -2763,12 +2750,6 @@ class Sync
             'SELECT CASE WHEN EXISTS('.
                 'SELECT 1 FROM Product WHERE ExternalReference = ?) THEN 1 ELSE 0 END'
         );
-        $preparedStatements['insertsku'] = $db->prepare(
-            'INSERT OR IGNORE INTO SKU'.
-            '(ExternalReference, Code, ProductExternalReference, Name, '.
-            'StockControl, StockLevel, Price, Enabled, InStore) '.
-            'VALUES(?,?,?,?,?,?,?,?,?)'
-        );
         $preparedStatements['insertskulink'] = $db->prepare(
             'INSERT OR REPLACE INTO SKULink '.
             '(SKUExternalReference, ProductExternalReference, Price) '.
@@ -2836,7 +2817,7 @@ class Sync
             'VALUES(?, ?, ?, ?, ?, ?, ?)'
         );
 
-        $db->exec('BEGIN EXCLUSIVE TRANSACTION');
+        $db->exec('BEGIN IMMEDIATE TRANSACTION');
 
         $qry = $db->query('SELECT entity_id FROM Progress'); // @codingStandardsIgnoreLine
 
@@ -2995,7 +2976,6 @@ class Sync
             'DELETE FROM ProductQuestion WHERE ProductExternalReference IN ('.$productUpdateIdList.');'.
             'DELETE FROM SKULink WHERE ProductExternalReference IN ('.$productUpdateIdList.');'.
             'DELETE FROM SKUMatrix WHERE ProductExternalReference IN ('.$productUpdateIdList.');'.
-            'DELETE FROM SKU WHERE ProductExternalReference IN ('.$productUpdateIdList.');'.
             'DELETE FROM CategoryProduct WHERE ProductExternalReference IN ('.$productUpdateIdList.')'
         );
 
@@ -3011,12 +2991,6 @@ class Sync
         );
         $checkProduct = $db->prepare(
             'SELECT CASE WHEN EXISTS(SELECT 1 FROM Product WHERE ExternalReference = ?) THEN 1 ELSE 0 END'
-        );
-        $insertSKU = $db->prepare(
-            'INSERT OR IGNORE INTO SKU'.
-                '(ExternalReference, Code, ProductExternalReference, Name, '.
-                    'StockControl, StockLevel, Price, Enabled, InStore) '.
-            'VALUES(?,?,?,?,?,?,?,?,?)'
         );
         $insertSKULink = $db->prepare(
             'INSERT OR REPLACE INTO SKULink (SKUExternalReference, ProductExternalReference, Price) '.
@@ -3179,7 +3153,6 @@ class Sync
                 'db' => $db,
                 'preparedStatement' => $insertProduct,
                 'preparedcheckproductStatement' => $checkProduct,
-                'preparedskuStatement' => $insertSKU,
                 'preparedskulinkStatement' => $insertSKULink,
                 'preparedskumatrixStatement' => $insertSKUMatrix,
                 'preparedcategoryproductStatement' => $insertCategoryProduct,
@@ -3224,7 +3197,6 @@ class Sync
                 'db' => $db,
                 'preparedStatement' => $insertProduct,
                 'preparedcheckproductStatement' => $checkProduct,
-                'preparedskuStatement' => $insertSKU,
                 'preparedskulinkStatement' => $insertSKULink,
                 'preparedskumatrixStatement' => $insertSKUMatrix,
                 'preparedcategoryproductStatement' => $insertCategoryProduct,
@@ -3513,7 +3485,7 @@ class Sync
                 continue;
             }
 
-            $db->exec('BEGIN EXCLUSIVE TRANSACTION');
+            $db->exec('BEGIN IMMEDIATE TRANSACTION');
 
             $this->_syncIncrementalProducts($store, $storeId, $productUpdateIds, $iterator, $db);
             $this->_syncIncrementalCategories($store, $categoryUpdateIds, $iterator, $db);
@@ -3591,7 +3563,7 @@ class Sync
         $db = $this->_getSyncDb($syncDb, 5);
 
         $db->exec('ATTACH DATABASE \''.$changeDb.'\' AS ChangeDb');
-        $db->exec('BEGIN EXCLUSIVE TRANSACTION');
+        $db->exec('BEGIN IMMEDIATE TRANSACTION');
 
         $qry = $db->query( // @codingStandardsIgnoreLine MEQP2.Classes.ResourceModel.OutsideOfResourceModel
             'SELECT CASE WHEN '.
@@ -3702,7 +3674,7 @@ class Sync
 
         $db = $this->_getSyncDb($syncDb, 5);
 
-        $db->exec('BEGIN EXCLUSIVE TRANSACTION');
+        $db->exec('BEGIN IMMEDIATE TRANSACTION');
 
         $db->exec('DELETE FROM TaxClass');
         $db->exec('DELETE FROM TaxCalculation');
@@ -3836,7 +3808,7 @@ class Sync
     {
         $db = $this->_getSyncDb($syncDb, 5);
 
-        $db->exec('BEGIN EXCLUSIVE TRANSACTION');
+        $db->exec('BEGIN IMMEDIATE TRANSACTION');
 
         $db->exec('DELETE FROM StaticBlock');
 
@@ -3873,7 +3845,7 @@ class Sync
 
         $db = $this->_getSyncDb($syncDb);
 
-        $db->exec('BEGIN EXCLUSIVE TRANSACTION');
+        $db->exec('BEGIN IMMEDIATE TRANSACTION');
         $db->exec('DELETE FROM Store');
         $db->exec('DELETE FROM StoreMerchant');
 
@@ -3948,7 +3920,7 @@ class Sync
         $shipmentName = $coreResource->getTableName('sales/shipment');
         $shipmentTrackName = $coreResource->getTableName('sales/shipment_track');
 
-        $db->exec('BEGIN EXCLUSIVE TRANSACTION');
+        $db->exec('BEGIN IMMEDIATE TRANSACTION');
 
         $orders = $this->salesOrderCollectionFactory->create()
                     ->addFieldToSelect(['codisto_orderid', 'status'])
@@ -3994,7 +3966,7 @@ class Sync
 
         $this->codistoHelper->prepareSqliteDatabase($db, $timeout);
 
-        $db->exec('BEGIN EXCLUSIVE TRANSACTION');
+        $db->exec('BEGIN IMMEDIATE TRANSACTION');
         $db->exec(
             'CREATE TABLE IF NOT EXISTS Progress('.
             'entity_id integer NOT NULL, '.
@@ -4028,6 +4000,7 @@ class Sync
             'Description text NOT NULL, '.
             'Enabled bit NOT NULL,  '.
             'StockControl bit NOT NULL, StockLevel integer NOT NULL, '.
+            'Backorder bit NOT NULL, InStock bit NOT NULL, '.
             'Weight real NULL, '.
             'InStore bit NOT NULL'.
             ')'
@@ -4070,21 +4043,6 @@ class Sync
             'ProductQuestionAnswer(ProductQuestionExternalReference)'
         );
 
-        $db->exec(
-            'CREATE TABLE IF NOT EXISTS SKU ('.
-            'ExternalReference text NOT NULL PRIMARY KEY, '.
-            'Code text NULL, '.
-            'ProductExternalReference text NOT NULL, '.
-            'Name text NOT NULL, StockControl bit NOT NULL, '.
-            'StockLevel integer NOT NULL, '.
-            'Price real NOT NULL, '.
-            'Enabled bit NOT NULL, '.
-            'InStore bit NOT NULL'.
-            ')'
-        );
-        $db->exec(
-            'CREATE INDEX IF NOT EXISTS IX_SKU_ProductExternalReference ON SKU(ProductExternalReference)'
-        );
         $db->exec(
             'CREATE TABLE IF NOT EXISTS SKUMatrix ('.
             'SKUExternalReference text NOT NULL, '.
@@ -4315,6 +4273,18 @@ class Sync
             $db->exec('ALTER TABLE [Order] ADD COLUMN MerchantID text NOT NULL DEFAULT \'\'');
         }
 
+        try {
+            $db->exec('ALTER TABLE Product ADD COLUMN Backorder bit NOT NULL DEFAULT 0');
+        } catch(\Exception $e) {
+
+        }
+
+        try {
+            $db->exec('ALTER TABLE Product ADD COLUMN InStock bit NOT NULL DEFAULT 0');
+        } catch(\Exception $e) {
+
+        }
+
         $db->exec('COMMIT TRANSACTION');
 
         return $db;
@@ -4326,7 +4296,7 @@ class Sync
 
         $this->codistoHelper->prepareSqliteDatabase($db, 60);
 
-        $db->exec('BEGIN EXCLUSIVE TRANSACTION');
+        $db->exec('BEGIN IMMEDIATE TRANSACTION');
         $db->exec(
             'CREATE TABLE IF NOT EXISTS File ('.
             'Name text NOT NULL PRIMARY KEY, Content blob NOT NULL, '.
