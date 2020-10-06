@@ -157,6 +157,11 @@ class Index extends \Magento\Framework\App\Action\Action
                         '(SELECT ExternalReference FROM SyncDb.ProductChange)'
                 );
                 $db->exec(
+                    'CREATE TABLE SKU AS '.
+                    'SELECT * FROM SyncDb.SKU WHERE ProductExternalReference IN '.
+                        '(SELECT ExternalReference FROM SyncDb.ProductChange)'
+                );
+                $db->exec(
                     'CREATE TABLE SKULink AS '.
                     'SELECT * FROM SyncDb.SKULink WHERE ProductExternalReference IN '.
                         '(SELECT ExternalReference FROM SyncDb.ProductChange)'
@@ -323,6 +328,11 @@ class Index extends \Magento\Framework\App\Action\Action
             $db->exec(
                 'CREATE TABLE CategoryProduct AS '.
                 'SELECT * FROM SyncDb.CategoryProduct WHERE ProductExternalReference IN '.
+                    '(SELECT ExternalReference FROM Product)'
+            );
+            $db->exec(
+                'CREATE TABLE SKU AS '.
+                'SELECT * FROM SyncDb.SKU WHERE ProductExternalReference IN '.
                     '(SELECT ExternalReference FROM Product)'
             );
             $db->exec(
@@ -718,6 +728,11 @@ class Index extends \Magento\Framework\App\Action\Action
             $db->exec(
                 'CREATE TABLE CategoryProduct AS '.
                 'SELECT * FROM SyncDb.CategoryProduct WHERE ProductExternalReference IN '.
+                    '(SELECT ExternalReference FROM Product)'
+            );
+            $db->exec(
+                'CREATE TABLE SKU AS '.
+                'SELECT * FROM SyncDb.SKU WHERE ProductExternalReference IN '.
                     '(SELECT ExternalReference FROM Product)'
             );
             $db->exec(
