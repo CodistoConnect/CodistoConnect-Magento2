@@ -4044,6 +4044,18 @@ class Sync
         );
 
         $db->exec(
+            'CREATE TABLE IF NOT EXISTS SKU ('.
+            'ExternalReference text NOT NULL PRIMARY KEY, '.
+            'Code text NULL, '.
+            'ProductExternalReference text NOT NULL, '.
+            'Name text NOT NULL, StockControl bit NOT NULL, '.
+            'StockLevel integer NOT NULL, '.
+            'Price real NOT NULL, '.
+            'Enabled bit NOT NULL, '.
+            'InStore bit NOT NULL'.
+            ')'
+        );
+        $db->exec(
             'CREATE TABLE IF NOT EXISTS SKUMatrix ('.
             'SKUExternalReference text NOT NULL, '.
             'ProductExternalReference text NOT NULL, '.
