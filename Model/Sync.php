@@ -23,9 +23,12 @@ namespace Codisto\Connect\Model;
 
 use Magento\Framework\UrlInterface;
 use Magento\Framework\DB\Ddl\Table;
+use Magento\Store\Model\ScopeInterface;
 
 class Sync
 {
+    const CONF_PATH_STOCK_TO_SYNC   = 'cataloginventory/codisto_connect/stock_to_sync';
+    
     private $resourceConnection;
     private $deploymentConfigFactory;
     private $productCollectionFactory;
@@ -2184,10 +2187,12 @@ class Sync
             $price
         );
 
+        $stockToSync = $this->scopeConfig->getValue(self::CONF_PATH_STOCK_TO_SYNC, ScopeInterface::SCOPE_STORE);
+        
         $stockData = $this->_syncStockData(
             $product,
             $productId,
-            \Magento\CatalogInventory\Model\Stock::DEFAULT_STOCK_ID
+            !empty($stockToSync) ? $stockToSync : \Magento\CatalogInventory\Model\Stock::DEFAULT_STOCK_ID
         );
 
         $data = [];
