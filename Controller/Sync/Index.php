@@ -115,7 +115,7 @@ class Index extends \Magento\Framework\App\Action\Action
 
         $db->exec('ATTACH DATABASE \''.$syncDb.'\' AS SyncDB');
 
-        $db->exec('BEGIN EXCLUSIVE TRANSACTION');
+        $db->exec('BEGIN IMMEDIATE TRANSACTION');
 
         $qry = $db->query( // @codingStandardsIgnoreLine MEQP2.Classes.ResourceModel.OutsideOfResourceModel
             'SELECT CASE WHEN EXISTS(SELECT 1 FROM SyncDb.sqlite_master WHERE type = \'table\' AND name = \'Sync\') THEN -1 ELSE 0 END'
@@ -300,7 +300,7 @@ class Index extends \Magento\Framework\App\Action\Action
 
         $db->exec('ATTACH DATABASE \''.$syncDb.'\' AS SyncDb');
 
-        $db->exec('BEGIN EXCLUSIVE TRANSACTION');
+        $db->exec('BEGIN IMMEDIATE TRANSACTION');
 
         if ($request->getQuery('categoryid')) {
             $db->exec('CREATE TABLE Category AS SELECT * FROM SyncDb.Category');
@@ -714,13 +714,11 @@ class Index extends \Magento\Framework\App\Action\Action
 
             $db->exec('ATTACH DATABASE \''.$syncDb.'\' AS SyncDB');
 
-            $db->exec('BEGIN EXCLUSIVE TRANSACTION');
+            $db->exec('BEGIN IMMEDIATE TRANSACTION');
             $db->exec(
                 'CREATE TABLE Product AS '.
                 'SELECT * FROM SyncDb.Product WHERE ExternalReference IN '.
-                    '('.implode(',', $productIds).') OR ExternalReference IN '.
-                    '(SELECT ProductExternalReference FROM SKU WHERE ExternalReference IN '.
-                        '('.implode(',', $productIds).'))'
+                    '('.implode(',', $productIds).')'
             );
             $db->exec(
                 'CREATE TABLE ProductImage AS '.
@@ -818,7 +816,7 @@ class Index extends \Magento\Framework\App\Action\Action
 
             $db->exec('ATTACH DATABASE \''.$syncDb.'\' AS SyncDB');
 
-            $db->exec('BEGIN EXCLUSIVE TRANSACTION');
+            $db->exec('BEGIN IMMEDIATE TRANSACTION');
             $db->exec('CREATE TABLE TaxClass AS SELECT * FROM SyncDb.TaxClass');
             $db->exec('CREATE TABLE TaxCalculation AS SELECT * FROM SyncDb.TaxCalculation');
             $db->exec('CREATE TABLE TaxCalculationRule AS SELECT * FROM SyncDb.TaxCalculationRule');
@@ -856,7 +854,7 @@ class Index extends \Magento\Framework\App\Action\Action
 
             $db->exec('ATTACH DATABASE \''.$syncDb.'\' AS SyncDB');
 
-            $db->exec('BEGIN EXCLUSIVE TRANSACTION');
+            $db->exec('BEGIN IMMEDIATE TRANSACTION');
             $db->exec('CREATE TABLE Store AS SELECT * FROM SyncDb.Store');
             $db->exec('COMMIT TRANSACTION');
             $db->exec('VACUUM');
@@ -915,7 +913,7 @@ class Index extends \Magento\Framework\App\Action\Action
 
             $db->exec('ATTACH DATABASE \''.$syncDb.'\' AS SyncDB');
 
-            $db->exec('BEGIN EXCLUSIVE TRANSACTION');
+            $db->exec('BEGIN IMMEDIATE TRANSACTION');
             $db->exec('CREATE TABLE [Order] AS SELECT * FROM SyncDb.[Order]');
             $db->exec('COMMIT TRANSACTION');
             $db->exec('VACUUM');
@@ -948,7 +946,7 @@ class Index extends \Magento\Framework\App\Action\Action
                         $files = $db->query('SELECT Name FROM File WHERE Changed != 0'); // @codingStandardsIgnoreLine MEQP2.Classes.ResourceModel.OutsideOfResourceModel
                         $files->execute();
 
-                        $db->exec('BEGIN EXCLUSIVE TRANSACTION');
+                        $db->exec('BEGIN IMMEDIATE TRANSACTION');
 
                         while ($row = $files->fetch()) {
                             $stat = stat( // @codingStandardsIgnoreLine
