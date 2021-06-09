@@ -1376,6 +1376,7 @@ class Index extends \Magento\Framework\App\Action\Action
         if (($ordercontent->orderstate == 'inprogress' || $ordercontent->orderstate == 'processing') &&
             $ordercontent->paymentstatus == 'complete' &&
             $orderstatus!=\Magento\Sales\Model\Order::STATE_PROCESSING &&
+            $orderstatus!=\Magento\Sales\Model\Order::STATE_PENDING_PAYMENT &&
             $orderstatus!=\Magento\Sales\Model\Order::STATE_COMPLETE) {
             $order->setState(\Magento\Sales\Model\Order::STATE_PROCESSING);
             $order->setStatus(\Magento\Sales\Model\Order::STATE_PROCESSING);
