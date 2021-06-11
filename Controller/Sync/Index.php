@@ -84,7 +84,7 @@ class Index extends \Magento\Framework\App\Action\Action
         return $syncDb;
     }
 
-    private function _syncActionGetSyncOrders($request)
+    private function _syncActionGetSyncOrders($storeId, $request)
     {
         if ($request->getQuery('orderid')) {
             $orderIds = $this->json->jsonDecode($request->getQuery('orderid'));
@@ -285,7 +285,7 @@ class Index extends \Magento\Framework\App\Action\Action
             return $this->_sendFile($syncDb);
         }
 
-        $this->_syncActionGetSyncOrders($request);
+        $this->_syncActionGetSyncOrders($storeId, $request);
 
         $tmpDb = $this->codistoHelper->getSyncPathTemp('sync');
 
