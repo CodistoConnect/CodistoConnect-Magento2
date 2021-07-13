@@ -87,7 +87,7 @@ class Calc extends \Magento\Framework\App\Action\Action
         $regioncode = null;
 
         if ($countrycode == 'AU') {
-            $pc = $postalcode{0};
+            $pc = $postalcode[0];
 
             if ($pc == 2 || $pc == 1) {
                 $regiontext = 'NSW';
@@ -103,7 +103,7 @@ class Calc extends \Magento\Framework\App\Action\Action
                 $regiontext = 'TAS';
             }
 
-            $pc3 = $postalcode{0} . $postalcode{1};
+            $pc3 = $postalcode[0] . $postalcode[1];
             if ($pc3 == '08' || $pc3 == '09') {
                 $regiontext = 'NT';
             }
