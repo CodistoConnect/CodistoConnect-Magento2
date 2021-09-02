@@ -3944,9 +3944,9 @@ class Sync
 
         $coreResource = $this->resourceConnection;
 
-        $invoiceName = $coreResource->getTableName('sales/invoice');
-        $shipmentName = $coreResource->getTableName('sales/shipment');
-        $shipmentTrackName = $coreResource->getTableName('sales/shipment_track');
+        $invoiceName = $coreResource->getTableName('sales_invoice');
+        $shipmentName = $coreResource->getTableName('sales_shipment');
+        $shipmentTrackName = $coreResource->getTableName('sales_shipment_track');
 
         $db->exec('BEGIN EXCLUSIVE TRANSACTION');
 
