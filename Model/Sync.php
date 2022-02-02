@@ -1589,17 +1589,19 @@ class Sync
                 $values = $option->getValuesCollection();
 
                 foreach ($values as $value) {
-                    $valueData = $this->_syncProductQuestionValue($value);
+                    if($value) {
+                        $valueData = $this->_syncProductQuestionValue($value);
 
-                    $insertProductAnswerSQL->execute(
-                        [
-                            $optionData['id'],
-                            $valueData['name'],
-                            $valueData['pricemod'],
-                            $valueData['skumod'],
-                            $valueData['sort']
-                        ]
-                    );
+                        $insertProductAnswerSQL->execute(
+                            [
+                                $optionData['id'],
+                                $valueData['name'],
+                                $valueData['pricemod'],
+                                $valueData['skumod'],
+                                $valueData['sort']
+                            ]
+                        );
+                    }
                 }
             }
         }
