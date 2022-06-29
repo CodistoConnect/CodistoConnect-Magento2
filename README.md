@@ -28,9 +28,3 @@ It may be necessary to run the Magento 2 code compiler after the installation ab
 It also may be necessary to deploy static view files in your supported locales after installation is complete. eg, from the Magento root directory:
 
 **`php bin/magento setup:static-content:deploy en_AU en_US`**
-
-* * *
-
-## **Installation service**
-
-Alternatively we provide an installation service for a one off fee of **USD$99**. Please [**click here**](https://codisto.com/connect/) and find the 'Installation Service' button to get started.
