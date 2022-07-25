@@ -431,6 +431,8 @@ class Index extends \Magento\Framework\App\Action\Action
 
     private function _syncActionExecuteFirstConfigurable($storeId, $request)
     {
+        $syncDb = $this->codistoHelper->getSyncPath('sync-first-'.$storeId.'.db');
+
         $result = '';
 
         $configurableCount = (int)$request->getQuery('configurablecount');
@@ -447,6 +449,8 @@ class Index extends \Magento\Framework\App\Action\Action
 
     private function _syncActionExecuteFirstSimple($storeId, $request)
     {
+        $syncDb = $this->codistoHelper->getSyncPath('sync-first-'.$storeId.'.db');
+
         $result = '';
 
         $simpleCount = (int)$request->getQuery('simplecount');
