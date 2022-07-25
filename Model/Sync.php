@@ -79,9 +79,6 @@ class Sync
 
     private $availableProductFields;
 
-    private $productFlatState;
-    private $categoryFlatState;
-
     private $urlBuilder;
 
     /*
@@ -89,7 +86,6 @@ class Sync
             \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory is required as we use the walk interface
             which is not compatible with ProductRepositoryInterface
     */
-
 
     public function __construct(
         \Magento\Framework\App\Action\Context $context,
@@ -122,8 +118,6 @@ class Sync
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Catalog\Model\Product\Media\ConfigFactory $mediaConfigFactory,
         \Magento\Framework\Model\ResourceModel\IteratorFactory $iteratorFactory,
-        \Magento\Catalog\Model\Indexer\Product\Flat\StateFactory $productFlatState,
-        \Magento\Catalog\Model\Indexer\Category\Flat\StateFactory $categoryFlatState,
         \Codisto\Connect\Helper\Data $codistoHelper
     // @codingStandardsIgnoreEnd MEQP2.Classes.CollectionDependency.CollectionDependency
     ) {
@@ -156,8 +150,6 @@ class Sync
         $this->taxCalc = $taxCalc;
         $this->mediaConfigFactory = $mediaConfigFactory;
         $this->iteratorFactory = $iteratorFactory;
-        $this->productFlatState = $productFlatState;
-        $this->categoryFlatState = $categoryFlatState;
         $this->urlBuilder = $context->getUrl();
         $this->codistoHelper = $codistoHelper;
         $this->scopeConfig = $scopeConfig;
@@ -336,9 +328,8 @@ class Sync
             ') VALUES(?,?,?,?,?,?)'
         );
 
-        $categoryFlatState = $this->categoryFlatState->create([ 'isAvailable' => false ]);
-
-        $categories = $this->categoryFactory->create([ 'flatState' => $categoryFlatState ])->getCollection()
+        $categories = $this->categoryFactory
+            ->create()
             ->addAttributeToSelect(['name', 'image', 'is_active', 'updated_at', 'parent_id', 'position'], 'left')
             ->addAttributeToFilter('entity_id', ['eq' => $id]);
 
@@ -389,11 +380,8 @@ class Sync
 
         $idscsv = implode(',', $ids);
 
-        // Configurable products
-        $productFlatState = $this->productFlatState->create([ 'isAvailable' => false ]);
-
         $configurableProducts = $this->productCollectionFactory
-            ->create(['catalogProductFlatState' => $productFlatState])
+            ->create()
             ->addAttributeToSelect($this->availableProductFields, 'left')
             ->addAttributeToFilter('type_id', ['eq' => 'configurable']);
 
@@ -415,7 +403,8 @@ class Sync
             ->where($sqlCheckModified); // @codingStandardsIgnoreLine
 
         // Simple Products not participating as configurable skus
-        $simpleProducts = $this->productCollectionFactory->create(['catalogProductFlatState' => $productFlatState])
+        $simpleProducts = $this->productCollectionFactory
+            ->create()
             ->addAttributeToSelect($this->availableProductFields, 'left')
             ->addAttributeToFilter('type_id', ['eq' => 'simple'])
             ->addAttributeToFilter('entity_id', ['in' => $ids]);
@@ -434,7 +423,8 @@ class Sync
             );
 
         // Virtual Products not participating as configurable skus
-        $virtualProducts = $this->productCollectionFactory->create(['catalogProductFlatState' => $productFlatState])
+        $virtualProducts = $this->productCollectionFactory
+            -create()
             ->addAttributeToSelect($this->availableProductFields, 'left')
             ->addAttributeToFilter('type_id', ['eq' => 'virtual'])
             ->addAttributeToFilter('entity_id', ['in' => $ids]);
@@ -454,7 +444,7 @@ class Sync
 
         // Grouped products
         $groupedProducts = $this->productCollectionFactory
-            ->create(['catalogProductFlatState' => $productFlatState])
+            ->create()
             ->addAttributeToSelect($this->availableProductFields, 'left')
             ->addAttributeToFilter('type_id', ['eq' => 'grouped'])
             ->addAttributeToFilter('entity_id', ['in' => $ids]);
@@ -2337,11 +2327,10 @@ class Sync
         $preparedStatements,
         &$state
     ) {
-        $productFlatState = $this->productFlatState->create(['isAvailable' => false]);
 
         // Simple Products not participating as configurable skus
         $simpleProducts = $this->productCollectionFactory
-            ->create(['catalogProductFlatState' => $productFlatState])
+            ->create()
             ->addAttributeToSelect($this->availableProductFields, 'left')
             ->addAttributeToFilter('type_id', ['eq' => 'simple'])
             ->addAttributeToFilter('entity_id', ['gt' => (int)$this->currentEntityId]);
@@ -2405,11 +2394,9 @@ class Sync
         $preparedStatements,
         &$state
     ) {
-        $productFlatState = $this->productFlatState->create(['isAvailable' => false]);
-
         // Simple Products not participating as configurable skus
         $virtualProducts = $this->productCollectionFactory
-            ->create(['catalogProductFlatState' => $productFlatState])
+            ->create()
             ->addAttributeToSelect($this->availableProductFields, 'left')
             ->addAttributeToFilter('type_id', ['eq' => 'virtual'])
             ->addAttributeToFilter('entity_id', ['gt' => (int)$this->currentEntityId]);
@@ -2473,12 +2460,10 @@ class Sync
         $preparedStatements,
         &$state
     ) {
-        $productFlatState = $this->productFlatState->create(['isAvailable' => false]);
-
         // Configurable products
         // @codingStandardsIgnoreStart
         $configurableProducts = $this->productCollectionFactory
-            ->create(['catalogProductFlatState' => $productFlatState])
+            ->create()
             ->addAttributeToSelect($this->availableProductFields, 'left')
             ->addAttributeToFilter('type_id', ['eq' => 'configurable'])
             ->addAttributeToFilter('entity_id', ['gt' => (int)$this->currentEntityId]);
@@ -2540,11 +2525,10 @@ class Sync
         $preparedStatements,
         &$state
     ) {
-        $productFlatState = $this->productFlatState->create(['isAvailable' => false]);
         // Grouped products
         // @codingStandardsIgnoreStart
         $groupedProducts = $this->productCollectionFactory
-            ->create(['catalogProductFlatState' => $productFlatState])
+            ->create()
             ->addAttributeToSelect($this->availableProductFields, 'left')
             ->addAttributeToFilter('type_id', ['eq' => 'grouped'])
             ->addAttributeToFilter('entity_id', ['gt' => (int)$this->currentEntityId]);
@@ -2715,10 +2699,10 @@ class Sync
 
     private function _syncChunkCategories($iterator, $db, $store, $preparedStatements)
     {
-        $categoryFlatState = $this->categoryFlatState->create(['isAvailable' => false]);
-
         // Categories
-        $categories = $this->categoryFactory->create(['flatState' => $categoryFlatState])->getCollection()
+        $categories = $this->categoryFactory
+            ->create()
+            ->getCollection()
             ->addAttributeToSelect(
                 ['name', 'image', 'is_active', 'updated_at', 'parent_id', 'position'],
                 'left'
@@ -2734,7 +2718,7 @@ class Sync
             ]
         );
 
-        $db->exec('INSERT OR REPLACE INTO Progress (Sentinel, State, entity_id) VALUES (1, \'complete\', 0)');
+        $db->exec("INSERT OR REPLACE INTO Progress (Sentinel, State, entity_id) VALUES (1, 'complete', 0)");
     }
 
     public function syncChunk($syncDb, $simpleCount, $configurableCount, $storeId, $first)
@@ -2981,8 +2965,6 @@ class Sync
         $catalogWebsiteName = $this->resourceConnection->getTableName('catalog_product_website');
         $storeName = $this->resourceConnection->getTableName('store');
 
-        $productFlatState = $this->productFlatState->create(['isAvailable' => false]);
-
         $productUpdateIdList = implode(',', $productUpdateIds);
 
         $db->exec(
@@ -3072,7 +3054,7 @@ class Sync
 
         // Simple Products
         $simpleProducts = $this->productCollectionFactory
-            ->create(['catalogProductFlatState' => $productFlatState])
+            ->create()
             ->addAttributeToSelect($this->availableProductFields, 'left')
             ->addAttributeToFilter('type_id', ['eq' => 'simple'])
             ->addAttributeToFilter('entity_id', ['in' => $productUpdateIds]);
@@ -3114,7 +3096,7 @@ class Sync
 
         // Virtual Products
         $virtualProducts = $this->productCollectionFactory
-            ->create(['catalogProductFlatState' => $productFlatState])
+            ->create()
             ->addAttributeToSelect($this->availableProductFields, 'left')
             ->addAttributeToFilter('type_id', ['eq' => 'virtual'])
             ->addAttributeToFilter('entity_id', ['in' => $productUpdateIds]);
@@ -3156,7 +3138,7 @@ class Sync
 
         // Configurable products
         $configurableProducts = $this->productCollectionFactory
-            ->create(['catalogProductFlatState' => $productFlatState])
+            ->create()
             ->addAttributeToSelect($this->availableProductFields, 'left')
             ->addAttributeToFilter('type_id', ['eq' => 'configurable'])
             ->addAttributeToFilter('entity_id', ['in' => $productUpdateIds]);
@@ -3201,7 +3183,7 @@ class Sync
 
         // Grouped products
         $groupedProducts = $this->productCollectionFactory
-            ->create(['catalogProductFlatState' => $productFlatState])
+            ->create()
             ->addAttributeToSelect($this->availableProductFields, 'left')
             ->addAttributeToFilter('type_id', ['eq' => 'grouped'])
             ->addAttributeToFilter('entity_id', ['in' => $productUpdateIds]);
@@ -3251,15 +3233,14 @@ class Sync
             return;
         }
 
-        $categoryFlatState = $this->categoryFlatState->create(['isAvailable' => false]);
-
         $insertCategory = $db->prepare(
             'INSERT OR REPLACE INTO Category'.
                 '(ExternalReference, Name, ParentExternalReference, LastModified, Enabled, Sequence) '.
             'VALUES(?,?,?,?,?,?)'
         );
 
-        $categories = $this->categoryFactory->create(['flatState' => $categoryFlatState])->getCollection()
+        $categories = $this->categoryFactory
+            ->create()
             ->addAttributeToSelect(['name', 'image', 'is_active', 'updated_at', 'parent_id', 'position'], 'left')
             ->addAttributeToFilter('entity_id', ['in' => $categoryUpdateIds]);
 
@@ -3665,10 +3646,8 @@ class Sync
     {
         $storeId; // unused param
 
-        $productFlatState = $this->productFlatState->create(['isAvailable' => false]);
-
         $configurableProducts = $this->productCollectionFactory
-            ->create(['catalogProductFlatState' => $productFlatState])
+            ->create()
             ->removeAttributeToSelect()
             ->addAttributeToSelect('entity_id')
             ->addAttributeToFilter('type_id', ['eq' => 'configurable']);
@@ -3676,7 +3655,7 @@ class Sync
         $configurableCount = $configurableProducts->getSize();
 
         $simpleProducts = $this->productCollectionFactory
-            ->create(['catalogProductFlatState' => $productFlatState])
+            ->create()
             ->removeAttributeToSelect()
             ->addAttributeToSelect('entity_id')
             ->addAttributeToFilter('type_id', ['in' => ['simple', 'virtual']]);
@@ -3684,7 +3663,7 @@ class Sync
         $simpleCount = $simpleProducts->getSize();
 
         $groupedProducts = $this->productCollectionFactory
-            ->create(['catalogProductFlatState' => $productFlatState])
+            ->create()
             ->removeAttributeToSelect()
             ->addAttributeToSelect('entity_id')
             ->addAttributeToFilter('type_id', ['eq' => 'grouped']);
