@@ -329,6 +329,7 @@ class Sync
         );
 
         $categories = $this->categoryFactory
+            ->create()
             ->addAttributeToSelect(['name', 'image', 'is_active', 'updated_at', 'parent_id', 'position'], 'left')
             ->addAttributeToFilter('entity_id', ['eq' => $id]);
 
@@ -380,6 +381,7 @@ class Sync
         $idscsv = implode(',', $ids);
 
         $configurableProducts = $this->productCollectionFactory
+            ->create()
             ->addAttributeToSelect($this->availableProductFields, 'left')
             ->addAttributeToFilter('type_id', ['eq' => 'configurable']);
 
@@ -402,6 +404,7 @@ class Sync
 
         // Simple Products not participating as configurable skus
         $simpleProducts = $this->productCollectionFactory
+            ->create()
             ->addAttributeToSelect($this->availableProductFields, 'left')
             ->addAttributeToFilter('type_id', ['eq' => 'simple'])
             ->addAttributeToFilter('entity_id', ['in' => $ids]);
@@ -421,6 +424,7 @@ class Sync
 
         // Virtual Products not participating as configurable skus
         $virtualProducts = $this->productCollectionFactory
+            -create()
             ->addAttributeToSelect($this->availableProductFields, 'left')
             ->addAttributeToFilter('type_id', ['eq' => 'virtual'])
             ->addAttributeToFilter('entity_id', ['in' => $ids]);
@@ -440,6 +444,7 @@ class Sync
 
         // Grouped products
         $groupedProducts = $this->productCollectionFactory
+            ->create()
             ->addAttributeToSelect($this->availableProductFields, 'left')
             ->addAttributeToFilter('type_id', ['eq' => 'grouped'])
             ->addAttributeToFilter('entity_id', ['in' => $ids]);
@@ -2325,6 +2330,7 @@ class Sync
 
         // Simple Products not participating as configurable skus
         $simpleProducts = $this->productCollectionFactory
+            ->create()
             ->addAttributeToSelect($this->availableProductFields, 'left')
             ->addAttributeToFilter('type_id', ['eq' => 'simple'])
             ->addAttributeToFilter('entity_id', ['gt' => (int)$this->currentEntityId]);
@@ -2390,6 +2396,7 @@ class Sync
     ) {
         // Simple Products not participating as configurable skus
         $virtualProducts = $this->productCollectionFactory
+            ->create()
             ->addAttributeToSelect($this->availableProductFields, 'left')
             ->addAttributeToFilter('type_id', ['eq' => 'virtual'])
             ->addAttributeToFilter('entity_id', ['gt' => (int)$this->currentEntityId]);
@@ -2456,6 +2463,7 @@ class Sync
         // Configurable products
         // @codingStandardsIgnoreStart
         $configurableProducts = $this->productCollectionFactory
+            ->create()
             ->addAttributeToSelect($this->availableProductFields, 'left')
             ->addAttributeToFilter('type_id', ['eq' => 'configurable'])
             ->addAttributeToFilter('entity_id', ['gt' => (int)$this->currentEntityId]);
@@ -2520,6 +2528,7 @@ class Sync
         // Grouped products
         // @codingStandardsIgnoreStart
         $groupedProducts = $this->productCollectionFactory
+            ->create()
             ->addAttributeToSelect($this->availableProductFields, 'left')
             ->addAttributeToFilter('type_id', ['eq' => 'grouped'])
             ->addAttributeToFilter('entity_id', ['gt' => (int)$this->currentEntityId]);
@@ -2692,6 +2701,7 @@ class Sync
     {
         // Categories
         $categories = $this->categoryFactory
+            ->create()
             ->getCollection()
             ->addAttributeToSelect(
                 ['name', 'image', 'is_active', 'updated_at', 'parent_id', 'position'],
@@ -3044,6 +3054,7 @@ class Sync
 
         // Simple Products
         $simpleProducts = $this->productCollectionFactory
+            ->create()
             ->addAttributeToSelect($this->availableProductFields, 'left')
             ->addAttributeToFilter('type_id', ['eq' => 'simple'])
             ->addAttributeToFilter('entity_id', ['in' => $productUpdateIds]);
@@ -3085,6 +3096,7 @@ class Sync
 
         // Virtual Products
         $virtualProducts = $this->productCollectionFactory
+            ->create()
             ->addAttributeToSelect($this->availableProductFields, 'left')
             ->addAttributeToFilter('type_id', ['eq' => 'virtual'])
             ->addAttributeToFilter('entity_id', ['in' => $productUpdateIds]);
@@ -3126,6 +3138,7 @@ class Sync
 
         // Configurable products
         $configurableProducts = $this->productCollectionFactory
+            ->create()
             ->addAttributeToSelect($this->availableProductFields, 'left')
             ->addAttributeToFilter('type_id', ['eq' => 'configurable'])
             ->addAttributeToFilter('entity_id', ['in' => $productUpdateIds]);
@@ -3170,6 +3183,7 @@ class Sync
 
         // Grouped products
         $groupedProducts = $this->productCollectionFactory
+            ->create()
             ->addAttributeToSelect($this->availableProductFields, 'left')
             ->addAttributeToFilter('type_id', ['eq' => 'grouped'])
             ->addAttributeToFilter('entity_id', ['in' => $productUpdateIds]);
@@ -3226,6 +3240,7 @@ class Sync
         );
 
         $categories = $this->categoryFactory
+            ->create()
             ->addAttributeToSelect(['name', 'image', 'is_active', 'updated_at', 'parent_id', 'position'], 'left')
             ->addAttributeToFilter('entity_id', ['in' => $categoryUpdateIds]);
 
@@ -3632,6 +3647,7 @@ class Sync
         $storeId; // unused param
 
         $configurableProducts = $this->productCollectionFactory
+            ->create()
             ->removeAttributeToSelect()
             ->addAttributeToSelect('entity_id')
             ->addAttributeToFilter('type_id', ['eq' => 'configurable']);
@@ -3639,6 +3655,7 @@ class Sync
         $configurableCount = $configurableProducts->getSize();
 
         $simpleProducts = $this->productCollectionFactory
+            ->create()
             ->removeAttributeToSelect()
             ->addAttributeToSelect('entity_id')
             ->addAttributeToFilter('type_id', ['in' => ['simple', 'virtual']]);
@@ -3646,6 +3663,7 @@ class Sync
         $simpleCount = $simpleProducts->getSize();
 
         $groupedProducts = $this->productCollectionFactory
+            ->create()
             ->removeAttributeToSelect()
             ->addAttributeToSelect('entity_id')
             ->addAttributeToFilter('type_id', ['eq' => 'grouped']);
