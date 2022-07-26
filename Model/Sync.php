@@ -330,6 +330,7 @@ class Sync
 
         $categories = $this->categoryFactory
             ->create()
+            ->getCollection()
             ->addAttributeToSelect(['name', 'image', 'is_active', 'updated_at', 'parent_id', 'position'], 'left')
             ->addAttributeToFilter('entity_id', ['eq' => $id]);
 
@@ -3241,6 +3242,7 @@ class Sync
 
         $categories = $this->categoryFactory
             ->create()
+            ->getCollection()
             ->addAttributeToSelect(['name', 'image', 'is_active', 'updated_at', 'parent_id', 'position'], 'left')
             ->addAttributeToFilter('entity_id', ['in' => $categoryUpdateIds]);
 
