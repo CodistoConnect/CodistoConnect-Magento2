@@ -425,7 +425,7 @@ class Sync
 
         // Virtual Products not participating as configurable skus
         $virtualProducts = $this->productCollectionFactory
-            -create()
+            ->create()
             ->addAttributeToSelect($this->availableProductFields, 'left')
             ->addAttributeToFilter('type_id', ['eq' => 'virtual'])
             ->addAttributeToFilter('entity_id', ['in' => $ids]);
