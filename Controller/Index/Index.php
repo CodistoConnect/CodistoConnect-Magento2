@@ -1749,7 +1749,7 @@ class Index extends \Magento\Framework\App\Action\Action
             $customer->setEmail($email);
             $customer->setFirstname((string)$addressBilling['firstname']);
             $customer->setLastname((string)$addressBilling['lastname']);
-            $customer->setPassword('');
+            $customer->setPassword((string)sha1(uniqid()));
             if ($customerGroupId) {
                 $customer->setGroupId($customerGroupId);
             }
