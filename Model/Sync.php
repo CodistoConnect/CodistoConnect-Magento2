@@ -1076,6 +1076,7 @@ class Sync
         $store = $args['store'];
         $storeId = $store->getId();
 
+        $insertSQL = $args['preparedskuStatement'];
         $insertSKULinkSQL = $args['preparedskulinkStatement'];
         $insertSKUMatrixSQL = $args['preparedskumatrixStatement'];
 
@@ -2361,6 +2362,7 @@ class Sync
                 'db' => $db,
                 'preparedStatement' => $preparedStatements['insertproduct'],
                 'preparedcheckproductStatement' => $preparedStatements['checkproduct'],
+                'preparedskuStatement' => $preparedStatements['insertsku'],
                 'preparedcategoryproductStatement' => $preparedStatements['insertcategoryproduct'],
                 'preparedimageStatement' => $preparedStatements['insertproductimage'],
                 'preparedproducthtmlStatement' => $preparedStatements['insertproducthtml'],
@@ -3167,6 +3169,7 @@ class Sync
                 'db' => $db,
                 'preparedStatement' => $insertProduct,
                 'preparedcheckproductStatement' => $checkProduct,
+                'preparedskuStatement' => $insertSKU,
                 'preparedskulinkStatement' => $insertSKULink,
                 'preparedskumatrixStatement' => $insertSKUMatrix,
                 'preparedcategoryproductStatement' => $insertCategoryProduct,
@@ -3211,6 +3214,7 @@ class Sync
                 'db' => $db,
                 'preparedStatement' => $insertProduct,
                 'preparedcheckproductStatement' => $checkProduct,
+                'preparedskuStatement' => $insertSKU,
                 'preparedskulinkStatement' => $insertSKULink,
                 'preparedskumatrixStatement' => $insertSKUMatrix,
                 'preparedcategoryproductStatement' => $insertCategoryProduct,
