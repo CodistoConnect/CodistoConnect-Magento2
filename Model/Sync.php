@@ -514,6 +514,10 @@ class Sync
             '(SELECT entity_id FROM TmpChanged)'
         );
         $db->exec(
+            'DELETE FROM SKU WHERE ProductExternalReference IN '.
+            '(SELECT entity_id FROM TmpChanged)'
+        );
+        $db->exec(
             'DELETE FROM CategoryProduct WHERE ProductExternalReference IN '.
             '(SELECT entity_id FROM TmpChanged)'
         );
@@ -533,6 +537,12 @@ class Sync
         );
         $checkProduct = $db->prepare(
             'SELECT CASE WHEN EXISTS(SELECT 1 FROM Product WHERE ExternalReference = ?) THEN 1 ELSE 0 END'
+        );
+        $insertSKU = $db->prepare(
+            'INSERT OR IGNORE INTO SKU'.
+            '(ExternalReference, Code, ProductExternalReference, Name, '.
+            'StockControl, StockLevel, Price, Enabled, InStore) '.
+            'VALUES(?,?,?,?,?,?,?,?,?)'
         );
         $insertSKULink = $db->prepare(
             'INSERT OR REPLACE INTO SKULink'.
@@ -606,6 +616,7 @@ class Sync
                 'db' => $db,
                 'preparedStatement' => $insertProduct,
                 'preparedcheckproductStatement' => $checkProduct,
+                'preparedskuStatement' => $insertSKU,
                 'preparedskulinkStatement' => $insertSKULink,
                 'preparedskumatrixStatement' => $insertSKUMatrix,
                 'preparedcategoryproductStatement' => $insertCategoryProduct,
@@ -631,6 +642,7 @@ class Sync
                 'db' => $db,
                 'preparedStatement' => $insertProduct,
                 'preparedcheckproductStatement' => $checkProduct,
+                'preparedskuStatement' => $insertSKU,
                 'preparedcategoryproductStatement' => $insertCategoryProduct,
                 'preparedimageStatement' => $insertImage,
                 'preparedproducthtmlStatement' => $insertProductHTML,
@@ -1174,6 +1186,7 @@ class Sync
                 'parent_product' => $product,
                 'attributes' => $configurableAttributes,
                 'db' => $db,
+                'preparedStatement' => $insertSQL,
                 'preparedskulinkStatement' => $insertSKULinkSQL,
                 'preparedskumatrixStatement' => $insertSKUMatrixSQL,
                 'preparedcategoryproductStatement' => $insertCategorySQL,
@@ -1195,6 +1208,7 @@ class Sync
         $store = $args['store'];
         $db = $args['db'];
 
+        $insertSQL = $args['preparedskuStatement'];
         $insertSKULinkSQL = $args['preparedskulinkStatement'];
         $insertSKUMatrixSQL = $args['preparedskumatrixStatement'];
 
@@ -2737,6 +2751,12 @@ class Sync
             'SELECT CASE WHEN EXISTS('.
                 'SELECT 1 FROM Product WHERE ExternalReference = ?) THEN 1 ELSE 0 END'
         );
+        $preparedStatements['insertsku'] = $db->prepare(
+            'INSERT OR IGNORE INTO SKU'.
+            '(ExternalReference, Code, ProductExternalReference, Name, '.
+            'StockControl, StockLevel, Price, Enabled, InStore) '.
+            'VALUES(?,?,?,?,?,?,?,?,?)'
+        );
         $preparedStatements['insertskulink'] = $db->prepare(
             'INSERT OR REPLACE INTO SKULink '.
             '(SKUExternalReference, ProductExternalReference, Price) '.
@@ -2961,6 +2981,7 @@ class Sync
             'DELETE FROM ProductQuestion WHERE ProductExternalReference IN ('.$productUpdateIdList.');'.
             'DELETE FROM SKULink WHERE ProductExternalReference IN ('.$productUpdateIdList.');'.
             'DELETE FROM SKUMatrix WHERE ProductExternalReference IN ('.$productUpdateIdList.');'.
+            'DELETE FROM SKU WHERE ProductExternalReference IN ('.$productUpdateIdList.');'.
             'DELETE FROM CategoryProduct WHERE ProductExternalReference IN ('.$productUpdateIdList.')'
         );
 
@@ -2976,6 +2997,12 @@ class Sync
         );
         $checkProduct = $db->prepare(
             'SELECT CASE WHEN EXISTS(SELECT 1 FROM Product WHERE ExternalReference = ?) THEN 1 ELSE 0 END'
+        );
+        $insertSKU = $db->prepare(
+            'INSERT OR IGNORE INTO SKU'.
+                '(ExternalReference, Code, ProductExternalReference, Name, '.
+                    'StockControl, StockLevel, Price, Enabled, InStore) '.
+            'VALUES(?,?,?,?,?,?,?,?,?)'
         );
         $insertSKULink = $db->prepare(
             'INSERT OR REPLACE INTO SKULink (SKUExternalReference, ProductExternalReference, Price) '.
@@ -3054,6 +3081,7 @@ class Sync
                 'db' => $db,
                 'preparedStatement' => $insertProduct,
                 'preparedcheckproductStatement' => $checkProduct,
+                'preparedskuStatement' => $insertSKU,
                 'preparedcategoryproductStatement' => $insertCategoryProduct,
                 'preparedimageStatement' => $insertImage,
                 'preparedproducthtmlStatement' => $insertProductHTML,
@@ -3096,6 +3124,7 @@ class Sync
                 'db' => $db,
                 'preparedStatement' => $insertProduct,
                 'preparedcheckproductStatement' => $checkProduct,
+                'preparedskuStatement' => $insertSKU,
                 'preparedcategoryproductStatement' => $insertCategoryProduct,
                 'preparedimageStatement' => $insertImage,
                 'preparedproducthtmlStatement' => $insertProductHTML,
@@ -4039,6 +4068,9 @@ class Sync
             ')'
         );
         $db->exec(
+            'CREATE INDEX IF NOT EXISTS IX_SKU_ProductExternalReference ON SKU(ProductExternalReference)'
+        );
+        $db->exec(
             'CREATE TABLE IF NOT EXISTS SKUMatrix ('.
             'SKUExternalReference text NOT NULL, '.
             'ProductExternalReference text NOT NULL, '.
@@ -4266,6 +4298,18 @@ class Sync
             $db->exec('SELECT 1 FROM [Order] WHERE MerchantID IS NULL LIMIT 1');
         } catch (\Exception $e) {
             $db->exec('ALTER TABLE [Order] ADD COLUMN MerchantID text NOT NULL DEFAULT \'\'');
+        }
+
+        try {
+            $db->exec('ALTER TABLE Product ADD COLUMN Backorder bit NOT NULL DEFAULT 0');
+        } catch(\Exception $e) {
+
+        }
+
+        try {
+            $db->exec('ALTER TABLE Product ADD COLUMN InStock bit NOT NULL DEFAULT 0');
+        } catch(\Exception $e) {
+
         }
 
         try {

@@ -22,14 +22,14 @@
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="../../Indexer/etc/indexer.xsd">
 	<indexer id="codisto_index_product" view_id="codisto_index_product" class="Codisto\Connect\Model\Indexer\Marketplace">
 		<title translate="true">Codisto Marketplace Products</title>
-		<description translate="true">Index Catalog data for synchronisation with Amazon,eBay and Kogan</description>
+		<description translate="true">Index Catalog data for synchronisation with Amazon, eBay, Google, Walmart and Kogan</description>
 	</indexer>
 	<indexer id="codisto_index_category" view_id="codisto_index_category" class="Codisto\Connect\Model\Indexer\Marketplace">
 		<title translate="true">Codisto Marketplace Categories</title>
-		<description translate="true">Index Catalog Category data for synchronisation with Amazon,eBay and Kogan</description>
+		<description translate="true">Index Catalog Category data for synchronisation with Amazon, eBay, Google, Walmart and Kogan</description>
 	</indexer>
 	<indexer id="codisto_index_order" view_id="codisto_index_order" class="Codisto\Connect\Model\Indexer\Marketplace">
 		<title translate="true">Codisto Marketplace Orders</title>
-		<description translate="true">Index Order Status and Shipping Tracking data for synchronisation with Amazon,eBay and Kogan</description>
+		<description translate="true">Index Order Status and Shipping Tracking data for synchronisation with Amazon, eBay, Google, Walmart and Kogan</description>
 	</indexer>
 </config>
