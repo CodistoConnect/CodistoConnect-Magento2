@@ -493,44 +493,44 @@ class Index extends \Magento\Framework\App\Action\Action
             $order->setData('status', \Magento\Sales\Model\Order::STATE_CANCELED);
             $order->addStatusToHistory(
                 \Magento\Sales\Model\Order::STATE_CANCELED,
-                $amazonorderid ?
+                ($amazonorderid ?
                     "Amazon Order $amazonorderid has been cancelled" . $customerNote
-                    : $koganorderid ?
+                    : ($koganorderid ?
                         "Kogan Order $koganorderid has been cancelled" . $customerNote
-                        : "eBay Order $ebaysalesrecordnumber has been cancelled" . $customerNote
+                        : "eBay Order $ebaysalesrecordnumber has been cancelled" . $customerNote))
             );
         } elseif ($ordercontent->orderstate == 'inprogress' || $ordercontent->orderstate == 'processing') {
             $order->setData('state', \Magento\Sales\Model\Order::STATE_PROCESSING);
             $order->setData('status', \Magento\Sales\Model\Order::STATE_PROCESSING);
             $order->addStatusToHistory(
                 \Magento\Sales\Model\Order::STATE_PROCESSING,
-                $amazonorderid ?
+                ($amazonorderid ?
                 "Amazon Order $amazonorderid is in progress" . $customerNote
-                : $koganorderid ?
+                : ($koganorderid ?
                     "Kogan Order $koganorderid is in progress" . $customerNote
-                    : "eBay Order $ebaysalesrecordnumber is in progress" . $customerNote
+                    : "eBay Order $ebaysalesrecordnumber is in progress" . $customerNote))
             );
         } elseif ($ordercontent->orderstate == 'complete') {
             $order->setData('state', \Magento\Sales\Model\Order::STATE_COMPLETE);
             $order->setData('status', \Magento\Sales\Model\Order::STATE_COMPLETE);
             $order->addStatusToHistory(
                 \Magento\Sales\Model\Order::STATE_COMPLETE,
-                $amazonorderid ?
+                ($amazonorderid ?
                 "Amazon Order $amazonorderid is complete" . $customerNote
-                : $koganorderid ?
+                : ($koganorderid ?
                     "Kogan Order $koganorderid is complete" . $customerNote
-                    : "eBay Order $ebaysalesrecordnumber is complete" . $customerNote
+                    : "eBay Order $ebaysalesrecordnumber is complete" . $customerNote))
             );
         } else {
             $order->setData('state', \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT);
             $order->setData('status', \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT);
             $order->addStatusToHistory(
                 \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT,
-                $amazonorderid ?
+                ($amazonorderid ?
                 "Amazon Order $amazonorderid has been captured" . $customerNote
-                : $koganorderid ?
+                : ($koganorderid ?
                     "Kogan Order $koganorderid has been captured" . $customerNote
-                    : "eBay Order $ebaysalesrecordnumber has been captured" . $customerNote
+                    : "eBay Order $ebaysalesrecordnumber has been captured" . $customerNote))
             );
         }
 
@@ -1394,11 +1394,11 @@ class Index extends \Magento\Framework\App\Action\Action
             $order->setStatus(\Magento\Sales\Model\Order::STATE_PENDING_PAYMENT);
             $order->addStatusToHistory(
                 $order->getStatus(),
-                $amazonorderid ?
+                ($amazonorderid ?
                     "Amazon Order $amazonorderid is pending payment"
-                    : $koganorderid ?
+                    : ($koganorderid ?
                         "Kogan Order $koganorderid is pending payment"
-                        : "eBay Order $ebaysalesrecordnumber is pending payment"
+                        : "eBay Order $ebaysalesrecordnumber is pending payment"))
             );
         }
 
@@ -1407,11 +1407,11 @@ class Index extends \Magento\Framework\App\Action\Action
             $order->setStatus(\Magento\Sales\Model\Order::STATE_CANCELED);
             $order->addStatusToHistory(
                 $order->getStatus(),
-                $amazonorderid ?
+                ($amazonorderid ?
                     "Amazon Order $amazonorderid has been cancelled"
-                    : $koganorderid ?
+                    : ($koganorderid ?
                         "Kogan Order $koganorderid has been cancelled"
-                        : "eBay Order $ebaysalesrecordnumber has been cancelled"
+                        : "eBay Order $ebaysalesrecordnumber has been cancelled"))
             );
         }
 
@@ -1423,11 +1423,11 @@ class Index extends \Magento\Framework\App\Action\Action
             $order->setStatus(\Magento\Sales\Model\Order::STATE_PROCESSING);
             $order->addStatusToHistory(
                 $order->getStatus(),
-                $amazonorderid ?
+                ($amazonorderid ?
                     "Amazon Order $amazonorderid is in progress"
-                    : $koganorderid ?
+                    : ($koganorderid ?
                         "Kogan Order $koganorderid is in progress"
-                        : "eBay Order $ebaysalesrecordnumber is in progress"
+                        : "eBay Order $ebaysalesrecordnumber is in progress"))
             );
         }
 
@@ -1437,11 +1437,11 @@ class Index extends \Magento\Framework\App\Action\Action
             $order->setData('status', \Magento\Sales\Model\Order::STATE_COMPLETE);
             $order->addStatusToHistory(
                 $order->getStatus(),
-                $amazonorderid ?
+                ($amazonorderid ?
                     "Amazon Order $amazonorderid is complete"
-                    : $koganorderid ?
+                    : ($koganorderid ?
                         "Kogan Order $koganorderid is complete"
-                        : "eBay Order $ebaysalesrecordnumber is complete"
+                        : "eBay Order $ebaysalesrecordnumber is complete"))
             );
         }
 
