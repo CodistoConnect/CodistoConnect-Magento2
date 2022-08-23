@@ -200,11 +200,23 @@ class Index extends \Magento\Framework\App\Action\Action
                 ' ebaytransactionid varchar(255) NOT NULL,'.
                 ' ebayuser varchar(255) NOT NULL,'.
                 ' amazonorderid varchar(255) NOT NULL,'.
-                ' amazonfulfillmentchannel varchar(255) NOT NULL)');
+                ' amazonfulfillmentchannel varchar(255) NOT NULL,'.
+                ' koganorderid varchar(255) NOT NULL)');
             // @codingStandardsIgnoreEnd
         } catch (\Exception $e) {
             $e;
             // ignore failures to add codisto_order_detail table
+        }
+
+        try {
+            $connection->addColumn('codisto_order_detail', 'koganorderid', [
+                'type' => Table::TYPE_TEXT,
+                'length' => '255',
+                'comment' => 'Codisto Kogan Order Id'
+            ]);
+        } catch (\Exception $e) {
+            $e;
+            // ignore if column is already present
         }
     }
 
@@ -412,16 +424,18 @@ class Index extends \Magento\Framework\App\Action\Action
         $order,
         $ebaysalesrecordnumber,
         $ebaytransactionid,
-        $amazonorderid
+        $amazonorderid,
+        $koganorderid
     ) {
         if (preg_match(
-            '/\{ordernumber\}|\{ebaysalesrecordnumber\}|\{ebaytransactionid\}|\{amazonorderid\}/',
+            '/\{ordernumber\}|\{ebaysalesrecordnumber\}|\{ebaytransactionid\}|\{amazonorderid\}|\{koganorderid\}/',
             $ordernumberformat
         )) {
             $incrementId = preg_replace('/\{ordernumber\}/', (string)$order->getIncrementId(), $ordernumberformat);
             $incrementId = preg_replace('/\{ebaysalesrecordnumber\}/', $ebaysalesrecordnumber, $incrementId);
             $incrementId = preg_replace('/\{ebaytransactionid\}/', $ebaytransactionid, $incrementId);
             $incrementId = preg_replace('/\{amazonorderid\}/', $amazonorderid, $incrementId);
+            $incrementId = preg_replace('/\{koganorderid\}/', $koganorderid, $incrementId);
         } else {
             $incrementId = $ordernumberformat.''.(string)$order->getIncrementId();
         }
@@ -461,7 +475,8 @@ class Index extends \Magento\Framework\App\Action\Action
         $ordercontent,
         $adjustStock,
         $ebaysalesrecordnumber,
-        $amazonorderid
+        $amazonorderid,
+        $koganorderid
     ) {
 
         // ignore count failure on simple_xml - treat count failure as no customer instruction
@@ -478,36 +493,44 @@ class Index extends \Magento\Framework\App\Action\Action
             $order->setData('status', \Magento\Sales\Model\Order::STATE_CANCELED);
             $order->addStatusToHistory(
                 \Magento\Sales\Model\Order::STATE_CANCELED,
-                $amazonorderid ?
+                ($amazonorderid ?
                     "Amazon Order $amazonorderid has been cancelled" . $customerNote
-                    : "eBay Order $ebaysalesrecordnumber has been cancelled" . $customerNote
+                    : ($koganorderid ?
+                        "Kogan Order $koganorderid has been cancelled" . $customerNote
+                        : "eBay Order $ebaysalesrecordnumber has been cancelled" . $customerNote))
             );
         } elseif ($ordercontent->orderstate == 'inprogress' || $ordercontent->orderstate == 'processing') {
             $order->setData('state', \Magento\Sales\Model\Order::STATE_PROCESSING);
             $order->setData('status', \Magento\Sales\Model\Order::STATE_PROCESSING);
             $order->addStatusToHistory(
                 \Magento\Sales\Model\Order::STATE_PROCESSING,
-                $amazonorderid ?
+                ($amazonorderid ?
                 "Amazon Order $amazonorderid is in progress" . $customerNote
-                : "eBay Order $ebaysalesrecordnumber is in progress" . $customerNote
+                : ($koganorderid ?
+                    "Kogan Order $koganorderid is in progress" . $customerNote
+                    : "eBay Order $ebaysalesrecordnumber is in progress" . $customerNote))
             );
         } elseif ($ordercontent->orderstate == 'complete') {
             $order->setData('state', \Magento\Sales\Model\Order::STATE_COMPLETE);
             $order->setData('status', \Magento\Sales\Model\Order::STATE_COMPLETE);
             $order->addStatusToHistory(
                 \Magento\Sales\Model\Order::STATE_COMPLETE,
-                $amazonorderid ?
+                ($amazonorderid ?
                 "Amazon Order $amazonorderid is complete" . $customerNote
-                : "eBay Order $ebaysalesrecordnumber is complete" . $customerNote
+                : ($koganorderid ?
+                    "Kogan Order $koganorderid is complete" . $customerNote
+                    : "eBay Order $ebaysalesrecordnumber is complete" . $customerNote))
             );
         } else {
             $order->setData('state', \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT);
             $order->setData('status', \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT);
             $order->addStatusToHistory(
                 \Magento\Sales\Model\Order::STATE_PENDING_PAYMENT,
-                $amazonorderid ?
+                ($amazonorderid ?
                 "Amazon Order $amazonorderid has been captured" . $customerNote
-                : "eBay Order $ebaysalesrecordnumber has been captured" . $customerNote
+                : ($koganorderid ?
+                    "Kogan Order $koganorderid has been captured" . $customerNote
+                    : "eBay Order $ebaysalesrecordnumber has been captured" . $customerNote))
             );
         }
 
@@ -572,12 +595,15 @@ class Index extends \Magento\Framework\App\Action\Action
         $ebaytransactionid,
         $ebayusername,
         $amazonorderid,
-        $amazonfulfillmentchannel
+        $amazonfulfillmentchannel,
+        $koganorderid
     ) {
         $payment = $order->getPayment();
 
         if($amazonorderid != '') {
             $payment->setMethod('amazon');
+        } elseif ($koganorderid != '') {
+            $payment->setMethod('kogan');
         } else {
             $payment->setMethod('ebay');
         }
@@ -609,6 +635,9 @@ class Index extends \Magento\Framework\App\Action\Action
         }
         if ($amazonfulfillmentchannel) {
             $payment->setAdditionalInformation('amazonfulfillmentchannel', $amazonfulfillmentchannel);
+        }
+        if ($koganorderid) {
+            $payment->setAdditionalInformation('koganorderid', $koganorderid);
         }
 
         if ($ordercontent->paymentstatus == 'complete') {
@@ -781,6 +810,9 @@ class Index extends \Magento\Framework\App\Action\Action
         $amazonfulfillmentchannel = (string)$ordercontent->amazonfulfillmentchannel ?
             (string)$ordercontent->amazonfulfillmentchannel : '';
 
+        $koganorderid = (string)$ordercontent->koganorderid ?
+            (string)$ordercontent->koganorderid : '';
+
         $quote->reserveOrderId();
         $order = $this->orderConverter->convert($quote->getShippingAddress());
 
@@ -798,7 +830,7 @@ class Index extends \Magento\Framework\App\Action\Action
         $order->setCodistoOrderid((string)$ordercontent->orderid);
         $order->setCodistoMerchantid((string)$ordercontent->merchantid);
         $order->setIncrementId(
-            $this->_incrementId($ordernumberformat, $order, $ebaysalesrecordnumber, $ebaytransactionid, $amazonorderid)
+            $this->_incrementId($ordernumberformat, $order, $ebaysalesrecordnumber, $ebaytransactionid, $amazonorderid, $koganorderid)
         );
 
         $weight_total = 0;
@@ -999,7 +1031,7 @@ class Index extends \Magento\Framework\App\Action\Action
             );
         }
 
-        $this->_processOrderCreateState($order, $ordercontent, $adjustStock, $ebaysalesrecordnumber, $amazonorderid);
+        $this->_processOrderCreateState($order, $ordercontent, $adjustStock, $ebaysalesrecordnumber, $amazonorderid, $koganorderid);
 
         $order->setBaseTotalPaid(0);
         $order->setTotalPaid(0);
@@ -1016,7 +1048,8 @@ class Index extends \Magento\Framework\App\Action\Action
             $ebaytransactionid,
             $ebayusername,
             $amazonorderid,
-            $amazonfulfillmentchannel
+            $amazonfulfillmentchannel,
+            $koganorderid
         );
 
         $quote->setIsActive(false)->save();
@@ -1059,7 +1092,8 @@ class Index extends \Magento\Framework\App\Action\Action
             $ebaytransactionid,
             $ebayusername,
             $amazonorderid,
-            $amazonfulfillmentchannel
+            $amazonfulfillmentchannel,
+            $koganorderid
         );
 
         $response = $this->getResponse();
@@ -1121,6 +1155,7 @@ class Index extends \Magento\Framework\App\Action\Action
         $ordertotal,
         $paypaltransactionid,
         $amazonorderid,
+        $koganorderid,
         &$invoiceids
     ) {
         if (!$order->hasInvoices()) {
@@ -1143,6 +1178,8 @@ class Index extends \Magento\Framework\App\Action\Action
 
                 if($amazonorderid != '') {
                     $payment->setMethod('amazon');
+                } elseif($koganorderid != '') {
+                    $payment->setMethod('kogan');
                 } else {
                     $payment->setMethod('ebay');
                 }
@@ -1343,6 +1380,7 @@ class Index extends \Magento\Framework\App\Action\Action
         $ordercontent,
         $ebaysalesrecordnumber,
         $amazonorderid,
+        $koganorderid,
         &$productsToReindex
     ) {
         /* States: cancelled, processing, captured, inprogress, complete */
@@ -1356,9 +1394,11 @@ class Index extends \Magento\Framework\App\Action\Action
             $order->setStatus(\Magento\Sales\Model\Order::STATE_PENDING_PAYMENT);
             $order->addStatusToHistory(
                 $order->getStatus(),
-                $amazonorderid ?
+                ($amazonorderid ?
                     "Amazon Order $amazonorderid is pending payment"
-                    : "eBay Order $ebaysalesrecordnumber is pending payment"
+                    : ($koganorderid ?
+                        "Kogan Order $koganorderid is pending payment"
+                        : "eBay Order $ebaysalesrecordnumber is pending payment"))
             );
         }
 
@@ -1367,9 +1407,11 @@ class Index extends \Magento\Framework\App\Action\Action
             $order->setStatus(\Magento\Sales\Model\Order::STATE_CANCELED);
             $order->addStatusToHistory(
                 $order->getStatus(),
-                $amazonorderid ?
+                ($amazonorderid ?
                     "Amazon Order $amazonorderid has been cancelled"
-                    : "eBay Order $ebaysalesrecordnumber has been cancelled"
+                    : ($koganorderid ?
+                        "Kogan Order $koganorderid has been cancelled"
+                        : "eBay Order $ebaysalesrecordnumber has been cancelled"))
             );
         }
 
@@ -1381,9 +1423,11 @@ class Index extends \Magento\Framework\App\Action\Action
             $order->setStatus(\Magento\Sales\Model\Order::STATE_PROCESSING);
             $order->addStatusToHistory(
                 $order->getStatus(),
-                $amazonorderid ?
+                ($amazonorderid ?
                     "Amazon Order $amazonorderid is in progress"
-                    : "eBay Order $ebaysalesrecordnumber is in progress"
+                    : ($koganorderid ?
+                        "Kogan Order $koganorderid is in progress"
+                        : "eBay Order $ebaysalesrecordnumber is in progress"))
             );
         }
 
@@ -1393,9 +1437,11 @@ class Index extends \Magento\Framework\App\Action\Action
             $order->setData('status', \Magento\Sales\Model\Order::STATE_COMPLETE);
             $order->addStatusToHistory(
                 $order->getStatus(),
-                $amazonorderid ?
+                ($amazonorderid ?
                     "Amazon Order $amazonorderid is complete"
-                    : "eBay Order $ebaysalesrecordnumber is complete"
+                    : ($koganorderid ?
+                        "Kogan Order $koganorderid is complete"
+                        : "eBay Order $ebaysalesrecordnumber is complete"))
             );
         }
 
@@ -1487,6 +1533,9 @@ class Index extends \Magento\Framework\App\Action\Action
 
         $amazonfulfillmentchannel = (string)$ordercontent->amazonfulfillmentchannel ?
             (string)$ordercontent->amazonfulfillmentchannel : '';
+
+        $koganorderid = (string)$ordercontent->koganorderid ?
+            (string)$ordercontent->koganorderid : '';
 
         $currencyCode = (string)$ordercontent->transactcurrency[0];
         $ordertotal = (float)($ordercontent->defaultcurrencytotal[0]);
@@ -1658,6 +1707,7 @@ class Index extends \Magento\Framework\App\Action\Action
             $ordercontent,
             $ebaysalesrecordnumber,
             $amazonorderid,
+            $koganorderid,
             $productsToReindex
         );
         $order->save();
@@ -1670,6 +1720,7 @@ class Index extends \Magento\Framework\App\Action\Action
             $ordertotal,
             $paypaltransactionid,
             $amazonorderid,
+            $koganorderid,
             $invoiceids
         );
 
@@ -1679,7 +1730,8 @@ class Index extends \Magento\Framework\App\Action\Action
             $ebaytransactionid,
             $ebayusername,
             $amazonorderid,
-            $amazonfulfillmentchannel
+            $amazonfulfillmentchannel,
+            $koganorderid
         );
 
         $response = $this->getResponse();
@@ -1742,6 +1794,17 @@ class Index extends \Magento\Framework\App\Action\Action
                     $amazonGroup->save();
                 }
                 $customerGroupId = $amazonGroup->getId();
+            } elseif ($order_source == 'kogan') {
+                $koganGroup = $this->customerGroupFactory->create();
+                $koganGroup->load('Kogan', 'customer_group_code');
+                if (!$koganGroup->getId()) {
+                    $defaultGroup = $this->customerGroupFactory->create()->load(1);
+
+                    $koganGroup->setCode('Kogan');
+                    $koganGroup->setTaxClassId($defaultGroup->getTaxClassId());
+                    $koganGroup->save();
+                }
+                $customerGroupId = $koganGroup->getId();
             }
 
             $customer->setWebsiteId($websiteId);
@@ -1749,7 +1812,7 @@ class Index extends \Magento\Framework\App\Action\Action
             $customer->setEmail($email);
             $customer->setFirstname((string)$addressBilling['firstname']);
             $customer->setLastname((string)$addressBilling['lastname']);
-            $customer->setPassword('');
+            $customer->setPassword((string)sha1(uniqid()));
             if ($customerGroupId) {
                 $customer->setGroupId($customerGroupId);
             }
@@ -2028,6 +2091,9 @@ class Index extends \Magento\Framework\App\Action\Action
         $amazonorderid = (string)$ordercontent->amazonorderid ?
             (string)$ordercontent->amazonorderid : '';
 
+        $koganorderid = (string)$ordercontent->koganorderid ?
+            (string)$ordercontent->koganorderid : '';
+
         $quote->setCurrency();
         $quote->setIsSuperMode(true);
         $quote->setStore($store);
@@ -2164,11 +2230,15 @@ class Index extends \Magento\Framework\App\Action\Action
         $quote->save();
 
         $quotePayment = $quote->getPayment();
+
         if($amazonorderid != '') {
             $quotePayment->setMethod('amazon');
+        } elseif ($koganorderid != '') {
+            $quotePayment->setMethod('kogan');
         } else {
             $quotePayment->setMethod('ebay');
         }
+
         $quotePayment->save();
 
         // ignore count failure on simple_xml - treat count failure as no customer instruction
@@ -2212,7 +2282,8 @@ class Index extends \Magento\Framework\App\Action\Action
         $ebaytransactionid,
         $ebayusername,
         $amazonorderid,
-        $amazonfulfillmentchannel
+        $amazonfulfillmentchannel,
+        $koganorderid
     ) {
         try {
             $deploymentConfig = $this->deploymentConfigFactory->create();
@@ -2231,7 +2302,8 @@ class Index extends \Magento\Framework\App\Action\Action
                 'ebaytransactionid' => $ebaytransactionid,
                 'ebayuser' => $ebayusername,
                 'amazonorderid' => $amazonorderid,
-                'amazonfulfillmentchannel' => $amazonfulfillmentchannel
+                'amazonfulfillmentchannel' => $amazonfulfillmentchannel,
+                'koganorderid' => $koganorderid
             ];
 
             // @codingStandardsIgnoreStart
