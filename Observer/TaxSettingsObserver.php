@@ -14,9 +14,9 @@
  * to license@magentocommerce.com so we can send you a copy immediately.
  *
  * @package   Codisto_Connect
- * @copyright 2016-2017 On Technology Pty. Ltd. (http://codisto.com/)
+ * @copyright 2016-2022 On Technology Pty. Ltd. (https://codisto.com/)
  * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
- * @link      https://codisto.com/connect/
+ * @link      https://codisto.com/
  */
 
 namespace Codisto\Connect\Observer;
@@ -37,7 +37,7 @@ class TaxSettingsObserver implements ObserverInterface
     public function execute(EventObserver $observer)
     {
         $observer;
-        
+
         $merchants = $this->codistoHelper->syncAllMerchants();
         if (!empty($merchants)) {
             $this->codistoHelper->signal($merchants, 'action=synctax');
