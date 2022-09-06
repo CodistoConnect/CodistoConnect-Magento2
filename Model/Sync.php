@@ -532,8 +532,8 @@ class Sync
         $insertProduct = $db->prepare(
             'INSERT INTO Product'.
             '(ExternalReference, Type, Code, Name, Price, ListPrice, TaxClass, '.
-            'Description, Enabled, StockControl, StockLevel, Weight, InStore) '.
-            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            'Description, Enabled, StockControl, StockLevel, BackOrder, InStock, Weight, InStore) '.
+            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
         $checkProduct = $db->prepare(
             'SELECT CASE WHEN EXISTS(SELECT 1 FROM Product WHERE ExternalReference = ?) THEN 1 ELSE 0 END'
@@ -2186,25 +2186,25 @@ class Sync
         );
 
         $data = [];
-        $data[] = $productId;
-        $data[] = $type == 'configurable' ? 'c' : ($type == 'grouped' ? 'g' : ($type == 'virtual' ? 'v' : 's'));
-        $data[] = $productCode;
-        $data[] = $productName;
-        $data[] = $price;
-        $data[] = $listPrice;
+        $data[] = $productId; //ExternalReference ?1
+        $data[] = $type == 'configurable' ? 'c' : ($type == 'grouped' ? 'g' : ($type == 'virtual' ? 'v' : 's')); //Type ?2
+        $data[] = $productCode; //Code ?3
+        $data[] = $productName; //Name ?4
+        $data[] = $price; //Price ?5
+        $data[] = $listPrice; //ListPrice ?6
         $data[] = isset($productData['tax_class_id'])
             && $productData['tax_class_id'] ?
-                $productData['tax_class_id'] : '';
-        $data[] = $description;
-        $data[] = $productData['status'] != 1 ? 0 : -1;
-        $data[] = $stockData['managestock'];
-        $data[] = $stockData['qty'];
-        $data[] = $stockData['backorders'];
-        $data[] = $stockData['instock'];
+                $productData['tax_class_id'] : ''; //TaxClass ?7
+        $data[] = $description; //Description ?8
+        $data[] = $productData['status'] != 1 ? 0 : -1; //Enabled ?9
+        $data[] = $stockData['managestock']; //StockControl ?10
+        $data[] = $stockData['qty']; //StockLevel ?11
+        $data[] = $stockData['backorders'] != -1 ? 0 : -1; //BackOrder ?12
+        $data[] = $stockData['instock'] != -1 ? 0 : -1; //Instock ?13
         $data[] = isset($productData['weight'])
             && is_numeric($productData['weight']) ?
-                (float)$productData['weight'] : $productData['weight'];
-        $data[] = $productData['codisto_in_store'];
+                (float)$productData['weight'] : $productData['weight']; //Weight ?14
+        $data[] = $productData['codisto_in_store']; //InStore ?15
 
         $insertSQL->execute($data);
 
@@ -2746,9 +2746,10 @@ class Sync
         $preparedStatements['insertproduct'] = $db->prepare(
             'INSERT INTO Product'.
             '(ExternalReference, Type, Code, Name, Price, ListPrice, TaxClass, '.
-                'Description, Enabled, StockControl, StockLevel, Weight, InStore) '.
-            'VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            'Description, Enabled, StockControl, StockLevel, BackOrder, InStock, Weight, InStore) '.
+            'VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)'
         );
+
         $preparedStatements['checkproduct'] = $db->prepare(
             'SELECT CASE WHEN EXISTS('.
                 'SELECT 1 FROM Product WHERE ExternalReference = ?) THEN 1 ELSE 0 END'
@@ -2991,12 +2992,14 @@ class Sync
             'INSERT OR IGNORE INTO CategoryProduct(ProductExternalReference, CategoryExternalReference, Sequence) '.
             'VALUES(?,?,?)'
         );
+
         $insertProduct = $db->prepare(
-            'INSERT INTO Product '.
-                '(ExternalReference, Type, Code, Name, Price, ListPrice, TaxClass, '.
-                    'Description, Enabled, StockControl, StockLevel, Weight, InStore) '.
-            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            'INSERT INTO Product'.
+            '(ExternalReference, Type, Code, Name, Price, ListPrice, TaxClass, '.
+            'Description, Enabled, StockControl, StockLevel, BackOrder, InStock, Weight, InStore) '.
+            'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         );
+
         $checkProduct = $db->prepare(
             'SELECT CASE WHEN EXISTS(SELECT 1 FROM Product WHERE ExternalReference = ?) THEN 1 ELSE 0 END'
         );
@@ -4016,7 +4019,8 @@ class Sync
             'Description text NOT NULL, '.
             'Enabled bit NOT NULL,  '.
             'StockControl bit NOT NULL, StockLevel integer NOT NULL, '.
-            'Backorder bit NOT NULL, InStock bit NOT NULL, '.
+            'Backorder bit NOT NULL, '.
+            'InStock bit NOT NULL, '.
             'Weight real NULL, '.
             'InStore bit NOT NULL'.
             ')'
@@ -4302,18 +4306,6 @@ class Sync
             $db->exec('SELECT 1 FROM [Order] WHERE MerchantID IS NULL LIMIT 1');
         } catch (\Exception $e) {
             $db->exec('ALTER TABLE [Order] ADD COLUMN MerchantID text NOT NULL DEFAULT \'\'');
-        }
-
-        try {
-            $db->exec('ALTER TABLE Product ADD COLUMN Backorder bit NOT NULL DEFAULT 0');
-        } catch(\Exception $e) {
-
-        }
-
-        try {
-            $db->exec('ALTER TABLE Product ADD COLUMN InStock bit NOT NULL DEFAULT 0');
-        } catch(\Exception $e) {
-
         }
 
         try {
