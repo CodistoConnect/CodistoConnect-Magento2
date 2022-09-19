@@ -589,6 +589,7 @@ class Index extends \Magento\Framework\App\Action\Action
     private function _processPayment(
         $order,
         $ordercontent,
+        $ordersubtotal,
         $ordertotal,
         $paypaltransactionid,
         $ebaysalesrecordnumber,
@@ -641,18 +642,18 @@ class Index extends \Magento\Framework\App\Action\Action
         }
 
         if ($ordercontent->paymentstatus == 'complete') {
-            $payment->setBaseAmountPaid($ordertotal);
-            $payment->setAmountPaid($ordertotal);
-            $payment->setBaseAmountAuthorized($ordertotal);
-            $payment->setBaseAmountPaidOnline($ordertotal);
-            $payment->setAmountAuthorized($ordertotal);
+            $payment->setBaseAmountPaid($ordersubtotal);
+            $payment->setAmountPaid($ordersubtotal);
+            $payment->setBaseAmountAuthorized($ordersubtotal);
+            $payment->setBaseAmountPaidOnline($ordersubtotal);
+            $payment->setAmountAuthorized($ordersubtotal);
             $payment->setIsTransactionClosed(1);
         } else {
             $payment->setBaseAmountPaid(0.0);
             $payment->setAmountPaid(0.0);
-            $payment->setBaseAmountAuthorized($ordertotal);
-            $payment->setBaseAmountPaidOnline($ordertotal);
-            $payment->setAmountAuthorized($ordertotal);
+            $payment->setBaseAmountAuthorized($ordersubtotal);
+            $payment->setBaseAmountPaidOnline($ordersubtotal);
+            $payment->setAmountAuthorized($ordersubtotal);
             $payment->setIsTransactionClosed(0);
         }
 
@@ -1042,6 +1043,7 @@ class Index extends \Magento\Framework\App\Action\Action
         $payment = $this->_processPayment(
             $order,
             $ordercontent,
+            $ordersubtotal,
             $ordertotal,
             $paypaltransactionid,
             $ebaysalesrecordnumber,
