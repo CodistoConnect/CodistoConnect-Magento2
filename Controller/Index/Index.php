@@ -642,18 +642,18 @@ class Index extends \Magento\Framework\App\Action\Action
         }
 
         if ($ordercontent->paymentstatus == 'complete') {
-            $payment->setBaseAmountPaid($ordersubtotal);
-            $payment->setAmountPaid($ordersubtotal);
-            $payment->setBaseAmountAuthorized($ordersubtotal);
-            $payment->setBaseAmountPaidOnline($ordersubtotal);
-            $payment->setAmountAuthorized($ordersubtotal);
+            $payment->setBaseAmountPaid($ordertotal);
+            $payment->setAmountPaid($ordertotal);
+            $payment->setBaseAmountAuthorized($ordertotal);
+            $payment->setBaseAmountPaidOnline($ordertotal);
+            $payment->setAmountAuthorized($ordertotal);
             $payment->setIsTransactionClosed(1);
         } else {
             $payment->setBaseAmountPaid(0.0);
             $payment->setAmountPaid(0.0);
-            $payment->setBaseAmountAuthorized($ordersubtotal);
-            $payment->setBaseAmountPaidOnline($ordersubtotal);
-            $payment->setAmountAuthorized($ordersubtotal);
+            $payment->setBaseAmountAuthorized($ordertotal);
+            $payment->setBaseAmountPaidOnline($ordertotal);
+            $payment->setAmountAuthorized($ordertotal);
             $payment->setIsTransactionClosed(0);
         }
 
