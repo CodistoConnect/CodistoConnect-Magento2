@@ -1,0 +1,85 @@
+<?xml version="1.0"?>
+<!--
+
+/**
+ * Codisto LINQ Sync Extension
+ *
+ * NOTICE OF LICENSE
+ *
+ * This source file is subject to the Open Software License (OSL 3.0)
+ * that is bundled with this package in the file LICENSE.txt.
+ * It is also available through the world-wide-web at this URL:
+ * http://opensource.org/licenses/osl-3.0.php
+ * If you did not receive a copy of the license and are unable to
+ * obtain it through the world-wide-web, please send an email
+ * to license@magentocommerce.com so we can send you a copy immediately.
+ *
+ * @package   Codisto_Connect
+ * @copyright 2016-2022 On Technology Pty. Ltd. (https://codisto.com/)
+ * @license   http://opensource.org/licenses/osl-3.0.php  Open Software License (OSL 3.0)
+ * @link      https://codisto.com/
+ */
+
+-->
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <payment>
+            <ebay>
+                <active>1</active>
+                <title>eBay</title>
+                <order_status>pending</order_status>
+                <allowspecific>0</allowspecific>
+                <model>PurchaseOrderPaymentFacade</model>
+                <group>offline</group>
+                <can_use_internal>1</can_use_internal>
+                <can_use_checkout>0</can_use_checkout>
+                <is_offline>1</is_offline>
+            </ebay>
+            <amazon>
+                <active>1</active>
+                <title>Amazon</title>
+                <order_status>pending</order_status>
+                <allowspecific>0</allowspecific>
+                <model>PurchaseOrderPaymentFacade</model>
+                <group>offline</group>
+                <can_use_internal>1</can_use_internal>
+                <can_use_checkout>0</can_use_checkout>
+                <is_offline>1</is_offline>
+            </amazon>
+            <walmart>
+                <active>1</active>
+                <title>Walmart</title>
+                <order_status>pending</order_status>
+                <allowspecific>0</allowspecific>
+                <model>PurchaseOrderPaymentFacade</model>
+                <group>offline</group>
+                <can_use_internal>1</can_use_internal>
+                <can_use_checkout>0</can_use_checkout>
+                <is_offline>1</is_offline>
+            </walmart>
+            <google>
+                <active>1</active>
+                <title>Google</title>
+                <order_status>pending</order_status>
+                <allowspecific>0</allowspecific>
+                <model>PurchaseOrderPaymentFacade</model>
+                <group>offline</group>
+                <can_use_internal>1</can_use_internal>
+                <can_use_checkout>0</can_use_checkout>
+                <is_offline>1</is_offline>
+            </google>
+            <kogan>
+                <active>1</active>
+                <title>Kogan</title>
+                <order_status>pending</order_status>
+                <allowspecific>0</allowspecific>
+                <model>PurchaseOrderPaymentFacade</model>
+                <group>offline</group>
+                <can_use_internal>1</can_use_internal>
+                <can_use_checkout>0</can_use_checkout>
+                <is_offline>1</is_offline>
+            </kogan>
+        </payment>
+    </default>
+</config>

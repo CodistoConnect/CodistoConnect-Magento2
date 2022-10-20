@@ -576,7 +576,7 @@ class Index extends \Magento\Framework\App\Action\Action
 
                 if ($this->catalogInventoryConfig->isQty($typeId)) {
                     if ($this->canSubtractQty($stockItem)) {
-                        $productsToReindex[$product->getId()] = 0;
+                        $productsToReindex[$product->getId()] = $orderItem->getQtyOrdered();
 
                         $stockItem->setQty($stockItem->getQty() - $orderItem->getQtyOrdered());
                         $stockItem->save();
@@ -589,6 +589,7 @@ class Index extends \Magento\Framework\App\Action\Action
     private function _processPayment(
         $order,
         $ordercontent,
+        $ordersubtotal,
         $ordertotal,
         $paypaltransactionid,
         $ebaysalesrecordnumber,
@@ -1042,6 +1043,7 @@ class Index extends \Magento\Framework\App\Action\Action
         $payment = $this->_processPayment(
             $order,
             $ordercontent,
+            $ordersubtotal,
             $ordertotal,
             $paypaltransactionid,
             $ebaysalesrecordnumber,
@@ -1295,6 +1297,7 @@ class Index extends \Magento\Framework\App\Action\Action
         $orderlineStockReserved,
         $adjustStock,
         $cancelled,
+        $orderline,
         &$productsToReindex
     ) {
         if (!$cancelled) {
@@ -1309,6 +1312,8 @@ class Index extends \Magento\Framework\App\Action\Action
                     $typeId = 'simple';
                 }
 
+                $qty = $orderline->quantity[0];
+
                 if ($this->catalogInventoryConfig->isQty($typeId)) {
                     if ($this->canSubtractQty($stockItem)) {
                         $stockReserved = isset($orderlineStockReserved[$productId])
@@ -1317,12 +1322,12 @@ class Index extends \Magento\Framework\App\Action\Action
                         $stockMovement = $qty - $stockReserved;
 
                         if ($stockMovement > 0) {
-                            $productsToReindex[$productId] = 0;
+                            $productsToReindex[$productId] = $qty;
 
                             $stockItem->setQty($stockItem->getQty() - $stockMovement);
                             $stockItem->save();
                         } elseif ($stockMovement < 0) {
-                            $productsToReindex[$productId] = 0;
+                            $productsToReindex[$productId] = $qty;
 
                             $stockMovement = abs($stockMovement);
 
@@ -1363,7 +1368,7 @@ class Index extends \Magento\Framework\App\Action\Action
 
         if ($this->catalogInventoryConfig->isQty($typeId) &&
             $this->canSubtractQty($stockItem)) {
-            $productsToReindex[$product->getId()] = 0;
+            $productsToReindex[$product->getId()] = $qty;
 
             if (!$cancelled) {
                 $stockItem->setQty($stockItem->getQty() - (int)$qty);
@@ -1691,6 +1696,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 $orderlineStockReserved,
                 $adjustStock,
                 ($ordercontent->orderstate != 'cancelled') ? false : true,
+                $orderline,
                 $productsToReindex
             );
         }
