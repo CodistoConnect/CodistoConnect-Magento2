@@ -789,7 +789,10 @@ class Index extends \Magento\Framework\App\Action\Action
         $ordertotal = (float)($ordercontent->ordertotal[0]);
         $ordersubtotal = (float)($ordercontent->ordersubtotal[0]);
         $ordertaxtotal = (float)($ordercontent->ordertaxtotal[0]);
-        $weightunit = (string)$ordercontent->weightunit;
+        $weightunit= $this->scopeConfig->getValue(
+            'general/locale/weight_unit',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
 
         $ordersubtotal = $this->priceCurrency->round($ordersubtotal);
         $ordersubtotalincltax = $this->priceCurrency->round($ordersubtotal + $ordertaxtotal);
@@ -1473,7 +1476,10 @@ class Index extends \Magento\Framework\App\Action\Action
     ) {
         $orderstatus = $order->getStatus();
         $ordercontent = $xml->entry->content->children('http://api.codisto.com/schemas/2009/');
-        $weightunit = (string)$ordercontent->weightunit;
+        $weightunit= $this->scopeConfig->getValue(
+            'general/locale/weight_unit',
+            \Magento\Store\Model\ScopeInterface::SCOPE_STORE
+        );
 
         $order->setCodistoMerchantid((string)$ordercontent->merchantid);
 
