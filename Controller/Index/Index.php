@@ -1819,11 +1819,15 @@ class Index extends \Magento\Framework\App\Action\Action
                 $customerGroupId = $koganGroup->getId();
             }
 
+            $regexPattern = '/(?:[^\p{L}\p{M}\,\-\_\.\'’`\s\d]){1,255}+/u';
+            $matchedFirstName = preg_replace($regexPattern, '', (string)$addressBilling['firstname']);
+            $matchedLastName = preg_replace($regexPattern, '', (string)$addressBilling['lastname']);
+
             $customer->setWebsiteId($websiteId);
             $customer->setStoreId($store->getId());
             $customer->setEmail($email);
-            $customer->setFirstname((string)$addressBilling['firstname']);
-            $customer->setLastname((string)$addressBilling['lastname']);
+            $customer->setFirstname($matchedFirstName);
+            $customer->setLastname($matchedLastName);
             $customer->setPassword((string)sha1(uniqid()));
             if ($customerGroupId) {
                 $customer->setGroupId($customerGroupId);
