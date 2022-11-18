@@ -465,7 +465,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 break;
         }
 
-        $weight = max($weight, 1.0);
+        $weight = max($weight, 0.0);
 
         return $weight;
     }
