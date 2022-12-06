@@ -1150,6 +1150,7 @@ class Sync
         $store = $args['store'];
         $db = $args['db'];
 
+        $insertSQL = $args['preparedskuStatement'];
         $insertSKULinkSQL = $args['preparedskulinkStatement'];
         $insertCategorySQL = $args['preparedcategoryproductStatement'];
         $insertSKUMatrixSQL = $args['preparedskumatrixStatement'];
