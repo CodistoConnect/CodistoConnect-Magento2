@@ -297,7 +297,7 @@ class Sync
             while ($files->fetch()) {
                 $fileName = $ebayDesignDir.$name;
 
-                if (strpos($name, '..') === false) {
+                if (strpos($name ?? '', '..') === false) {
                     if (!file_exists($fileName)) { // @codingStandardsIgnoreLine
                         $dir = dirname($fileName);
 

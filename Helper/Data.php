@@ -696,7 +696,7 @@ class Data
             foreach ($interpreterName as $fileName) {
                 $file = shell_exec('which '.$fileName.$extension); // @codingStandardsIgnoreLine MEQP1.Security.DiscouragedFunction.Found
                 if ($file) {
-                    $file = trim($file);
+                    $file = trim($file ?? '');
                     if (@is_file($file) // @codingStandardsIgnoreLine Generic.PHP.NoSilencedErrors.Discouraged
                         && (
                             '\\' === DIRECTORY_SEPARATOR
@@ -896,8 +896,8 @@ class Data
 
     public function processCmsContent($content, $storeId)
     {
-        if (strpos($content, '{{') === false) {
-            return trim($content);
+        if (strpos($content ?? '', '{{') === false) {
+            return trim($content ?? '');
         }
 
         $result = $this->runProcess(
