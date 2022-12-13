@@ -193,7 +193,7 @@ class CodistoActionInstance extends \Magento\Backend\App\AbstractAction
         }
 
         foreach ($this->_getAllHeaders($request) as $k => $v) {
-            if (strtolower($k) != 'host') {
+            if (strtolower($k ?? '') != 'host') {
                 $client->setHeaders($k, $v);
             }
         }
@@ -250,12 +250,12 @@ class CodistoActionInstance extends \Magento\Backend\App\AbstractAction
         }
 
         foreach ($remoteResponse->getHeaders() as $k => $v) {
-            if (!in_array(strtolower($k), $filterHeaders, true)) {
+            if (!in_array(strtolower($k ?? ''), $filterHeaders, true)) {
                 $this->_proxySetResponseHeader($response, $k, $v);
                 continue;
             }
 
-            if (strtolower($k) == 'x-storeviewmap') {
+            if (strtolower($k ?? '') == 'x-storeviewmap') {
                 $this->_handleStoreViewMap($v);
             }
         }
@@ -378,7 +378,7 @@ class CodistoActionInstance extends \Magento\Backend\App\AbstractAction
             ? '' : ':'.$adminBasePort;
         $adminBasePort = '';
         $adminBasePath = $request->getServer('REQUEST_URI');
-        $adminBasePath = substr($adminBasePath, 0, strpos($adminBasePath, '/codisto/'));
+        $adminBasePath = substr($adminBasePath, 0, strpos($adminBasePath ?? '', '/codisto/'));
         $adminBaseURL = $request->getScheme() . '://' .
             $request->getHttpHost() . $adminBasePort .
             $adminBasePath . '/codisto/ebaytab/'.$storeId.'/'.$merchant['merchantid'].'/';
