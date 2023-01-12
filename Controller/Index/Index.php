@@ -1820,8 +1820,10 @@ class Index extends \Magento\Framework\App\Action\Action
             }
 
             $regexPattern = '/(?:[^\p{L}\p{M}\,\-\_\.\'’`\s\d]){1,255}+/u';
-            $matchedFirstName = empty(preg_replace($regexPattern, '', (string)$addressBilling['firstname'])) ? preg_replace($regexPattern, '_', (string)$addressBilling['firstname']) : preg_replace($regexPattern, '', (string)$addressBilling['firstname']) ;
-            $matchedLastName = empty(preg_replace($regexPattern, '', (string)$addressBilling['lastname'])) ? preg_replace($regexPattern, '_', (string)$addressBilling['lastname']) : preg_replace($regexPattern, '', (string)$addressBilling['lastname']) ;
+            $matchedFirstName = empty(preg_replace($regexPattern, '', (string)$addressBilling['firstname'])) ?
+                preg_replace($regexPattern, '_', (string)$addressBilling['firstname']) : preg_replace($regexPattern, '', (string)$addressBilling['firstname']) ;
+            $matchedLastName = empty(preg_replace($regexPattern, '', (string)$addressBilling['lastname'])) ?
+                preg_replace($regexPattern, '_', (string)$addressBilling['lastname']) : preg_replace($regexPattern, '', (string)$addressBilling['lastname']) ;
 
             $customer->setWebsiteId($websiteId);
             $customer->setStoreId($store->getId());
