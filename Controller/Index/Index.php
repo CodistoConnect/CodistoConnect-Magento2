@@ -465,7 +465,7 @@ class Index extends \Magento\Framework\App\Action\Action
                 break;
         }
 
-        $weight = max($weight, 1.0);
+        $weight = max($weight, 0.0);
 
         return $weight;
     }
@@ -1637,9 +1637,15 @@ class Index extends \Magento\Framework\App\Action\Action
             $taxamount = $priceinctax - $price;
             $taxpercent = $price == 0 ? 0 : round($priceinctax / $price - 1.0, 2) * 100;
 
-            $weight = $this->_translateWeight($orderline->weight[0], $weightunit);
+            if(isset($productData['product']) && is_object($productData['product'])) {
+                $weight = (float)$productData['product']->getWeight();
+            }
 
-            $weight_total += $weight;
+            if(!$weight) {
+                $weight = $this->_translateWeight($orderline->weight[0], $weightunit);
+            }
+
+            $weight_total += ($weight * $qty);
 
             $itemData = $this->_processOrderSyncLine(
                 $order,
