@@ -23,6 +23,12 @@ namespace Codisto\Connect\Model;
 
 use Magento\Framework\UrlInterface;
 use Magento\Framework\DB\Ddl\Table;
+use Magento\Framework\Exception\InputException;
+use Magento\Framework\Exception\LocalizedException;
+use Magento\InventoryConfigurationApi\Api\Data\StockItemConfigurationInterface;
+use Magento\InventorySalesApi\Api\Data\SalesChannelInterface;
+use Magento\InventorySalesApi\Api\GetProductSalableQtyInterface;
+use Magento\InventorySalesApi\Api\StockResolverInterface;
 
 class Sync
 {
@@ -81,6 +87,12 @@ class Sync
 
     private $urlBuilder;
 
+    private $getProductSalableQty;
+    private $stockResolver;
+    private $getWebsiteCodeByWebsiteId;
+    private $isProductSalable;
+    private $getStockItemConfiguration;
+
     /*
         @codingStandardsIgnoreStart MEQP2.Classes.CollectionDependency.CollectionDependency
             \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory is required as we use the walk interface
@@ -118,7 +130,12 @@ class Sync
         \Magento\Framework\App\Config\ScopeConfigInterface $scopeConfig,
         \Magento\Catalog\Model\Product\Media\ConfigFactory $mediaConfigFactory,
         \Magento\Framework\Model\ResourceModel\IteratorFactory $iteratorFactory,
-        \Codisto\Connect\Helper\Data $codistoHelper
+        \Codisto\Connect\Helper\Data $codistoHelper,
+        GetProductSalableQtyInterface $getProductSalableQty,
+        StockResolverInterface $stockResolver,
+        \Magento\InventorySales\Model\ResourceModel\GetWebsiteCodeByWebsiteId $getWebsiteCodeByWebsiteId,
+        \Magento\InventorySalesApi\Api\IsProductSalableInterface $isProductSalable,
+        \Magento\InventoryConfigurationApi\Api\GetStockItemConfigurationInterface $getStockItemConfiguration
     // @codingStandardsIgnoreEnd MEQP2.Classes.CollectionDependency.CollectionDependency
     ) {
 
@@ -159,6 +176,12 @@ class Sync
         $this->groupCache = [];
         $this->optionCache = [];
         $this->optionTextCache = [];
+
+        $this->getProductSalableQty = $getProductSalableQty;
+        $this->stockResolver = $stockResolver;
+        $this->getWebsiteCodeByWebsiteId = $getWebsiteCodeByWebsiteId;
+        $this->isProductSalable = $isProductSalable;
+        $this->getStockItemConfiguration = $getStockItemConfiguration;
 
         $ebayGroup = $groupFactory->create();
         $ebayGroup->load('eBay', 'customer_group_code');
@@ -915,24 +938,45 @@ class Sync
         return $listPrice;
     }
 
-    private function _syncStockData($product, $productId, $stockId)
+    private function _syncStockData($product, $productId, $websiteId)
     {
-        $stockItem = $this->stockItemFactory->create();
-        $stockItem->setStockId($stockId)
-                    ->setProduct($product);
+        $stockId = \Magento\CatalogInventory\Model\Stock::DEFAULT_STOCK_ID;
+        $websiteCode = is_numeric($websiteId) ? $this->getWebsiteCodeByWebsiteId->execute((int)$websiteId) : $websiteId;
 
-        $stockItem->getResource()->loadByProductId($stockItem, $productId, $stockItem->getStockId());
+        $qty = null;
+        $manageStock = null;
+        $backorders = null;
+        $instock = null;
 
-        $qty = $stockItem->getQty();
-        if (!is_numeric($qty)) {
-            $qty = 0;
+        try {
+            $stockItem = $this->stockResolver->execute(SalesChannelInterface::TYPE_WEBSITE, $websiteCode);
+            $stockConfiguration = $this->getStockItemConfiguration->execute($product->getSku(), $stockItem->getStockId());
+            $qty = $this->getProductSalableQty->execute($product->getSku(), $stockItem->getStockId());
+            $manageStock = $stockConfiguration->isManageStock() ? -1 : 0;
+            $backorders =
+                $stockConfiguration->getBackorders() === StockItemConfigurationInterface::BACKORDERS_YES_NONOTIFY
+                || $stockConfiguration->getBackorders() === StockItemConfigurationInterface::BACKORDERS_YES_NOTIFY ? -1 : 0;
+            $instock = $this->isProductSalable->execute($product->getSku(), $stockItem->getStockId()) ? -1 : 0;
+        } catch (\Exception $e) {
+            $this->codistoHelper->logger((string)$e);
         }
+        
+        if (null === $qty) {
+            $stockItem = $this->stockItemFactory->create();
+            $stockItem->setStockId($stockId)
+                ->setProduct($product);
 
-        $manageStock = $stockItem->getManageStock() ? -1 : 0;
-        $backorders = $stockItem->getBackorders() == \Magento\CatalogInventory\Model\Stock::BACKORDERS_YES_NONOTIFY
-                    || $stockItem->getBackorders() == \Magento\CatalogInventory\Model\Stock::BACKORDERS_YES_NOTIFY ? -1 : 0;
-        $instock = $stockItem->getIsInStock() ? -1 : 0;
+            $stockItem->getResource()->loadByProductId($stockItem, $productId, $stockItem->getStockId());
+            $manageStock = $stockItem->getManageStock() ? -1 : 0;
+            $backorders = $stockItem->getBackorders() == \Magento\CatalogInventory\Model\Stock::BACKORDERS_YES_NONOTIFY
+            || $stockItem->getBackorders() == \Magento\CatalogInventory\Model\Stock::BACKORDERS_YES_NOTIFY ? -1 : 0;
+            $instock = $stockItem->getIsInStock() ? -1 : 0;
 
+            $qty = $stockItem->getQty();
+            if (!is_numeric($qty)) {
+                $qty = 0;
+            }
+        }
         return ['qty' => (int)$qty, 'managestock' => $manageStock, 'backorders' => $backorders, 'instock' => $instock ];
     }
 
@@ -2180,11 +2224,17 @@ class Sync
             $price
         );
 
-        $stockData = $this->_syncStockData(
-            $product,
-            $productId,
-            \Magento\CatalogInventory\Model\Stock::DEFAULT_STOCK_ID
-        );
+        $stockData = [];
+        try {
+            $stockData = $this->_syncStockData(
+                $product,
+                $productId,
+                $store->getWebsiteId()
+            );
+        } catch (\Exception $e) {
+            $this->codistoHelper->logger((string)$e);
+            return;
+        }
 
         $data = [];
         $data[] = $productId; //ExternalReference ?1
