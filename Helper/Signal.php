@@ -55,10 +55,10 @@ if (getenv('CURL_CA_BUNDLE')) { // @codingStandardsIgnoreLine
 }
 
 // using zend http client directly in sub process
-$client = new \Zend_Http_Client(); // @codingStandardsIgnoreLine
+$client = new \Laminas\Http\Client(); // @codingStandardsIgnoreLine
 $client->setConfig(
     [
-        'adapter' => 'Zend_Http_Client_Adapter_Curl',
+        'adapter' => '\Laminas\Http\Client\Adapter\Curl',
         'curloptions' => $curlOptions,
         'keepalive' => true,
         'maxredirects' => 0

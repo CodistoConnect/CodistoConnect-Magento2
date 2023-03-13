@@ -108,10 +108,10 @@ class CodistoController extends \Magento\Backend\App\Action
                 $curlOptions = [CURLOPT_TIMEOUT => 60, CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_0];
 
                 // impossible to use the object manager because di on non-namespaced classes is broken
-                $client = new \Zend_Http_Client( // @codingStandardsIgnoreLine MEQP2.Classes.ObjectInstantiation.FoundDirectInstantiation
+                $client = new \Laminas\Http\Client( // @codingStandardsIgnoreLine MEQP2.Classes.ObjectInstantiation.FoundDirectInstantiation
                     'https://ui.codisto.com/create',
                     [
-                        'adapter' => 'Zend_Http_Client_Adapter_Curl',
+                        'adapter' => '\Laminas\Http\Client\Adapter\Curl',
                         'curloptions' => $curlOptions,
                         'keepalive' => false,
                         'strict' => false,
@@ -200,10 +200,10 @@ class CodistoController extends \Magento\Backend\App\Action
             $curlOptions = [ CURLOPT_TIMEOUT => 60, CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_0 ];
 
             // impossible to use the object manager because di on non-namespaced classes is broken
-            $client = new \Zend_Http_Client( // @codingStandardsIgnoreLine MEQP2.Classes.ObjectInstantiation.FoundDirectInstantiation
+            $client = new \Laminas\Http\Client( // @codingStandardsIgnoreLine MEQP2.Classes.ObjectInstantiation.FoundDirectInstantiation
                 'https://ui.codisto.com/create',
                 [
-                    'adapter' => 'Zend_Http_Client_Adapter_Curl',
+                    'adapter' => '\Laminas\Http\Client\Adapter\Curl',
                     'curloptions' => $curlOptions,
                     'keepalive' => false,
                     'strict' => false,

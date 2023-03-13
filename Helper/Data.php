@@ -282,10 +282,10 @@ class Data
             $this->registerProductChanges($merchants, $eventtype, $productids);
 
             if (!$this->client) {
-                $this->client = new \Zend_Http_Client(); // @codingStandardsIgnoreLine MEQP2.Classes.ObjectInstantiation.FoundDirectInstantiation
+                $this->client = new \\Laminas\Http\Client(); // @codingStandardsIgnoreLine MEQP2.Classes.ObjectInstantiation.FoundDirectInstantiation
                 $this->client->setConfig(
                     [
-                        'adapter' => 'Zend_Http_Client_Adapter_Curl',
+                        'adapter' => '\Laminas\Http\Client\Adapter\Curl',
                         'curloptions' =>
                         [
                             CURLOPT_TIMEOUT => 4,

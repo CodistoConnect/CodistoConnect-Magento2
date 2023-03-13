@@ -384,10 +384,10 @@ class CodistoActionInstance extends \Magento\Backend\App\AbstractAction
             $adminBasePath . '/codisto/ebaytab/'.$storeId.'/'.$merchant['merchantid'].'/';
 
         // use Zend_Http_Client directly to have discrete control over compression, http version and keep alive
-        $client = new \Zend_Http_Client( // @codingStandardsIgnoreLine MEQP2.Classes.ObjectInstantiation.FoundDirectInstantiation
+        $client = new \Laminas\Http\Client( // @codingStandardsIgnoreLine MEQP2.Classes.ObjectInstantiation.FoundDirectInstantiation
             $remoteUrl,
             [
-                'adapter' => 'Zend_Http_Client_Adapter_Curl',
+                'adapter' => '\Laminas\Http\Client\Adapter\Curl',
                 'curloptions' => $curlOptions,
                 'keepalive' => false,
                 'strict' => false,
